@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { getSesionServer } from '@/lib/session-server';
 import { prisma } from '@pelotea/db';
-import { getSedeActiva } from '@/lib/sede';
+import { getSedeActivaONull } from '@/lib/sede';
 import { DEPORTE_LABEL, DEPORTES } from '@pelotea/shared';
 import { CrearPartidoForm } from './CrearPartidoForm';
 
@@ -11,7 +11,16 @@ export default async function CrearPartidoPage() {
   const sesion = await getSesionServer();
   if (!sesion) redirect('/entrar?next=/partidos/crear');
 
-  const sede = await getSedeActiva();
+  const sede = await getSedeActivaONull();
+  if (!sede) {
+    return (
+      <main className="pl-container" style={{ paddingBlock: 60, textAlign: 'center' }}>
+        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 15 }}>
+          Todavía no hay ningún club configurado en esta instancia. Vuelve pronto.
+        </p>
+      </main>
+    );
+  }
   const canchas = await prisma.cancha.findMany({ where: { sedeId: sede.id, activa: true }, orderBy: { orden: 'asc' } });
 
   return (

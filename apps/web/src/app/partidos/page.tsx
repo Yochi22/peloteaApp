@@ -2,14 +2,24 @@ import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { getSesionServer } from '@/lib/session-server';
-import { getSedeActiva } from '@/lib/sede';
+import { getSedeActivaONull } from '@/lib/sede';
 import { ListaPartidos, type PartidoItem } from './ListaPartidos';
 
 export const dynamic = 'force-dynamic';
 
 export default async function PartidosPage() {
   const sesion = await getSesionServer();
-  const sede = await getSedeActiva();
+  const sede = await getSedeActivaONull();
+
+  if (!sede) {
+    return (
+      <main className="pl-container" style={{ paddingBlock: 60, textAlign: 'center' }}>
+        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 15 }}>
+          Todavía no hay ningún club configurado en esta instancia. Vuelve pronto.
+        </p>
+      </main>
+    );
+  }
 
   const partidos = await prisma.partidoAbierto.findMany({
     where: { sedeId: sede.id, estado: 'ABIERTO', inicio: { gt: new Date() } },
