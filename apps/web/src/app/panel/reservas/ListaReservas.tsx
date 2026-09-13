@@ -1,7 +1,7 @@
 'use client';
 
-import { useState } from 'react';
-import { useRouter } from 'next/navigation';
+import { useEffect, useState } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Alert, Pagination } from '@pelotea/ui';
 
@@ -112,10 +112,14 @@ function Fila({ r, onCambio }: { r: ReservaFila; onCambio: (id: string, estado: 
 
 export function ListaReservas({ reservas, pagina, totalPaginas }: { reservas: ReservaFila[]; pagina: number; totalPaginas: number }) {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [items, setItems] = useState(reservas);
+  // Sin esto, cambiar de página o de filtro (mismo componente, prop nuevo)
+  // se quedaba mostrando la lista vieja — mismo patrón que ColaAprobacion.
+  useEffect(() => setItems(reservas), [reservas]);
 
   if (items.length === 0) {
-    return <Alert tone="info">Todavía no hay reservas confirmadas.</Alert>;
+    return <Alert tone="info">No hay reservas en ese rango/categoría.</Alert>;
   }
 
   return (
@@ -125,7 +129,15 @@ export function ListaReservas({ reservas, pagina, totalPaginas }: { reservas: Re
       ))}
       {totalPaginas > 1 ? (
         <div style={{ marginTop: 16 }}>
-          <Pagination page={pagina} totalPages={totalPaginas} onChange={(p) => router.push(`/panel/reservas?pagina=${p}`)} />
+          <Pagination
+            page={pagina}
+            totalPages={totalPaginas}
+            onChange={(p) => {
+              const params = new URLSearchParams(searchParams.toString());
+              params.set('pagina', String(p));
+              router.push(`/panel/reservas?${params.toString()}`);
+            }}
+          />
         </div>
       ) : null}
     </div>
