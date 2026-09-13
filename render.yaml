@@ -52,8 +52,10 @@ services:
       # S3/MinIO externo (Backblaze B2 free tier) — pegar a mano.
       - key: S3_ENDPOINT
         sync: false
+      # 'auto' sirve para Cloudflare R2; Backblaze B2 exige la región real
+      # (la que aparece en el endpoint, ej. 'us-east-005') — pegar a mano.
       - key: S3_REGION
-        value: auto
+        sync: false
       - key: S3_ACCESS_KEY
         sync: false
       - key: S3_SECRET_KEY
