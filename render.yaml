@@ -34,12 +34,19 @@ services:
     # exista). El resto de la cadena sigue heredando el NODE_ENV real del
     # servicio para que el build de Next quede optimizado para producción.
     buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/web build
-    # `preDeployCommand` no existe en el plan free de Render — la migración
-    # (`migrate deploy`, no `migrate dev`: no interactiva) va pegada al
-    # arranque en su lugar. Es segura de repetir: solo aplica lo pendiente,
-    # así que correr esto en cada restart/wake-up del free tier no hace nada
-    # si el schema ya está al día.
-    startCommand: pnpm --filter @pelotea/db exec prisma migrate deploy && pnpm --filter @pelotea/web start
+    # `preDeployCommand` no existe en el plan free de Render — por eso esto
+    # va pegado al arranque. `db push` en vez de `migrate deploy` a
+    # propósito: todavía no existe ninguna migración generada (necesita una
+    # Postgres real para crearla con `prisma migrate dev`, que este proyecto
+    # nunca tuvo hasta desplegar acá) — `migrate deploy` sin migraciones no
+    # hace NADA, ni siquiera crea las tablas, que es justo lo que pasó en el
+    # primer deploy (`the table public.notificacion does not exist`). `db
+    # push` sincroniza el schema directo, sin necesitar historial de
+    # migraciones — correcto mientras no haya datos reales que proteger.
+    # Cuando eso cambie, hay que migrar a `migrate dev` + `migrate deploy`
+    # de verdad (ver CLAUDE.md). Es segura de repetir en cada wake-up del
+    # free tier: si el schema ya coincide, no hace nada.
+    startCommand: pnpm --filter @pelotea/db exec prisma db push --skip-generate --accept-data-loss && pnpm --filter @pelotea/web start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV

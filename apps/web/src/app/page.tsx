@@ -1,17 +1,20 @@
 import Link from 'next/link';
-
-const SUPERFICIES = [
-  { nombre: 'Arcilla', color: 'var(--pl-clay)', detalle: 'Tenis · 6 canchas' },
-  { nombre: 'Grass / césped', color: 'var(--pl-grass)', detalle: 'Fútbol · Beach tennis · 14 canchas' },
-  { nombre: 'Cancha dura', color: 'var(--pl-hard)', detalle: 'Pádel · Vóley playa · 14 canchas' },
-];
+import { prisma } from '@pelotea/db';
+import { DEPORTE_LABEL, SUPERFICIE_TOKEN, type Deporte, type Superficie } from '@pelotea/shared';
+import { getSedeActivaONull } from '@/lib/sede';
 
 const FEATURES = [
   { titulo: 'Descuentos exprés', texto: 'El precio baja solo cuando una franja se ve vacía.' },
   { titulo: 'Divide con amigos', texto: 'Cada quien paga su parte por un enlace.' },
   { titulo: 'Ofertas de última hora', texto: 'Si alguien cancela, te avisamos con la cancha rebajada.' },
-  { titulo: 'Busca jugadores', texto: '¿Quieres jugar y no tienes con quién? Únete a un partido abierto.' },
+  { titulo: '¿Quieres jugar y no tienes con quién?', texto: 'Únete a un partido abierto.' },
 ];
+
+const TOKEN_COLOR: Record<'clay' | 'grass' | 'hard', string> = {
+  clay: 'var(--pl-clay)',
+  grass: 'var(--pl-grass)',
+  hard: 'var(--pl-hard)',
+};
 
 function CourtSvg({ bg }: { bg: string }) {
   return (
@@ -25,7 +28,31 @@ function CourtSvg({ bg }: { bg: string }) {
   );
 }
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  const sede = await getSedeActivaONull();
+  const canchas = sede
+    ? await prisma.cancha.findMany({ where: { sedeId: sede.id, activa: true }, select: { deporte: true, superficie: true } })
+    : [];
+
+  // Categorías reales de ESTA sede, agrupadas por deporte — nunca una lista
+  // fija inventada. El color de cada tarjeta sigue la superficie más común
+  // dentro de ese deporte (SUPERFICIE_TOKEN, la misma rampa que usa /canchas).
+  const porDeporte = new Map<Deporte, { total: number; superficies: Map<Superficie, number> }>();
+  for (const c of canchas) {
+    const d = c.deporte as Deporte;
+    const s = c.superficie as Superficie;
+    const entry = porDeporte.get(d) ?? { total: 0, superficies: new Map() };
+    entry.total += 1;
+    entry.superficies.set(s, (entry.superficies.get(s) ?? 0) + 1);
+    porDeporte.set(d, entry);
+  }
+  const categorias = Array.from(porDeporte.entries()).map(([deporte, info]) => {
+    const superficiePrincipal = Array.from(info.superficies.entries()).sort((a, b) => b[1] - a[1])[0]![0];
+    return { deporte, total: info.total, color: TOKEN_COLOR[SUPERFICIE_TOKEN[superficiePrincipal]] };
+  });
+
   return (
     <main>
       <header
@@ -61,14 +88,16 @@ export default function HomePage() {
             color: 'var(--pl-clay-deep)',
           }}
         >
-          Tenis · Pádel · Beach tennis · Vóley playa · Fútbol
+          {categorias.length > 0
+            ? categorias.map((c) => DEPORTE_LABEL[c.deporte]).join(' · ')
+            : 'Tenis · Pádel · Beach tennis · Vóley playa · Fútbol'}
         </span>
         <h1 style={{ fontSize: 'clamp(34px, 6vw, 56px)' }}>
           Reserva tu cancha como quien compra la entrada del cine.
         </h1>
         <p style={{ fontSize: 17, color: 'var(--pl-ink-soft)' }}>
-          Elige día y hora, aparta la cancha 15 minutos, paga por pago móvil y manda el comprobante.
-          El club lo aprueba y listo.
+          Elige día, hora y cuántas horas quieres jugar, paga por pago móvil y manda el comprobante. El club lo
+          aprueba y listo.
         </p>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
           <Link className="pl-btn" href="/canchas">
@@ -80,19 +109,27 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="pl-container" style={{ paddingBlock: '0 44px' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
-          {SUPERFICIES.map((s) => (
-            <div key={s.nombre} style={{ borderRadius: 16, overflow: 'hidden', border: '1.5px solid var(--pl-line)' }}>
-              <CourtSvg bg={s.color} />
-              <div style={{ padding: '16px 18px', background: 'var(--pl-bg-raised)' }}>
-                <h3 style={{ fontSize: 20 }}>{s.nombre}</h3>
-                <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>{s.detalle}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-      </section>
+      {categorias.length > 0 ? (
+        <section className="pl-container" style={{ paddingBlock: '0 44px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
+            {categorias.map((c) => (
+              <Link
+                key={c.deporte}
+                href={`/canchas?deporte=${c.deporte}`}
+                style={{ borderRadius: 16, overflow: 'hidden', border: '1.5px solid var(--pl-line)', textDecoration: 'none', color: 'inherit' }}
+              >
+                <CourtSvg bg={c.color} />
+                <div style={{ padding: '16px 18px', background: 'var(--pl-bg-raised)' }}>
+                  <h3 style={{ fontSize: 20 }}>{DEPORTE_LABEL[c.deporte]}</h3>
+                  <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>
+                    {c.total} {c.total === 1 ? 'cancha' : 'canchas'}
+                  </p>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      ) : null}
 
       <section style={{ background: 'var(--pl-ink)', color: 'var(--pl-bg)', paddingBlock: 48 }}>
         <div

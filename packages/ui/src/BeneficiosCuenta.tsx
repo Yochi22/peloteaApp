@@ -21,7 +21,7 @@ const BENEFICIOS = [
   {
     icono: <path d="M11 8v6M8 11h6M11 21a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z" />,
     titulo: 'Partidos abiertos',
-    texto: '¿Te falta gente para jugar? Unite a partidos de tu nivel o creá el tuyo.',
+    texto: '¿Te falta gente para jugar? Únete a partidos de tu nivel o crea el tuyo.',
   },
 ];
 
