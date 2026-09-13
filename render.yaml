@@ -49,6 +49,13 @@ services:
     startCommand: pnpm --filter @pelotea/db exec prisma db push --skip-generate --accept-data-loss && pnpm --filter @pelotea/web start
     healthCheckPath: /api/health
     envVars:
+      # Crítico: todo el cálculo de horarios/disponibilidad usa Date local
+      # ingenuo (setHours/setMinutes de JS), asumiendo hora de Venezuela —
+      # `Sede.timezone` se guarda pero nada la aplica todavía. Sin esto, un
+      # servidor en UTC (como Render) corre 4h todo el horario configurado
+      # (una cancha con horario hasta las 10pm VET aparecía cortada ~6pm).
+      - key: TZ
+        value: America/Caracas
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL
@@ -96,6 +103,10 @@ services:
     startCommand: pnpm --filter @pelotea/worker start
     healthCheckPath: /health
     envVars:
+      # Mismo motivo que en pelotea-web: los jobs (hold-expiry, recordatorios)
+      # también hacen Date math local ingenuo asumiendo hora de Venezuela.
+      - key: TZ
+        value: America/Caracas
       - key: NODE_ENV
         value: production
       - key: DATABASE_URL

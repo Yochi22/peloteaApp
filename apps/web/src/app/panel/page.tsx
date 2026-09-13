@@ -99,17 +99,17 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           </p>
           <h1 style={{ fontSize: 26, marginTop: 4 }}>Últimos {DIAS_RANGO} días</h1>
         </div>
-        <div style={{ display: 'flex', gap: 10 }}>
-          <Link href="/panel/canchas" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+          <Link href="/panel/canchas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard)' }}>
             Canchas
           </Link>
-          <Link href="/panel/reservas" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+          <Link href="/panel/reservas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass)' }}>
             Reservas
           </Link>
-          <Link href="/panel/tasa-cambio" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+          <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
             Tasa de cambio
           </Link>
-          <Link href="/panel/configuracion" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+          <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-ink)' }}>
             Configuración
           </Link>
         </div>
