@@ -1,0 +1,266 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap');
+    :root{
+      --bone:#F5F0E3; --bone-2:#ECE3CF; --paper:#FFFDF7;
+      --ink:#1D1913; --ink-soft:#655C4E; --line:#E1D7C2;
+      --clay:#E4542A; --clay-deep:#B23C17;
+      --grass:#12A150; --hard:#1D80C4;
+      --volt:#D6F000; --ok:#12A150; --warn:#E8A100; --danger:#DA2B1F;
+      --chalk:#FFFFFF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bone);color:var(--ink);
+      font-family:"Instrument Sans",system-ui,-apple-system,sans-serif;
+      font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;
+      font-weight:800;line-height:1.03;letter-spacing:-0.02em;margin:0}
+    p{margin:0}
+    a{color:var(--clay-deep);text-decoration:none;font-weight:600}
+    a:hover{color:var(--clay)}
+    .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px}
+    .btn{font:inherit;font-weight:700;border:0;border-radius:9px;padding:13px 22px;
+      background:var(--clay);color:var(--chalk);cursor:pointer}
+    .btn-ghost{background:transparent;color:var(--ink);border:2px solid var(--ink);
+      border-radius:9px;padding:11px 20px;font:inherit;font-weight:700;cursor:pointer}
+  </style>
+</helmet>
+
+<div style="width:1440px;margin:0 auto;background:var(--bone)">
+
+  <!-- NAV -->
+  <header style="display:flex;align-items:center;justify-content:space-between;padding:22px 56px;border-bottom:1.5px solid var(--line)">
+    <div style="display:flex;align-items:center;gap:40px">
+      <div style="display:flex;align-items:center;gap:11px">
+        <svg width="27" height="27" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="var(--volt)"/><path d="M3.5 8.5c5.5 2.4 11.5 2.4 17 0M3.5 15.5c5.5-2.4 11.5-2.4 17 0" stroke="var(--ink)" stroke-width="1.7"/></svg>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:20px;letter-spacing:-.02em">Pelotea</span>
+      </div>
+      <nav style="display:flex;gap:26px;font-weight:500;color:var(--ink-soft)">
+        <a href="#" style="color:var(--ink-soft)">Canchas</a>
+        <a href="#" style="color:var(--ink-soft)">Partidos abiertos</a>
+        <a href="#" style="color:var(--ink-soft)">Abonos</a>
+        <a href="#" style="color:var(--ink-soft)">Para clubes</a>
+      </nav>
+    </div>
+    <div style="display:flex;gap:14px;align-items:center">
+      <a href="#">Entrar</a>
+      <button class="btn">Reservar cancha</button>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section style="display:grid;grid-template-columns:1.05fr 0.95fr;gap:48px;align-items:center;padding:60px 56px 52px">
+    <div style="display:flex;flex-direction:column;gap:22px">
+      <span class="tag" style="color:var(--clay-deep)">Tenis &middot; P&aacute;del &middot; Beach tennis &middot; V&oacute;ley playa &middot; F&uacute;tbol</span>
+      <h1 style="font-size:56px">Reserva tu cancha como quien compra la entrada del cine.</h1>
+      <p style="font-size:17px;color:var(--ink-soft);max-width:46ch">Elige d&iacute;a y hora, aparta la cancha 15&nbsp;minutos, paga por pago m&oacute;vil y manda el comprobante. El club lo aprueba y listo.</p>
+
+      <div class="card" style="display:flex;gap:4px;padding:8px;align-items:stretch;border-radius:13px;margin-top:6px">
+        <div style="display:flex;flex-direction:column;gap:2px;padding:9px 16px;flex:1">
+          <span class="tag" style="color:var(--ink-soft)">Deporte</span><span style="font-weight:600">P&aacute;del</span>
+        </div>
+        <div style="width:1.5px;background:var(--line)"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;padding:9px 16px;flex:1">
+          <span class="tag" style="color:var(--ink-soft)">D&iacute;a</span><span style="font-weight:600">Hoy, 10 sep</span>
+        </div>
+        <div style="width:1.5px;background:var(--line)"></div>
+        <div style="display:flex;flex-direction:column;gap:2px;padding:9px 16px;flex:1">
+          <span class="tag" style="color:var(--ink-soft)">Franja</span><span style="font-weight:600">6:00 p.m. &ndash; 10:00 p.m.</span>
+        </div>
+        <button class="btn">Buscar</button>
+      </div>
+
+      <div style="display:flex;gap:26px;color:var(--ink-soft);font-size:13px;margin-top:2px">
+        <span>8 clubes activos</span>
+        <span>34 canchas</span>
+        <span style="color:var(--clay-deep);font-weight:700">12 ofertas de &uacute;ltima hora hoy</span>
+      </div>
+    </div>
+
+    <div style="position:relative;border-radius:18px;overflow:hidden;border:1.5px solid var(--line)">
+      <svg viewBox="0 0 460 400" width="100%" style="display:block;background:var(--clay)">
+        <g stroke="var(--chalk)" stroke-width="2.5" fill="none" opacity="0.95">
+          <rect x="38" y="28" width="384" height="344"/>
+          <line x1="38" y1="200" x2="422" y2="200"/>
+          <rect x="38" y="96" width="384" height="208"/>
+          <line x1="230" y1="96" x2="230" y2="304"/>
+          <line x1="38" y1="96" x2="422" y2="96"/>
+          <line x1="38" y1="304" x2="422" y2="304"/>
+        </g>
+        <circle cx="366" cy="60" r="9" fill="var(--volt)"/>
+      </svg>
+      <div class="card" style="position:absolute;left:20px;bottom:20px;padding:11px 15px;border-radius:11px">
+        <span class="tag" style="color:var(--grass)">Oferta de &uacute;ltima hora</span>
+        <div style="font-weight:700;margin-top:3px">Cancha&nbsp;2 &middot; 7:00 p.m. &nbsp;
+          <span style="text-decoration:line-through;color:var(--ink-soft);font-weight:500">Bs&nbsp;640</span>
+          &nbsp;Bs&nbsp;480</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SURFACE SELECTOR -->
+  <section style="padding:8px 56px 44px">
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+      <div style="border-radius:16px;overflow:hidden;border:1.5px solid var(--line)">
+        <div style="background:var(--clay);height:132px">
+          <svg viewBox="0 0 300 132" width="100%" height="132" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".9"><rect x="16" y="14" width="268" height="104"/><line x1="150" y1="14" x2="150" y2="118"/><line x1="16" y1="66" x2="284" y2="66"/></g></svg>
+        </div>
+        <div style="padding:16px 18px;background:var(--paper)">
+          <h3 style="font-size:20px">Arcilla</h3>
+          <p style="color:var(--ink-soft);font-size:13px;margin-top:4px">Tenis &middot; 6 canchas</p>
+        </div>
+      </div>
+      <div style="border-radius:16px;overflow:hidden;border:1.5px solid var(--line)">
+        <div style="background:var(--grass);height:132px">
+          <svg viewBox="0 0 300 132" width="100%" height="132" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".9"><rect x="16" y="14" width="268" height="104"/><line x1="150" y1="14" x2="150" y2="118"/><line x1="16" y1="66" x2="284" y2="66"/></g></svg>
+        </div>
+        <div style="padding:16px 18px;background:var(--paper)">
+          <h3 style="font-size:20px">Grass / c&eacute;sped</h3>
+          <p style="color:var(--ink-soft);font-size:13px;margin-top:4px">F&uacute;tbol &middot; Beach tennis &middot; 14 canchas</p>
+        </div>
+      </div>
+      <div style="border-radius:16px;overflow:hidden;border:1.5px solid var(--line)">
+        <div style="background:var(--hard);height:132px">
+          <svg viewBox="0 0 300 132" width="100%" height="132" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".9"><rect x="16" y="14" width="268" height="104"/><line x1="150" y1="14" x2="150" y2="118"/><line x1="16" y1="66" x2="284" y2="66"/></g></svg>
+        </div>
+        <div style="padding:16px 18px;background:var(--paper)">
+          <h3 style="font-size:20px">Cancha dura</h3>
+          <p style="color:var(--ink-soft);font-size:13px;margin-top:4px">P&aacute;del &middot; V&oacute;ley playa &middot; 14 canchas</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- AVAILABLE TODAY -->
+  <section style="padding:8px 56px 48px">
+    <div style="display:flex;align-items:end;justify-content:space-between;margin-bottom:18px">
+      <h2 style="font-size:30px">Disponibles hoy</h2>
+      <a href="#">Ver las 34 canchas &rarr;</a>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:18px">
+
+      <div class="card" style="overflow:hidden;padding:0">
+        <div style="height:150px;background:var(--clay);position:relative">
+          <svg viewBox="0 0 420 150" width="100%" height="150" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".85"><rect x="20" y="16" width="380" height="118"/><line x1="210" y1="16" x2="210" y2="134"/><line x1="20" y1="75" x2="400" y2="75"/></g></svg>
+          <span class="tag" style="position:absolute;top:12px;left:12px;background:var(--volt);color:var(--ink);padding:5px 9px;border-radius:7px">2 de &uacute;ltima hora</span>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div><h3 style="font-size:18px">Club La Trinidad &middot; Cancha 3</h3>
+              <p style="color:var(--ink-soft);font-size:13px;margin-top:3px">Tenis &middot; arcilla &middot; techada</p></div>
+            <div style="text-align:right"><div style="font-weight:700">Bs&nbsp;560</div><div style="color:var(--ink-soft);font-size:12px">/ hora</div></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:14px">
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">6:00</span>
+            <span style="border:2px solid var(--grass);color:var(--grass);border-radius:7px;padding:5px 10px;font-size:13px;font-weight:700">7:00 &minus;25%</span>
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">9:00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="overflow:hidden;padding:0">
+        <div style="height:150px;background:var(--hard)">
+          <svg viewBox="0 0 420 150" width="100%" height="150" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".85"><rect x="20" y="16" width="380" height="118"/><line x1="210" y1="16" x2="210" y2="134"/><line x1="20" y1="75" x2="400" y2="75"/></g></svg>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div><h3 style="font-size:18px">Padel House &middot; Pista 1</h3>
+              <p style="color:var(--ink-soft);font-size:13px;margin-top:3px">P&aacute;del &middot; cristal &middot; techada</p></div>
+            <div style="text-align:right"><div style="font-weight:700">Bs&nbsp;720</div><div style="color:var(--ink-soft);font-size:12px">/ 1,5 h</div></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:14px">
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">5:30</span>
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">8:00</span>
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">10:30</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="overflow:hidden;padding:0">
+        <div style="height:150px;background:var(--grass);position:relative">
+          <svg viewBox="0 0 420 150" width="100%" height="150" style="display:block"><g stroke="var(--chalk)" stroke-width="2" fill="none" opacity=".85"><rect x="20" y="16" width="380" height="118"/><line x1="210" y1="16" x2="210" y2="134"/><circle cx="210" cy="75" r="26"/></g></svg>
+          <span class="tag" style="position:absolute;top:12px;left:12px;background:var(--paper);color:var(--clay-deep);padding:5px 9px;border-radius:7px">Partido abierto</span>
+        </div>
+        <div style="padding:16px 18px">
+          <div style="display:flex;justify-content:space-between;align-items:start">
+            <div><h3 style="font-size:18px">Arena Playa &middot; Cancha B</h3>
+              <p style="color:var(--ink-soft);font-size:13px;margin-top:3px">V&oacute;ley playa &middot; arena</p></div>
+            <div style="text-align:right"><div style="font-weight:700">Bs&nbsp;320</div><div style="color:var(--ink-soft);font-size:12px">c/u</div></div>
+          </div>
+          <div style="display:flex;gap:7px;margin-top:14px;align-items:center">
+            <span style="border:1.5px solid var(--line);border-radius:7px;padding:6px 10px;font-size:13px;font-weight:600">7:00 p.m.</span>
+            <span style="color:var(--ink-soft);font-size:13px">3/4 jugadores &middot; falta 1</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </section>
+
+  <!-- FEATURES -->
+  <section style="background:var(--ink);color:var(--bone);padding:52px 56px;margin-top:12px">
+    <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:26px">
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="1.8"><path d="M4 7l8-4 8 4-8 4-8-4Z"/><path d="M4 12l8 4 8-4M4 17l8 4 8-4"/></svg>
+        <h3 style="font-size:18px;color:var(--bone)">Descuentos expr&eacute;s</h3>
+        <p style="color:#B6AC98;font-size:13px">El precio baja solo cuando una franja se ve vac&iacute;a. Sin que muevas un dedo.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="1.8"><circle cx="9" cy="8" r="3.2"/><circle cx="17" cy="10" r="2.6"/><path d="M3.5 19c.6-3 3-4.6 5.5-4.6S13.9 16 14.5 19M15 18c.4-2 1.8-3 3.4-3s2.6.7 3.1 2.4"/></svg>
+        <h3 style="font-size:18px;color:var(--bone)">Divide con amigos</h3>
+        <p style="color:#B6AC98;font-size:13px">Cada quien paga su parte por un enlace. La cancha se confirma cuando el grupo completa.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="1.8"><path d="M12 3v6l4 2"/><circle cx="12" cy="13" r="8"/><path d="M9 21h6"/></svg>
+        <h3 style="font-size:18px;color:var(--bone)">Ofertas de &uacute;ltima hora</h3>
+        <p style="color:#B6AC98;font-size:13px">Si alguien cancela, te avisamos por notificaci&oacute;n con la cancha a precio rebajado.</p>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="1.8"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+        <h3 style="font-size:18px;color:var(--bone)">Busca jugadores</h3>
+        <p style="color:#B6AC98;font-size:13px">&iquest;Quieres jugar y no tienes con qui&eacute;n? &Uacute;nete a un partido abierto de tu nivel.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS (filas, sin cards) -->
+  <section style="padding:52px 56px 34px">
+    <h2 style="font-size:30px;margin-bottom:10px">C&oacute;mo funciona el pago</h2>
+    <div style="border-top:1.5px solid var(--line)">
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr;gap:24px;align-items:baseline;padding:22px 0;border-bottom:1.5px solid var(--line)">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;color:var(--clay)">01</span>
+        <h3 style="font-size:19px">Elige y aparta</h3>
+        <p style="color:var(--ink-soft);font-size:14px">Reserva el horario. La cancha queda bloqueada 15 minutos a tu nombre.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr;gap:24px;align-items:baseline;padding:22px 0;border-bottom:1.5px solid var(--line)">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;color:var(--clay)">02</span>
+        <h3 style="font-size:19px">Paga y env&iacute;a el comprobante</h3>
+        <p style="color:var(--ink-soft);font-size:14px">Pago m&oacute;vil con los datos del club. Sube la captura o mandala por WhatsApp.</p>
+      </div>
+      <div style="display:grid;grid-template-columns:64px 1fr 1fr;gap:24px;align-items:baseline;padding:22px 0;border-bottom:1.5px solid var(--line)">
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:26px;color:var(--clay)">03</span>
+        <h3 style="font-size:19px">El club aprueba y juegas</h3>
+        <p style="color:var(--ink-soft);font-size:14px">Tiene hasta 2 horas para confirmar. Te llega la confirmaci&oacute;n por WhatsApp.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FOOTER -->
+  <footer style="padding:36px 56px;border-top:1.5px solid var(--line);display:flex;justify-content:space-between;align-items:center;color:var(--ink-soft);font-size:13px">
+    <span>Pelotea &middot; reservas para clubes deportivos en Venezuela</span>
+    <span>Concepto visual &middot; no es la versi&oacute;n final</span>
+  </footer>
+
+</div>
+</x-dc>
+</body>
+</html>

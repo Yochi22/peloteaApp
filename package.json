@@ -1,0 +1,29 @@
+{
+  "name": "pelotea",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Plataforma de reservas para complejos deportivos (Venezuela)",
+  "packageManager": "pnpm@9.12.0",
+  "engines": {
+    "node": ">=22"
+  },
+  "scripts": {
+    "dev": "turbo run dev",
+    "build": "turbo run build",
+    "lint": "turbo run lint",
+    "typecheck": "turbo run typecheck",
+    "test": "turbo run test",
+    "format": "prettier --write \"**/*.{ts,tsx,js,mjs,json,md,css}\"",
+    "db:generate": "pnpm --filter @pelotea/db generate",
+    "db:migrate": "pnpm --filter @pelotea/db migrate",
+    "db:seed": "pnpm --filter @pelotea/db seed",
+    "db:studio": "pnpm --filter @pelotea/db studio",
+    "infra:up": "docker compose -f infra/docker-compose.yml up -d",
+    "infra:down": "docker compose -f infra/docker-compose.yml down"
+  },
+  "devDependencies": {
+    "prettier": "^3.3.3",
+    "turbo": "^2.1.3",
+    "typescript": "^5.6.2"
+  }
+}

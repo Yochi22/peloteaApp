@@ -1,0 +1,102 @@
+/* ───────────────────────────────────────────────────────────────
+   Pelotea — design tokens. Dirección "superficies de cancha",
+   paleta VIBRANTE. Importar una sola vez en el layout raíz.
+   ─────────────────────────────────────────────────────────────── */
+
+:root {
+  color-scheme: light;
+
+  /* Fondo / tinta */
+  --pl-bg: #f5f0e3;          /* hueso */
+  --pl-bg-raised: #fffdf7;   /* papel */
+  --pl-bg-sunken: #ece3cf;
+  --pl-ink: #1d1913;
+  --pl-ink-soft: #655c4e;
+  --pl-line: #e1d7c2;
+
+  /* Superficies de cancha (acentos vibrantes) */
+  --pl-clay: #e4542a;
+  --pl-clay-deep: #b23c17;
+  --pl-grass: #12a150;
+  --pl-grass-deep: #0b7c3d;
+  --pl-hard: #1d80c4;
+  --pl-hard-deep: #155e90;
+
+  /* Acento "volt" — amarillo óptico de pelota de tenis. Solo realces. */
+  --pl-volt: #d6f000;
+  --pl-volt-ink: #2a2f00;
+
+  /* Estados / alertas */
+  --pl-ok: #12a150;
+  --pl-ok-bg: #e7f6ec;
+  --pl-warn: #b7791f;
+  --pl-warn-bg: #fdf3e2;
+  --pl-danger: #d92d20;
+  --pl-danger-bg: #fdecea;
+  --pl-info: #1d80c4;
+  --pl-info-bg: #e8f2fb;
+
+  --pl-primary: var(--pl-clay);
+  --pl-primary-ink: #ffffff;
+
+  /* Tipografía */
+  --pl-font-display: 'Bricolage Grotesque', 'Arial Narrow', system-ui, sans-serif;
+  --pl-font-text: 'Instrument Sans', system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --pl-font-mono: 'JetBrains Mono', ui-monospace, 'SF Mono', Menlo, monospace;
+
+  /* Radios / sombras / foco */
+  --pl-radius-sm: 7px;
+  --pl-radius: 11px;
+  --pl-radius-lg: 16px;
+  --pl-shadow-1: 0 1px 2px rgba(29, 25, 19, 0.06), 0 4px 14px rgba(29, 25, 19, 0.06);
+  --pl-focus: 0 0 0 3px color-mix(in oklch, var(--pl-hard) 45%, transparent);
+
+  /* Espaciado base */
+  --pl-space: 4px;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    color-scheme: dark;
+    --pl-bg: #171410;
+    --pl-bg-raised: #201c16;
+    --pl-bg-sunken: #100d0a;
+    --pl-ink: #f3ede0;
+    --pl-ink-soft: #b6ac98;
+    --pl-line: #37312a;
+    --pl-ok-bg: #10281a;
+    --pl-warn-bg: #2a2213;
+    --pl-danger-bg: #2c1614;
+    --pl-info-bg: #12222f;
+  }
+}
+
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --pl-bg: #171410;
+  --pl-bg-raised: #201c16;
+  --pl-bg-sunken: #100d0a;
+  --pl-ink: #f3ede0;
+  --pl-ink-soft: #b6ac98;
+  --pl-line: #37312a;
+  --pl-ok-bg: #10281a;
+  --pl-warn-bg: #2a2213;
+  --pl-danger-bg: #2c1614;
+  --pl-info-bg: #12222f;
+}
+
+/* Accesibilidad: respetar reduce-motion en toda animación del DS. */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+*:focus-visible {
+  outline: 2px solid var(--pl-hard);
+  outline-offset: 2px;
+}

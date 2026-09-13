@@ -1,0 +1,36 @@
+# deps
+node_modules/
+.pnpm-store/
+
+# build
+dist/
+.next/
+out/
+build/
+.turbo/
+*.tsbuildinfo
+
+# env
+.env
+.env.*
+!.env.example
+
+# prisma
+packages/db/prisma/*.db
+packages/db/prisma/migrations/dev.db*
+
+# editor / os
+.DS_Store
+Thumbs.db
+.idea/
+*.log
+npm-debug.log*
+
+# baileys whatsapp session
+apps/worker/.wa-session/
+.wa-session/
+
+# misc
+coverage/
+.vercel
+*.local

@@ -1,0 +1,35 @@
+{
+  "name": "@pelotea/security",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "main": "./src/index.ts",
+  "types": "./src/index.ts",
+  "exports": {
+    ".": "./src/index.ts",
+    "./headers": "./src/headers.ts",
+    "./csrf": "./src/csrf.ts",
+    "./rate-limit": "./src/rate-limit.ts",
+    "./idempotency": "./src/idempotency.ts",
+    "./upload-guard": "./src/upload-guard.ts",
+    "./password": "./src/password.ts",
+    "./session": "./src/session.ts",
+    "./twofa": "./src/twofa.ts",
+    "./edge": "./src/edge.ts"
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@node-rs/argon2": "^2.0.2",
+    "ioredis": "^5.4.1",
+    "otpauth": "^9.3.6"
+  },
+  "devDependencies": {
+    "@types/node": "^22.7.0",
+    "ioredis-mock": "^8.13.1",
+    "typescript": "^5.6.2",
+    "vitest": "^2.1.1"
+  }
+}

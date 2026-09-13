@@ -1,0 +1,99 @@
+# Blueprint de Render para una demo gratuita de Pelotea.
+#
+# Cubre: web (Next.js) + worker (WhatsApp/Baileys + BullMQ) + Postgres
+# administrado (free). El worker corre como `type: web` (no `type: worker`)
+# a propósito — Render solo da Background Workers en planes pagos, pero un
+# "Web Service" free SÍ alcanza si bindea un puerto (ver
+# `apps/worker/src/lib/server.ts`): se duerme tras ~15 min sin tráfico
+# (aceptable en una demo). Redis y el almacenamiento de comprobantes
+# (S3/MinIO) NO tienen equivalente gratis nativo en Render — se conectan a
+# servicios externos gratuitos (Upstash para Redis, Cloudflare R2 para S3)
+# cuyas credenciales se pegan a mano en el dashboard de Render (variables
+# marcadas `sync: false`). Detalle completo en RENDER.md.
+#
+# Uso: en el dashboard de Render, "New +" → "Blueprint" → apuntar a este repo.
+
+databases:
+  - name: pelotea-db
+    plan: free
+    databaseName: pelotea
+    user: pelotea
+
+services:
+  - type: web
+    name: pelotea-web
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/web build
+    startCommand: pnpm --filter @pelotea/web start
+    # Aplica migraciones antes de arrancar — `migrate deploy` (no `migrate dev`),
+    # no interactivo y seguro de correr en cada deploy.
+    preDeployCommand: pnpm --filter @pelotea/db exec prisma migrate deploy
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pelotea-db
+          property: connectionString
+      - key: AUTH_SECRET
+        generateValue: true
+      - key: APP_BASE_URL
+        value: https://pelotea-web.onrender.com # ajustar al nombre real que Render asigne
+      - key: DEFAULT_SEDE_SLUG
+        value: club-piloto
+      # Redis externo (Upstash free tier) — pegar a mano en el dashboard.
+      # Usar la URL `rediss://` (TLS) que da Upstash, no `redis://`.
+      - key: REDIS_URL
+        sync: false
+      # S3/MinIO externo (Cloudflare R2 free tier) — pegar a mano.
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        value: auto
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: 'true'
+      - key: S3_PUBLIC_ORIGIN
+        sync: false
+
+  # ── Worker: WhatsApp (Baileys) + BullMQ (hold-expiry, recordatorios, ofertas) ──
+  - type: web
+    name: pelotea-worker
+    runtime: node
+    plan: free
+    region: oregon
+    branch: main
+    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/worker build
+    startCommand: pnpm --filter @pelotea/worker start
+    healthCheckPath: /health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DATABASE_URL
+        fromDatabase:
+          name: pelotea-db
+          property: connectionString
+      - key: REDIS_URL
+        sync: false
+      # Sin disco persistente (pago) en el plan free: la sesión de WhatsApp
+      # puede perderse si Render reconstruye el contenedor al despertar de
+      # un sleep — en ese caso hay que volver a escanear el QR en /qr. Para
+      # una demo puntual es aceptable; para algo que quede corriendo días,
+      # conviene un disco persistente o subir a un plan pago.
+      - key: WHATSAPP_SESSION_DIR
+        value: /tmp/wa-session
+      - key: WHATSAPP_ADMIN_NUMBER
+        sync: false
+      # Token para /qr?token=... — sin esto el endpoint del QR queda
+      # deshabilitado (nunca expuesto sin protección, ver server.ts).
+      - key: WHATSAPP_QR_TOKEN
+        generateValue: true

@@ -1,0 +1,83 @@
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: var(--pl-bg);
+  color: var(--pl-ink);
+  font-family: var(--pl-font-text);
+  font-size: 15px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  font-family: var(--pl-font-display);
+  font-weight: 800;
+  line-height: 1.04;
+  letter-spacing: -0.02em;
+  margin: 0;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+a {
+  color: var(--pl-clay-deep);
+  text-decoration: none;
+  font-weight: 600;
+}
+a:hover {
+  color: var(--pl-clay);
+}
+
+img {
+  max-width: 100%;
+  display: block;
+}
+
+button {
+  font: inherit;
+}
+
+.pl-container {
+  width: 100%;
+  max-width: 1200px;
+  margin-inline: auto;
+  padding-inline: 20px;
+}
+
+.pl-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-weight: 700;
+  border: 0;
+  border-radius: var(--pl-radius-sm);
+  padding: 13px 22px;
+  background: var(--pl-primary);
+  color: var(--pl-primary-ink);
+  cursor: pointer;
+  min-height: 44px;
+}
+.pl-btn--ghost {
+  background: transparent;
+  color: var(--pl-ink);
+  border: 2px solid var(--pl-ink);
+}

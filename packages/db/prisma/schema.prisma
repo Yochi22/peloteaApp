@@ -1,0 +1,696 @@
+// ────────────────────────────────────────────────────────────────────────────
+//  Pelotea — esquema de datos
+//  Postgres self-hosted. MVP single-tenant: todo lleva `sedeId` como hedge
+//  para generalizar a multi-complejo sin reescribir el modelo.
+//  Ver CLAUDE.md §3 (modelo de dominio) y §5 (seguridad / scoping).
+// ────────────────────────────────────────────────────────────────────────────
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ─── Enums ──────────────────────────────────────────────────────────────────
+
+enum Rol {
+  PLATAFORMA_ADMIN
+  SEDE_ADMIN
+  SEDE_STAFF // solo ve la cola de pagos y aprueba/rechaza
+  JUGADOR
+}
+
+enum Deporte {
+  TENIS
+  PADEL
+  BEACH_TENNIS
+  BEACH_PADEL
+  VOLEIBOL
+  VOLEY_PLAYA
+  FUTBOL
+  FUTSAL
+  OTRO
+}
+
+enum Superficie {
+  ARCILLA
+  GRASS
+  CANCHA_DURA
+  ARENA
+  SINTETICO
+  CRISTAL
+}
+
+enum NivelJuego {
+  PRINCIPIANTE
+  INTERMEDIO
+  AVANZADO
+  COMPETITIVO
+}
+
+enum EstadoReserva {
+  BORRADOR
+  PENDIENTE_PAGO // slot en HOLD; TTL corto para enviar comprobante
+  COMPROBANTE_ENVIADO
+  EN_REVISION // el club la tiene en cola; TTL para decidir
+  CONFIRMADA
+  COMPLETADA
+  NO_SHOW
+  CANCELADA
+  EXPIRADA
+}
+
+enum CanalReserva {
+  WEB
+  STAFF
+  OFERTA
+  PARTIDO_ABIERTO
+}
+
+enum MetodoPago {
+  PAGO_MOVIL
+  TRANSFERENCIA
+  EFECTIVO
+  TARJETA
+}
+
+enum EstadoPago {
+  PENDIENTE
+  EN_REVISION
+  APROBADO
+  RECHAZADO
+}
+
+enum EstadoCuota {
+  PENDIENTE
+  PAGADA // el participante dice que pagó / subió comprobante
+  APROBADA
+  VENCIDA
+}
+
+enum TipoOferta {
+  EXPRES // el precio baja sobre franjas que se ven vacías
+  LAST_MINUTE // se dispara al cancelarse una reserva confirmada
+}
+
+enum EstadoOferta {
+  ACTIVA
+  AGOTADA
+  VENCIDA
+  CANCELADA
+}
+
+enum EstadoPartido {
+  ABIERTO
+  COMPLETO
+  CONFIRMADO
+  CANCELADO
+  JUGADO
+}
+
+enum EstadoParticipante {
+  UNIDO
+  PAGADO
+  CONFIRMADO
+  SALIO
+}
+
+enum CanalNotificacion {
+  WEB_PUSH
+  EMAIL
+  IN_APP
+  WHATSAPP // SOLO transaccional
+}
+
+enum EstadoNotificacion {
+  PENDIENTE
+  ENVIADA
+  FALLIDA
+  LEIDA
+}
+
+enum TipoExcepcion {
+  CIERRE
+  HORARIO_ESPECIAL
+  MANTENIMIENTO
+  TORNEO
+}
+
+enum TipoModificadorPrecio {
+  PORCENTAJE
+  MONTO_FIJO
+}
+
+// ─── Tenant ─────────────────────────────────────────────────────────────────
+
+model Sede {
+  id        String  @id @default(cuid())
+  slug      String  @unique
+  nombre    String
+  timezone  String  @default("America/Caracas")
+  direccion String?
+  lat       Float?
+  lng       Float?
+  telefono  String?
+  moneda    String  @default("VES") // moneda en la que se COBRA — siempre Bs en la práctica venezolana
+
+  // Moneda en la que el club fija sus PRECIOS (Cancha.duracionTurnoMin,
+  // PlantillaHorario.precioBase, ReglaPrecio.valor con MONTO_FIJO) — muy
+  // común en Venezuela fijar en USD o EUR para no perseguir la inflación, y
+  // cobrar en Bs al cambio del día. Si es 'VES', no hay conversión: el
+  // precio base YA está en bolívares. Ver TasaCambio y
+  // apps/web/src/lib/tasa-cambio.ts.
+  precioMoneda String @default("USD")
+
+  // Datos para el pago móvil manual
+  pagoMovilBanco     String?
+  pagoMovilCedulaRif String?
+  pagoMovilTelefono  String?
+
+  // Config de tiempos (minutos / horas)
+  holdMinutos         Int @default(15)
+  revisionHoras       Int @default(2)
+  cancelacionHoras    Int @default(6) // dentro de esta ventana, cancelar dispara oferta LAST_MINUTE
+  ventanaExpresHoras  Int @default(24) // antelación máxima para ofertas exprés automáticas
+
+  // Pago parcial ("abono"): en reservas largas, muchos clubes exigen abonar
+  // por adelantado solo una parte (p.ej. la primera hora) y cobran el resto
+  // en efectivo/pago móvil al llegar, antes de entregar la pelota. Ver
+  // packages/shared/domain/pricing.ts `calcularAbono()`. Solo aplica a
+  // reservas SIN split (CLAUDE.md §3) — con split, el organizador ya cubre
+  // el 100% entre las cuotas.
+  pagoParcialActivo         Boolean @default(true)
+  pagoParcialDuracionMinMin Int     @default(120) // aplica desde 2 horas
+  pagoParcialHorasAdelanto  Int     @default(1) // se paga 1 hora por adelantado
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  usuarios       Usuario[]
+  canchas        Cancha[]
+  plantillas     PlantillaHorario[]
+  excepciones    ExcepcionHorario[]
+  reglasPrecio   ReglaPrecio[]
+  reservas       Reserva[]
+  pagos          Pago[]
+  ofertas        Oferta[]
+  partidos       PartidoAbierto[]
+  slotLocks      SlotLock[]
+  auditLogs      AuditLog[]
+
+  @@map("sede")
+}
+
+// Tasa de cambio (BCV) del día. Entrada MANUAL de staff/admin — no hay
+// scraping ni API automática de momento (todo lo de dinero en este proyecto
+// es manual, ver CLAUDE.md §5). Global a la plataforma (no por sede): el
+// mismo día, el dólar/euro vale lo mismo para todos los clubes.
+model TasaCambio {
+  id        String   @id @default(cuid())
+  moneda    String // 'USD' | 'EUR'
+  tasaVES   Decimal  @db.Decimal(12, 4) // cuántos Bs vale 1 unidad de `moneda`
+  fecha     DateTime @db.Date // fecha de publicación (BCV no publica fin de semana/feriado)
+  fuente    String   @default("BCV")
+  cargadaPorId String?
+  createdAt DateTime @default(now())
+
+  @@unique([moneda, fecha])
+  @@index([moneda, fecha])
+  @@map("tasa_cambio")
+}
+
+// ─── Usuarios ───────────────────────────────────────────────────────────────
+
+model Usuario {
+  id            String  @id @default(cuid())
+  // Nullable: un invitado que reserva sin cuenta no tiene email. NULL no
+  // choca con @unique en Postgres (varios NULL son válidos).
+  email         String? @unique
+  emailVerified Boolean @default(false)
+  telefono      String?
+  nombre        String
+  hashPassword  String? // null si es invitado o entra solo por OAuth / magic link
+  rol           Rol     @default(JUGADOR)
+
+  // true = reservó como invitado, sin registrarse. No puede dividir pagos,
+  // crear/unirse a partidos abiertos, ni recibir ofertas/descuentos — eso
+  // exige cuenta (ver CLAUDE.md §3).
+  esInvitado Boolean @default(false)
+
+  // sede a la que pertenece un SEDE_ADMIN / SEDE_STAFF (null para JUGADOR y PLATAFORMA_ADMIN)
+  sedeId String?
+  sede   Sede?   @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+
+  twoFactorEnabled Boolean  @default(false)
+  twoFactorSecret  String? // cifrado (AES-256-GCM) — ver packages/security/twofa.ts, nunca en texto plano
+  codigosRecuperacion2FA String[] @default([]) // hasheados (SHA-256), un solo uso cada uno
+
+  // Backoff / lockout de login (ver packages/security/password.ts)
+  loginIntentosFallidos Int       @default(0)
+  loginBloqueadoHasta   DateTime?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  perfil            PerfilJugador?
+  sesiones          Sesion[]
+  reservas          Reserva[]           @relation("ReservaOrganizador")
+  cuotas            Cuota[]
+  pagosAprobados    Pago[]              @relation("PagoAprobador")
+  partidosCreados   PartidoAbierto[]    @relation("PartidoOrganizador")
+  participaciones   ParticipantePartido[]
+  notificaciones    Notificacion[]
+  pushSubs          PushSubscription[]
+  auditLogs         AuditLog[]          @relation("AuditActor")
+
+  @@index([sedeId])
+  @@map("usuario")
+}
+
+model Sesion {
+  id        String   @id @default(cuid())
+  usuarioId String
+  usuario   Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  token     String   @unique
+  ip        String?
+  userAgent String?
+  expiraEn  DateTime
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId])
+  @@map("sesion")
+}
+
+model PerfilJugador {
+  id        String  @id @default(cuid())
+  usuarioId String  @unique
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+
+  zona          String?
+  bio           String?
+  reputacion    Int     @default(100) // baja con no-shows
+  noShowCount   Int     @default(0)
+
+  // Preferencias de notificación (ofertas/descuentos NUNCA por WhatsApp)
+  recibeOfertasPush  Boolean @default(true)
+  recibeOfertasEmail Boolean @default(true)
+
+  niveles NivelDeporte[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("perfil_jugador")
+}
+
+model NivelDeporte {
+  id      String        @id @default(cuid())
+  perfilId String
+  perfil  PerfilJugador @relation(fields: [perfilId], references: [id], onDelete: Cascade)
+  deporte Deporte
+  nivel   NivelJuego
+
+  @@unique([perfilId, deporte])
+  @@map("nivel_deporte")
+}
+
+model PushSubscription {
+  id        String  @id @default(cuid())
+  usuarioId String
+  usuario   Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  endpoint  String  @unique
+  p256dh    String
+  auth      String
+  createdAt DateTime @default(now())
+
+  @@index([usuarioId])
+  @@map("push_subscription")
+}
+
+// ─── Canchas y disponibilidad ───────────────────────────────────────────────
+
+model Cancha {
+  id              String     @id @default(cuid())
+  sedeId          String
+  sede            Sede       @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  nombre          String
+  deporte         Deporte
+  superficie      Superficie
+  techada         Boolean    @default(false)
+  capacidad       Int        @default(4)
+  // Unidad base de reserva (p.ej. 60 = "por hora") y el máximo que se puede
+  // encadenar en una sola reserva (p.ej. 180 = hasta 3 horas). El cliente
+  // elige cuántas unidades quiere; el precio y el abono (Sede.pagoParcial*)
+  // se calculan sobre la duración real elegida, no sobre esta unidad.
+  duracionTurnoMin  Int @default(60)
+  duracionMaximaMin Int @default(180)
+  activa          Boolean    @default(true)
+  orden           Int        @default(0)
+  fotos           String[]   @default([]) // object keys en MinIO
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  plantillas   PlantillaHorario[]
+  excepciones  ExcepcionHorario[]
+  reglasPrecio ReglaPrecio[]
+  reservas     Reserva[]
+  ofertas      Oferta[]
+  partidos     PartidoAbierto[]
+  slotLocks    SlotLock[]
+
+  @@index([sedeId, activa])
+  @@map("cancha")
+}
+
+// Disponibilidad recurrente. canchaId null = aplica a toda la sede.
+model PlantillaHorario {
+  id         String  @id @default(cuid())
+  sedeId     String
+  sede       Sede    @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId   String?
+  cancha     Cancha? @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+  diaSemana  Int // 0 = domingo … 6 = sábado
+  horaInicio Int // minutos desde medianoche
+  horaFin    Int
+  precioBase Decimal @db.Decimal(12, 2)
+  activa     Boolean @default(true)
+
+  @@index([sedeId, canchaId, diaSemana])
+  @@map("plantilla_horario")
+}
+
+// Overrides puntuales por fecha.
+model ExcepcionHorario {
+  id         String        @id @default(cuid())
+  sedeId     String
+  sede       Sede          @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId   String?
+  cancha     Cancha?       @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+  fecha      DateTime      @db.Date
+  tipo       TipoExcepcion
+  horaInicio Int?
+  horaFin    Int?
+  nota       String?
+
+  @@index([sedeId, fecha])
+  @@map("excepcion_horario")
+}
+
+// Modificadores de precio (peak / off-peak / por día).
+model ReglaPrecio {
+  id              String                @id @default(cuid())
+  sedeId          String
+  sede            Sede                  @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId        String?
+  cancha          Cancha?               @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+  nombre          String
+  diaSemana       Int?
+  horaDesde       Int?
+  horaHasta       Int?
+  tipoModificador TipoModificadorPrecio
+  valor           Decimal               @db.Decimal(12, 2)
+  prioridad       Int                   @default(0)
+  activa          Boolean               @default(true)
+
+  @@index([sedeId, canchaId])
+  @@map("regla_precio")
+}
+
+// ─── Reservas ───────────────────────────────────────────────────────────────
+
+model Reserva {
+  id             String        @id @default(cuid())
+  sedeId         String
+  sede           Sede          @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId       String
+  cancha         Cancha        @relation(fields: [canchaId], references: [id])
+  organizadorId  String
+  organizador    Usuario       @relation("ReservaOrganizador", fields: [organizadorId], references: [id])
+
+  inicio DateTime
+  fin    DateTime
+  estado EstadoReserva @default(BORRADOR)
+  canal  CanalReserva  @default(WEB)
+
+  // precioTotal/montoServicio/montoAbono/montoRestante son SIEMPRE en Bs
+  // (`moneda`) — es lo que de verdad se transfiere por pago móvil. Si el
+  // club fija precios en USD/EUR (Sede.precioMoneda), el monto "real" del
+  // turno es precioTotalRef, convertido a Bs con `tasaCambio` (congelada al
+  // momento de reservar — si la tasa sube después, esta reserva no cambia).
+  precioTotal    Decimal @db.Decimal(12, 2)
+  montoServicio  Decimal @db.Decimal(12, 2) @default(0)
+  moneda         String  @default("VES")
+  precioTotalRef Decimal @db.Decimal(12, 2) // en `monedaRef`
+  monedaRef      String  @default("VES") // copia de Sede.precioMoneda AL RESERVAR
+  tasaCambio     Decimal @db.Decimal(12, 4) @default(1) // Bs por unidad de monedaRef, del día de la reserva
+
+  // Pago parcial ("abono"): lo que hay que abonar en línea para confirmar
+  // (vía el flujo normal de comprobante) vs. lo que se cobra en sitio al
+  // llegar. Sin política aplicable, montoAbono == precioTotal y
+  // montoRestante == 0. Ver Sede.pagoParcial* y `calcularAbono()`.
+  montoAbono         Decimal   @db.Decimal(12, 2)
+  montoRestante      Decimal   @default(0) @db.Decimal(12, 2)
+  restanteCobrado    Boolean   @default(false)
+  restanteCobradoEn  DateTime?
+  restanteCobradoPorId String?
+
+  ofertaId          String?
+  oferta            Oferta?         @relation(fields: [ofertaId], references: [id])
+  partidoAbiertoId  String?         @unique
+  partidoAbierto    PartidoAbierto? @relation(fields: [partidoAbiertoId], references: [id])
+
+  esDividida Boolean @default(false)
+
+  // Acceso de invitado (sin cuenta) a SU reserva: token de un solo propósito,
+  // igual que el `inviteToken` de Cuota. Null si el organizador tiene cuenta.
+  accessToken String? @unique
+
+  // TTLs — el worker transiciona al vencer.
+  holdExpiraEn     DateTime?
+  revisionExpiraEn DateTime?
+  confirmadaEn     DateTime?
+  canceladaEn      DateTime?
+  motivoCancelacion String?
+  canceladaPorId   String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pagos    Pago[]
+  cuotas   Cuota[]
+  slotLocks SlotLock[]
+  ofertasGeneradas Oferta[] @relation("OfertaReservaOrigen")
+
+  @@index([sedeId, estado])
+  @@index([canchaId, inicio])
+  @@index([organizadorId])
+  @@map("reserva")
+}
+
+// Guarda de concurrencia: UNA FILA POR UNIDAD BASE ocupada (Cancha.duracionTurnoMin).
+// Una reserva de 2 horas con unidad base de 1 hora crea 2 filas — así el
+// mismo @@unique([canchaId, inicio]) que impide doble-reservar un turno de 1
+// hora también impide que se solapen reservas de distinta duración, sin
+// necesitar una exclusion constraint de rangos. El lock rápido vive en Redis;
+// esto es el durable. Se borra al expirar/cancelar.
+model SlotLock {
+  id        String   @id @default(cuid())
+  sedeId    String
+  sede      Sede     @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId  String
+  cancha    Cancha   @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+  inicio    DateTime
+  fin       DateTime
+  reservaId String
+  reserva   Reserva  @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  expiraEn  DateTime // para HOLD; en CONFIRMADA se extiende hasta el fin real de la reserva
+  createdAt DateTime @default(now())
+
+  @@unique([canchaId, inicio]) // impide doble reserva de la misma unidad base
+  @@index([reservaId])
+  @@index([expiraEn])
+  @@map("slot_lock")
+}
+
+model Pago {
+  id       String     @id @default(cuid())
+  sedeId   String
+  sede     Sede       @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  reservaId String?
+  reserva  Reserva?   @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  cuotaId  String?    @unique
+  cuota    Cuota?     @relation(fields: [cuotaId], references: [id], onDelete: Cascade)
+
+  monto          Decimal    @db.Decimal(12, 2)
+  moneda         String     @default("VES")
+  metodo         MetodoPago
+  referencia     String?
+  comprobanteKey String? // object key en MinIO — se sirve por URL firmada
+  estado         EstadoPago @default(PENDIENTE)
+
+  aprobadoPorId String?
+  aprobadoPor   Usuario?  @relation("PagoAprobador", fields: [aprobadoPorId], references: [id])
+  aprobadoEn    DateTime?
+  motivoRechazo String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@index([sedeId, estado])
+  @@index([reservaId])
+  @@map("pago")
+}
+
+model Cuota {
+  id        String  @id @default(cuid())
+  reservaId String
+  reserva   Reserva @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+
+  participanteId String?
+  participante   Usuario? @relation(fields: [participanteId], references: [id], onDelete: SetNull)
+  nombreInvitado String?
+  emailInvitado  String?
+
+  monto        Decimal     @db.Decimal(12, 2)
+  estado       EstadoCuota @default(PENDIENTE)
+  esOrganizador Boolean    @default(false)
+  inviteToken  String?     @unique // link para pagar la parte
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  pago Pago?
+
+  @@index([reservaId])
+  @@map("cuota")
+}
+
+// ─── Ofertas (exprés / last-minute) ─────────────────────────────────────────
+
+model Oferta {
+  id       String    @id @default(cuid())
+  sedeId   String
+  sede     Sede      @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId String
+  cancha   Cancha    @relation(fields: [canchaId], references: [id], onDelete: Cascade)
+  tipo     TipoOferta
+
+  inicioObjetivo DateTime
+  finObjetivo    DateTime
+  descuentoPct   Int?
+  precioFinal    Decimal  @db.Decimal(12, 2)
+
+  ventanaInicio DateTime
+  ventanaFin    DateTime
+  cupo          Int          @default(1)
+  tomada        Int          @default(0)
+  estado        EstadoOferta @default(ACTIVA)
+
+  // si nació de una cancelación
+  reservaOrigenId String?
+  reservaOrigen   Reserva? @relation("OfertaReservaOrigen", fields: [reservaOrigenId], references: [id], onDelete: SetNull)
+
+  // audiencia: { deportes:[], zonas:[], soloOptIn:true }
+  filtros Json?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reservas Reserva[]
+
+  @@index([sedeId, estado])
+  @@index([ventanaFin])
+  @@map("oferta")
+}
+
+// ─── Social / matchmaking ───────────────────────────────────────────────────
+
+model PartidoAbierto {
+  id       String     @id @default(cuid())
+  sedeId   String
+  sede     Sede       @relation(fields: [sedeId], references: [id], onDelete: Cascade)
+  canchaId String?
+  cancha   Cancha?    @relation(fields: [canchaId], references: [id], onDelete: SetNull)
+
+  deporte    Deporte
+  superficie Superficie?
+  inicio     DateTime
+  fin        DateTime
+  nivel      NivelJuego
+
+  cuposTotales     Int
+  cuposLlenos      Int     @default(1)
+  precioPorJugador Decimal @db.Decimal(12, 2)
+
+  organizadorId String
+  organizador   Usuario @relation("PartidoOrganizador", fields: [organizadorId], references: [id])
+
+  estado EstadoPartido @default(ABIERTO)
+  notas  String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reserva       Reserva?
+  participantes ParticipantePartido[]
+
+  @@index([sedeId, estado, inicio])
+  @@map("partido_abierto")
+}
+
+model ParticipantePartido {
+  id        String             @id @default(cuid())
+  partidoId String
+  partido   PartidoAbierto     @relation(fields: [partidoId], references: [id], onDelete: Cascade)
+  usuarioId String
+  usuario   Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  estado    EstadoParticipante @default(UNIDO)
+  createdAt DateTime           @default(now())
+
+  @@unique([partidoId, usuarioId])
+  @@map("participante_partido")
+}
+
+// ─── Notificaciones ─────────────────────────────────────────────────────────
+
+model Notificacion {
+  id        String             @id @default(cuid())
+  usuarioId String
+  usuario   Usuario            @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  canal     CanalNotificacion
+  plantilla String // p.ej. "reserva.confirmada", "oferta.last_minute"
+  payload   Json
+  estado    EstadoNotificacion @default(PENDIENTE)
+  enviadaEn DateTime?
+  error     String?
+  createdAt DateTime           @default(now())
+
+  @@index([usuarioId, estado])
+  @@map("notificacion")
+}
+
+// ─── Auditoría ──────────────────────────────────────────────────────────────
+
+model AuditLog {
+  id        String   @id @default(cuid())
+  sedeId    String?
+  sede      Sede?    @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+  actorId   String?
+  actor     Usuario? @relation("AuditActor", fields: [actorId], references: [id], onDelete: SetNull)
+  accion    String // "pago.aprobado", "reserva.cancelada", "precio.cambiado", ...
+  entidad   String
+  entidadId String
+  antes     Json?
+  despues   Json?
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  @@index([sedeId, entidad, entidadId])
+  @@index([actorId])
+  @@map("audit_log")
+}

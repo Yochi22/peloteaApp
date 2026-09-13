@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 1440, "h": 2500, "title": "Landing publica" },
+    { "file": "Reserva.dc.html", "x": 1580, "y": 0, "w": 1440, "h": 1100, "title": "Reserva - eleccion de horario" },
+    { "file": "Panel.dc.html", "x": 3160, "y": 0, "w": 1440, "h": 1480, "title": "Panel del club" },
+    { "file": "Checkout.dc.html", "x": 4740, "y": 0, "w": 390, "h": 1360, "title": "Pago movil (mobile)" },
+    { "file": "Social.dc.html", "x": 5270, "y": 0, "w": 390, "h": 1520, "title": "Partidos abiertos (mobile)" }
+  ],
+  "annotations": [
+    { "id": "concept", "x": 0, "y": -160, "w": 660, "text": "Concepto visual v2 - direccion \"superficies de cancha\" con paleta VIBRANTE: clay tomate, grass, cancha dura azul y acento volt (amarillo pelota de tenis) sobre fondo hueso. Tipografia Bricolage Grotesque + Instrument Sans. Copy en espanol de Venezuela (tuteo, sin voseo). Menos cards: filas con divisores. Alertas y paginacion visibles. Mockups estaticos para fijar el look antes de codificar." },
+    { "id": "flow", "x": 1580, "y": -160, "w": 900, "text": "Flujo nucleo: elegir horario (slot seleccionable) -> apartar 15 min -> pago movil manual -> enviar comprobante -> el club aprueba en el panel. Ofertas expres y de ultima hora aparecen como slots verdes." }
+  ],
+  "launch": { "view": "canvas" }
+}

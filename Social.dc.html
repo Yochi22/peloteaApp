@@ -1,0 +1,163 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap');
+    :root{
+      --bone:#F5F0E3; --bone-2:#ECE3CF; --paper:#FFFDF7;
+      --ink:#1D1913; --ink-soft:#655C4E; --line:#E1D7C2;
+      --clay:#E4542A; --clay-deep:#B23C17;
+      --grass:#12A150; --hard:#1D80C4;
+      --volt:#D6F000; --ok:#12A150; --warn:#E8A100; --danger:#DA2B1F;
+      --chalk:#FFFFFF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bone);color:var(--ink);
+      font-family:"Instrument Sans",system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;font-weight:800;line-height:1.06;letter-spacing:-0.02em;margin:0}
+    p{margin:0}
+    a{color:var(--clay-deep);text-decoration:none;font-weight:600}
+    a:hover{color:var(--clay)}
+    .tag{font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .chip{border:1.5px solid var(--line);border-radius:20px;padding:7px 13px;font-size:13px;font-weight:600;white-space:nowrap}
+    .chip.on{background:var(--ink);color:var(--bone);border-color:var(--ink)}
+    .card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px;overflow:hidden}
+    .btn{font:inherit;font-weight:700;border:0;border-radius:9px;padding:11px 18px;background:var(--clay);color:var(--chalk);cursor:pointer}
+    .av{width:26px;height:26px;border-radius:50%;border:2px solid var(--paper);background:var(--bone-2);display:inline-block}
+    .pg{min-width:30px;height:30px;padding:0 8px;border:1.5px solid var(--line);border-radius:7px;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:600}
+    .pg.on{background:var(--ink);color:var(--chalk);border-color:var(--ink)}
+  </style>
+</helmet>
+
+<div style="width:390px;margin:0 auto;background:var(--bone);min-height:844px;padding-bottom:28px">
+
+  <div style="padding:20px 18px 12px">
+    <div class="tag" style="color:var(--ink-soft)">Pelotea &middot; comunidad</div>
+    <h1 style="font-size:25px;margin-top:4px">Partidos abiertos</h1>
+  </div>
+
+  <div style="display:flex;gap:8px;padding:0 18px 14px;overflow-x:auto">
+    <span class="chip on">Todos</span>
+    <span class="chip">P&aacute;del</span>
+    <span class="chip">Tenis</span>
+    <span class="chip">Hoy</span>
+    <span class="chip">Mi nivel</span>
+  </div>
+
+  <!-- create CTA -->
+  <div style="margin:0 18px 16px;background:var(--ink);color:var(--bone);border-radius:14px;padding:16px;display:flex;align-items:center;gap:13px">
+    <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="var(--volt)" stroke-width="1.8" style="flex:none"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.2-3.2M11 8v6M8 11h6"/></svg>
+    <div style="flex:1">
+      <div style="font-weight:700;font-size:14px">&iquest;Tienes cancha y falta gente?</div>
+      <div style="font-size:12px;color:#B6AC98">Crea un partido abierto y que se sume tu nivel.</div>
+    </div>
+    <button class="btn" style="padding:9px 14px;font-size:13px">Crear</button>
+  </div>
+
+  <div style="display:flex;flex-direction:column;gap:14px;padding:0 18px">
+
+    <!-- match 1 -->
+    <div class="card">
+      <div style="height:6px;background:var(--hard)"></div>
+      <div style="padding:15px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <span class="tag" style="color:var(--hard)">P&aacute;del &middot; nivel intermedio</span>
+            <h3 style="font-size:17px;margin-top:5px">Hoy 8:00 p.m. &middot; 1,5 h</h3>
+            <p style="color:var(--ink-soft);font-size:13px;margin-top:2px">Padel House &middot; Pista 1 &middot; techada</p>
+          </div>
+          <div style="text-align:right"><div style="font-weight:700">Bs&nbsp;180</div><div style="font-size:11px;color:var(--ink-soft)">c/u</div></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:13px">
+          <div style="display:flex"><span class="av"></span><span class="av" style="margin-left:-8px"></span><span class="av" style="margin-left:-8px"></span></div>
+          <span style="font-size:13px;color:var(--ink-soft)">3/4 &middot; falta 1 jugador</span>
+        </div>
+
+        <div style="display:flex;gap:5px;margin-top:11px">
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--grass)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--grass)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--grass)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--line)"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:13px">
+          <span style="font-size:12px;color:var(--grass);font-weight:700">Cancha reservada &middot; pago dividido</span>
+          <button class="btn">Unirme</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- match 2 -->
+    <div class="card">
+      <div style="height:6px;background:var(--clay)"></div>
+      <div style="padding:15px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <span class="tag" style="color:var(--clay-deep)">Tenis &middot; nivel principiante</span>
+            <h3 style="font-size:17px;margin-top:5px">Ma&ntilde;ana 8:00 a.m. &middot; 1 h</h3>
+            <p style="color:var(--ink-soft);font-size:13px;margin-top:2px">Club La Trinidad &middot; Cancha 5 &middot; arcilla</p>
+          </div>
+          <div style="text-align:right"><div style="font-weight:700">Bs&nbsp;140</div><div style="font-size:11px;color:var(--ink-soft)">c/u</div></div>
+        </div>
+
+        <div style="display:flex;align-items:center;gap:10px;margin-top:13px">
+          <div style="display:flex"><span class="av"></span><span class="av" style="margin-left:-8px"></span></div>
+          <span style="font-size:13px;color:var(--ink-soft)">2/4 &middot; faltan 2</span>
+        </div>
+
+        <div style="display:flex;gap:5px;margin-top:11px">
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--clay)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--clay)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--line)"></span>
+          <span style="flex:1;height:6px;border-radius:3px;background:var(--line)"></span>
+        </div>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-top:13px">
+          <span style="font-size:12px;color:var(--ink-soft);font-weight:600">Se reserva al completar 3</span>
+          <button class="btn">Unirme</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- match 3 -->
+    <div class="card" style="opacity:.62">
+      <div style="height:6px;background:var(--grass)"></div>
+      <div style="padding:15px 16px">
+        <div style="display:flex;justify-content:space-between;align-items:start">
+          <div>
+            <span class="tag" style="color:var(--grass)">V&oacute;ley playa &middot; nivel abierto</span>
+            <h3 style="font-size:17px;margin-top:5px">S&aacute;b 5:00 p.m. &middot; 2 h</h3>
+            <p style="color:var(--ink-soft);font-size:13px;margin-top:2px">Arena Playa &middot; Cancha B</p>
+          </div>
+          <span class="tag" style="color:var(--ink-soft)">Completo</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:10px;margin-top:13px">
+          <div style="display:flex"><span class="av"></span><span class="av" style="margin-left:-8px"></span><span class="av" style="margin-left:-8px"></span><span class="av" style="margin-left:-8px"></span></div>
+          <span style="font-size:13px;color:var(--ink-soft)">6/6 &middot; lista de espera</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- paginación -->
+  <div style="display:flex;gap:6px;justify-content:center;margin:18px 18px 0">
+    <span class="pg">&lsaquo;</span>
+    <span class="pg on">1</span><span class="pg">2</span><span class="pg">3</span><span class="pg">4</span>
+    <span class="pg">&rsaquo;</span>
+  </div>
+
+  <div style="margin:16px 18px 0;display:flex;gap:10px;align-items:flex-start;color:var(--ink-soft);font-size:12px">
+    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="var(--ink-soft)" stroke-width="2" style="flex:none;margin-top:1px"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg>
+    <p>Confirma solo si vas a ir. Los no-shows bajan tu reputaci&oacute;n y limitan a cu&aacute;ntos partidos te puedes unir.</p>
+  </div>
+
+</div>
+</x-dc>
+</body>
+</html>

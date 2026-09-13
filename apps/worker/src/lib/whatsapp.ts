@@ -1,0 +1,82 @@
+import makeWASocket, { useMultiFileAuthState, DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
+import { Boom } from '@hapi/boom';
+import pino from 'pino';
+
+/**
+ * Cliente de WhatsApp (Baileys) — SOLO transaccional (confirmaciones, envío de
+ * comprobante recibido, recordatorios, resultado de aprobación). Las ofertas
+ * y descuentos NUNCA pasan por acá (ver CLAUDE.md §4) — el volumen y el tipo
+ * de mensaje importan para no arriesgar el número.
+ */
+
+const SESSION_DIR = process.env.WHATSAPP_SESSION_DIR ?? './.wa-session';
+const logger = pino({ level: 'warn' });
+
+let socket: WASocket | null = null;
+let conectando: Promise<WASocket> | null = null;
+let qrActual: string | null = null;
+let conectado = false;
+
+/** Para el endpoint `/qr` del worker — nunca expone el socket ni las credenciales. */
+export function obtenerEstadoWhatsapp(): { conectado: boolean; qr: string | null } {
+  return { conectado, qr: qrActual };
+}
+
+async function conectar(): Promise<WASocket> {
+  const { state, saveCreds } = await useMultiFileAuthState(SESSION_DIR);
+  // `printQRInTerminal` además del `/qr` propio: en local (`pnpm dev`) sigue
+  // sirviendo verlo directo en la terminal sin levantar nada.
+  const sock = makeWASocket({ auth: state, logger, printQRInTerminal: true });
+
+  sock.ev.on('creds.update', saveCreds);
+  sock.ev.on('connection.update', (u) => {
+    if (u.qr) qrActual = u.qr;
+    if (u.connection === 'open') {
+      conectado = true;
+      qrActual = null;
+    }
+    if (u.connection === 'close') {
+      const boom = u.lastDisconnect?.error as Boom | undefined;
+      const debeReconectar = boom?.output?.statusCode !== DisconnectReason.loggedOut;
+      socket = null;
+      conectando = null;
+      conectado = false;
+      if (debeReconectar) {
+        console.warn('WhatsApp desconectado, reintentando…');
+        setTimeout(() => void obtenerSocket(), 3_000);
+      } else {
+        console.error('Sesión de WhatsApp cerrada (logged out). Hay que re-vincular con QR.');
+        qrActual = null;
+      }
+    }
+  });
+
+  return sock;
+}
+
+async function obtenerSocket(): Promise<WASocket> {
+  if (socket) return socket;
+  if (!conectando) conectando = conectar();
+  socket = await conectando;
+  return socket;
+}
+
+function formatoJid(telefonoVe: string): string {
+  const digits = telefonoVe.replace(/\D/g, '');
+  const conCodigoPais = digits.startsWith('58') ? digits : `58${digits.replace(/^0/, '')}`;
+  return `${conCodigoPais}@s.whatsapp.net`;
+}
+
+export async function enviarWhatsapp(telefono: string, mensaje: string): Promise<void> {
+  const sock = await obtenerSocket();
+  await sock.sendMessage(formatoJid(telefono), { text: mensaje });
+}
+
+/**
+ * Conecta al arrancar el worker en vez de esperar al primer mensaje —
+ * sin esto, el QR de emparejamiento nunca aparecía hasta que alguien
+ * confirmara una reserva de verdad (nadie lo vería a tiempo en una demo).
+ */
+export async function iniciarWhatsapp(): Promise<void> {
+  await obtenerSocket();
+}

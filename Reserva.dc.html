@@ -1,0 +1,145 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Instrument+Sans:wght@400;500;600&display=swap');
+    :root{
+      --bone:#F5F0E3; --bone-2:#ECE3CF; --paper:#FFFDF7;
+      --ink:#1D1913; --ink-soft:#655C4E; --line:#E1D7C2;
+      --clay:#E4542A; --clay-deep:#B23C17;
+      --grass:#12A150; --hard:#1D80C4;
+      --volt:#D6F000; --ok:#12A150; --warn:#E8A100; --danger:#DA2B1F;
+      --chalk:#FFFFFF;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bone);color:var(--ink);
+      font-family:"Instrument Sans",system-ui,-apple-system,sans-serif;font-size:15px;line-height:1.5;-webkit-font-smoothing:antialiased}
+    h1,h2,h3,h4{font-family:"Bricolage Grotesque","Arial Narrow",system-ui,sans-serif;font-weight:800;line-height:1.05;letter-spacing:-0.02em;margin:0}
+    p{margin:0}
+    a{color:var(--clay-deep);text-decoration:none;font-weight:600}
+    a:hover{color:var(--clay)}
+    .tag{font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase}
+    .card{background:var(--paper);border:1.5px solid var(--line);border-radius:14px}
+    .btn{font:inherit;font-weight:700;border:0;border-radius:9px;padding:14px 22px;background:var(--clay);color:var(--chalk);cursor:pointer;width:100%}
+    .slot{position:relative;border:1.5px solid var(--line);background:var(--paper);border-radius:10px;padding:12px 14px;display:flex;flex-direction:column;gap:3px}
+    .slot .price{font-weight:700}
+    .slot.busy{background:repeating-linear-gradient(-45deg,var(--bone-2),var(--bone-2) 6px,var(--paper) 6px,var(--paper) 12px);color:var(--ink-soft);border-style:dashed}
+    .slot.sel{border-color:var(--clay);background:var(--clay);color:var(--chalk);box-shadow:0 6px 0 -2px var(--clay-deep)}
+    .slot.offer{border-color:var(--grass);border-width:2px}
+    .slot.review{border-color:var(--warn);border-style:dashed}
+  </style>
+</helmet>
+
+<div style="width:1440px;margin:0 auto;background:var(--bone)">
+
+  <!-- COURT HEADER -->
+  <div style="display:flex;align-items:center;gap:20px;padding:24px 48px;border-bottom:1.5px solid var(--line)">
+    <div style="width:96px;height:64px;border-radius:9px;background:var(--hard);flex:none">
+      <svg viewBox="0 0 96 64" width="96" height="64" style="display:block"><g stroke="var(--chalk)" stroke-width="1.6" fill="none" opacity=".9"><rect x="8" y="7" width="80" height="50"/><line x1="48" y1="7" x2="48" y2="57"/><line x1="8" y1="32" x2="88" y2="32"/></g></svg>
+    </div>
+    <div style="flex:1">
+      <div class="tag" style="color:var(--ink-soft)">Reserva &middot; paso 1 de 2</div>
+      <h1 style="font-size:26px;margin-top:4px">Club La Trinidad &middot; Cancha 3</h1>
+      <p style="color:var(--ink-soft);font-size:13px;margin-top:3px">P&aacute;del &middot; cristal &middot; techada &middot; 1,5&nbsp;h por turno</p>
+    </div>
+    <a href="#">Cambiar cancha</a>
+  </div>
+
+  <div style="display:grid;grid-template-columns:1fr 372px;gap:0">
+
+    <!-- GRID -->
+    <div style="padding:28px 40px 40px">
+      <!-- day tabs -->
+      <div style="display:flex;gap:8px;margin-bottom:20px">
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">Lun</div><div style="font-weight:700">8</div></div>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">Mar</div><div style="font-weight:700">9</div></div>
+        <div style="border:2px solid var(--clay);background:var(--clay);color:var(--chalk);border-radius:9px;padding:7px 14px;text-align:center"><div class="tag">Mi&eacute;</div><div style="font-weight:700">10</div></div>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">Jue</div><div style="font-weight:700">11</div></div>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">Vie</div><div style="font-weight:700">12</div></div>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">S&aacute;b</div><div style="font-weight:700">13</div></div>
+        <div style="border:1.5px solid var(--line);border-radius:9px;padding:8px 14px;text-align:center"><div class="tag" style="color:var(--ink-soft)">Dom</div><div style="font-weight:700">14</div></div>
+      </div>
+
+      <div style="display:flex;gap:16px;margin-bottom:14px;font-size:12px;color:var(--ink-soft)">
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border:1.5px solid var(--line);border-radius:3px;display:inline-block"></span> Libre</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border:2px solid var(--grass);border-radius:3px;display:inline-block"></span> Oferta</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border:1.5px dashed var(--warn);border-radius:3px;display:inline-block"></span> En revisi&oacute;n</span>
+        <span style="display:flex;align-items:center;gap:6px"><span style="width:12px;height:12px;border:1.5px dashed var(--line);border-radius:3px;display:inline-block;background:var(--bone-2)"></span> Ocupada</span>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px">
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">6:00 a.m.</span><span class="price">Bs&nbsp;420</span></div>
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">7:30 a.m.</span><span class="price">Bs&nbsp;420</span></div>
+        <div class="slot busy"><span class="tag">9:00 a.m.</span><span>Ocupada</span></div>
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">10:30 a.m.</span><span class="price">Bs&nbsp;480</span></div>
+
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">12:00 m.</span><span class="price">Bs&nbsp;480</span></div>
+        <div class="slot offer"><span class="tag" style="color:var(--grass)">1:30 p.m. &middot; expr&eacute;s</span><span class="price"><span style="text-decoration:line-through;color:var(--ink-soft);font-weight:500">Bs&nbsp;560</span> Bs&nbsp;420</span></div>
+        <div class="slot busy"><span class="tag">3:00 p.m.</span><span>Ocupada</span></div>
+        <div class="slot review"><span class="tag" style="color:var(--warn)">4:30 p.m.</span><span style="color:var(--warn)">En revisi&oacute;n</span></div>
+
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">5:30 p.m.</span><span class="price">Bs&nbsp;620</span></div>
+        <div class="slot sel"><span class="tag">7:00 p.m.</span><span class="price">Bs&nbsp;720</span><span style="font-size:12px;opacity:.9">Seleccionado</span></div>
+        <div class="slot offer"><span class="tag" style="color:var(--grass)">8:30 p.m. &middot; &uacute;ltima hora</span><span class="price"><span style="text-decoration:line-through;color:var(--ink-soft);font-weight:500">Bs&nbsp;720</span> Bs&nbsp;540</span></div>
+        <div class="slot"><span class="tag" style="color:var(--ink-soft)">10:00 p.m.</span><span class="price">Bs&nbsp;620</span></div>
+      </div>
+    </div>
+
+    <!-- SUMMARY PANEL -->
+    <div style="border-left:1.5px solid var(--line);padding:28px 32px;background:var(--paper);min-height:620px">
+      <div class="tag" style="color:var(--ink-soft)">Tu reserva</div>
+
+      <!-- ticket -->
+      <div style="position:relative;margin-top:14px;border:1.5px solid var(--line);border-radius:12px;background:var(--bone);padding:18px">
+        <h3 style="font-size:18px">Cancha 3 &middot; P&aacute;del</h3>
+        <p style="color:var(--ink-soft);font-size:13px;margin-top:4px">Mi&eacute; 10 sep &middot; 7:00 &ndash; 8:30 p.m.</p>
+        <div style="border-top:1.5px dashed var(--line);margin:14px -18px 0"></div>
+        <div style="position:absolute;left:-9px;bottom:44px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line);border-right-color:var(--paper)"></div>
+        <div style="position:absolute;right:-9px;bottom:44px;width:16px;height:16px;border-radius:50%;background:var(--paper);border:1.5px solid var(--line);border-left-color:var(--paper)"></div>
+        <div style="display:flex;justify-content:space-between;margin-top:14px;font-size:14px"><span style="color:var(--ink-soft)">Turno 1,5 h</span><span>Bs&nbsp;720</span></div>
+        <div style="display:flex;justify-content:space-between;margin-top:6px;font-size:14px"><span style="color:var(--ink-soft)">Cargo por servicio</span><span>Bs&nbsp;20</span></div>
+      </div>
+
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:16px">
+        <span style="font-weight:600">Total</span>
+        <span style="font-family:'Bricolage Grotesque',sans-serif;font-weight:800;font-size:24px">Bs&nbsp;740</span>
+      </div>
+      <p style="color:var(--ink-soft);font-size:12px;margin-top:2px">&asymp; USD 8,20 al cambio de hoy</p>
+
+      <div style="border-top:1.5px solid var(--line);margin:18px 0"></div>
+
+      <label style="display:flex;align-items:center;justify-content:space-between;font-size:14px">
+        <span>Dividir con amigos</span>
+        <span style="width:40px;height:23px;border-radius:12px;background:var(--clay);position:relative;display:inline-block"><span style="position:absolute;right:2px;top:2px;width:19px;height:19px;border-radius:50%;background:var(--chalk)"></span></span>
+      </label>
+      <div style="display:flex;gap:6px;margin-top:10px">
+        <span style="flex:1;height:6px;border-radius:3px;background:var(--grass)"></span>
+        <span style="flex:1;height:6px;border-radius:3px;background:var(--grass)"></span>
+        <span style="flex:1;height:6px;border-radius:3px;background:var(--line)"></span>
+        <span style="flex:1;height:6px;border-radius:3px;background:var(--line)"></span>
+      </div>
+      <p style="color:var(--ink-soft);font-size:12px;margin-top:8px">4 jugadores &middot; Bs&nbsp;185 c/u &middot; 2 pagaron</p>
+
+      <div style="border-top:1.5px solid var(--line);margin:18px 0"></div>
+      <div style="display:flex;justify-content:space-between;font-size:14px"><span style="color:var(--ink-soft)">Abono del club</span><a href="#">Aplicar &middot; 4 h</a></div>
+
+      <div style="margin-top:22px">
+        <button class="btn">Continuar al pago</button>
+        <div style="display:flex;align-items:center;gap:8px;justify-content:center;margin-top:10px;background:#FFF7E6;border:1.5px solid var(--warn);border-radius:9px;padding:9px 12px">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="var(--warn)" stroke-width="2.4"><path d="M12 8v5M12 16h.01"/><circle cx="12" cy="12" r="9"/></svg>
+          <span style="font-size:12px;color:var(--ink)">Apartamos la cancha <strong>15:00</strong> mientras pagas</span>
+        </div>
+      </div>
+    </div>
+
+  </div>
+</div>
+</x-dc>
+</body>
+</html>

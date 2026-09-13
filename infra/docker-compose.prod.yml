@@ -1,0 +1,35 @@
+# Overlay de producción: uso junto al docker-compose.yml base.
+#   docker compose -f infra/docker-compose.yml -f infra/docker-compose.prod.yml up -d
+#
+# Endurece lo que en local es conveniente pero en producción es una puerta
+# abierta: Postgres, Redis y MinIO dejan de publicar puertos al host — solo
+# son alcanzables por `web`/`worker` dentro de la red interna de Docker.
+# Traefik/Caddy es el ÚNICO punto expuesto a internet (ver CLAUDE.md §4).
+
+services:
+  postgres:
+    ports: !reset []
+    command:
+      - "postgres"
+      - "-c"
+      - "password_encryption=scram-sha-256"
+      - "-c"
+      - "max_connections=100"
+      - "-c"
+      - "statement_timeout=30s"
+      - "-c"
+      - "log_connections=on"
+    restart: always
+
+  redis:
+    ports: !reset []
+    # requirepass vía REDIS_PASSWORD (setear en el .env de infra, no en el repo)
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
+    restart: always
+
+  minio:
+    ports: !reset []
+    restart: always
+
+  minio-init:
+    restart: "no"
