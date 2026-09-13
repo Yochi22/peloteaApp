@@ -27,10 +27,12 @@ services:
     region: oregon
     branch: main
     buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/web build
-    startCommand: pnpm --filter @pelotea/web start
-    # Aplica migraciones antes de arrancar — `migrate deploy` (no `migrate dev`),
-    # no interactivo y seguro de correr en cada deploy.
-    preDeployCommand: pnpm --filter @pelotea/db exec prisma migrate deploy
+    # `preDeployCommand` no existe en el plan free de Render — la migración
+    # (`migrate deploy`, no `migrate dev`: no interactiva) va pegada al
+    # arranque en su lugar. Es segura de repetir: solo aplica lo pendiente,
+    # así que correr esto en cada restart/wake-up del free tier no hace nada
+    # si el schema ya está al día.
+    startCommand: pnpm --filter @pelotea/db exec prisma migrate deploy && pnpm --filter @pelotea/web start
     healthCheckPath: /api/health
     envVars:
       - key: NODE_ENV
