@@ -26,6 +26,21 @@ const ALLOWED_ORIGINS = (process.env.APP_BASE_URL ?? 'http://localhost:3000')
 
 const DEV = process.env.NODE_ENV !== 'production';
 
+// Origen real del bucket (para que el navegador pueda cargar una URL firmada
+// de comprobante en un <img> — el bucket sigue siendo privado, la firma es
+// lo que de verdad protege el acceso) + un origen público separado si existe
+// (S3_PUBLIC_ORIGIN, para assets que sí son públicos de verdad).
+const S3_ENDPOINT_ORIGIN = (() => {
+  try {
+    return process.env.S3_ENDPOINT ? new URL(process.env.S3_ENDPOINT).origin : undefined;
+  } catch {
+    return undefined;
+  }
+})();
+const MEDIA_ORIGINS = [S3_ENDPOINT_ORIGIN, process.env.S3_PUBLIC_ORIGIN].filter(
+  (v): v is string => !!v,
+);
+
 export function middleware(req: NextRequest) {
   const nonce = generateNonce();
   const isMutating = !['GET', 'HEAD', 'OPTIONS'].includes(req.method);
@@ -59,7 +74,7 @@ export function middleware(req: NextRequest) {
   const csp = buildCsp({
     nonce,
     dev: DEV,
-    mediaOrigin: process.env.S3_PUBLIC_ORIGIN,
+    mediaOrigin: MEDIA_ORIGINS,
     connectSrc: process.env.SENTRY_DSN ? [new URL(process.env.SENTRY_DSN).origin] : [],
   });
   for (const [k, v] of Object.entries(securityHeaders(csp))) res.headers.set(k, v);

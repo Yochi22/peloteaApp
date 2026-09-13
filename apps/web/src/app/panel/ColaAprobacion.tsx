@@ -27,17 +27,18 @@ function Fila({ p, onResuelto }: { p: PagoPendiente; onResuelto: () => void }) {
   const [error, setError] = useState<string | null>(null);
   const [urlComprobante, setUrlComprobante] = useState<string | null>(null);
 
+  // Muestra el comprobante embebido en la misma tarjeta — antes hacía
+  // `window.open`, que terminaba forzando la descarga (el objeto en el
+  // bucket tiene Content-Disposition: attachment a propósito para cuando
+  // alguien abre la URL directo). Un <img> normal sí lo carga inline.
   async function verComprobante() {
     if (urlComprobante) {
-      window.open(urlComprobante, '_blank', 'noopener,noreferrer');
+      setUrlComprobante(null);
       return;
     }
     const res = await fetch(`/api/pagos/${p.pagoId}/comprobante-url`);
     const body = await res.json();
-    if (res.ok) {
-      setUrlComprobante(body.url);
-      window.open(body.url, '_blank', 'noopener,noreferrer');
-    }
+    if (res.ok) setUrlComprobante(body.url);
   }
 
   async function resolver(decision: 'APROBAR' | 'RECHAZAR') {
@@ -86,9 +87,16 @@ function Fila({ p, onResuelto }: { p: PagoPendiente; onResuelto: () => void }) {
           onClick={verComprobante}
           style={{ flex: 'none', border: '1.5px solid var(--pl-line)', borderRadius: 7, padding: '6px 10px', fontSize: 12, fontWeight: 600, background: 'var(--pl-bg-raised)', cursor: 'pointer', height: 32 }}
         >
-          Ver comprobante
+          {urlComprobante ? 'Ocultar comprobante' : 'Ver comprobante'}
         </button>
       </div>
+
+      {urlComprobante ? (
+        <div style={{ marginTop: 10, border: '1.5px solid var(--pl-line)', borderRadius: 10, padding: 8, maxWidth: 320 }}>
+          {/* <img> a propósito: es una URL firmada temporal, no un asset estático de Next/Image */}
+          <img src={urlComprobante} alt="Comprobante de pago" style={{ display: 'block', width: '100%', borderRadius: 6 }} />
+        </div>
+      ) : null}
 
       {error ? (
         <div style={{ marginTop: 8 }}>

@@ -10,16 +10,22 @@ export interface CspOptions {
   connectSrc?: string[];
   /** true en dev: habilita HMR / eval de Next. */
   dev?: boolean;
-  /** Origen de assets de MinIO/S3 para imágenes (URLs firmadas). */
-  mediaOrigin?: string;
+  /**
+   * Origen(es) de assets de MinIO/S3 para imágenes — tanto el endpoint real
+   * del bucket (para que el navegador pueda cargar una URL firmada de
+   * comprobante en un <img>, aunque el bucket en sí siga siendo privado)
+   * como, si existe, un origen público separado para assets de verdad
+   * públicos.
+   */
+  mediaOrigin?: string | string[];
 }
 
 export function buildCsp({ nonce, connectSrc = [], dev = false, mediaOrigin }: CspOptions): string {
-  const img = ["'self'", 'data:', 'blob:'];
-  if (mediaOrigin) img.push(mediaOrigin);
+  const medias = mediaOrigin ? (Array.isArray(mediaOrigin) ? mediaOrigin : [mediaOrigin]).filter(Boolean) : [];
 
-  const connect = ["'self'"];
-  if (mediaOrigin) connect.push(mediaOrigin);
+  const img = ["'self'", 'data:', 'blob:', ...medias];
+
+  const connect = ["'self'", ...medias];
   connect.push(...connectSrc);
   if (dev) connect.push('ws:', 'wss:');
 

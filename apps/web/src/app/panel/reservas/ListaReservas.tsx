@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { Alert, Pagination } from '@pelotea/ui';
 
 export interface ReservaFila {
@@ -62,7 +63,8 @@ function Fila({ r, onCambio }: { r: ReservaFila; onCambio: (id: string, estado: 
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
         <div>
           <p style={{ fontWeight: 700 }}>
-            {r.persona} {r.esInvitado ? <span style={{ fontSize: 11, color: 'var(--pl-ink-soft)', fontWeight: 500 }}>(invitado)</span> : null}
+            <Link href={`/panel/reservas/${r.id}`}>{r.persona}</Link>{' '}
+            {r.esInvitado ? <span style={{ fontSize: 11, color: 'var(--pl-ink-soft)', fontWeight: 500 }}>(invitado)</span> : null}
             {r.esDividida ? <span style={{ fontSize: 11, color: 'var(--pl-hard)', fontWeight: 700, marginLeft: 6 }}>SPLIT</span> : null}
           </p>
           <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
