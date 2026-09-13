@@ -3,6 +3,21 @@ import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { getSesionServer } from '@/lib/session-server';
+import { RetirarsePartido } from './RetirarsePartido';
+
+const NIVEL_LABEL: Record<string, string> = {
+  PRINCIPIANTE: 'principiante',
+  INTERMEDIO: 'intermedio',
+  AVANZADO: 'avanzado',
+  COMPETITIVO: 'competitivo',
+};
+
+/** Mismo criterio que `formatoJid()` del worker: normaliza a wa.me/58<número sin el 0>. */
+function linkWhatsapp(telefonoVe: string): string {
+  const digits = telefonoVe.replace(/\D/g, '');
+  const conCodigoPais = digits.startsWith('58') ? digits : `58${digits.replace(/^0/, '')}`;
+  return `https://wa.me/${conCodigoPais}`;
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -36,10 +51,12 @@ export default async function CuentaPage() {
       where: { organizadorId: sesion.usuarioId },
       orderBy: { inicio: 'desc' },
       take: 10,
-      include: { cancha: true, participantes: true },
+      include: { cancha: true, participantes: { include: { usuario: true }, orderBy: { createdAt: 'asc' } } },
     }),
     prisma.participantePartido.findMany({
-      where: { usuarioId: sesion.usuarioId },
+      // Excluye los que ya abandonó (`SALIO`) — si se retiró, ya no tiene
+      // sentido que siga apareciendo como "partido al que me uní".
+      where: { usuarioId: sesion.usuarioId, estado: { not: 'SALIO' } },
       orderBy: { createdAt: 'desc' },
       take: 10,
       include: { partido: { include: { cancha: true, organizador: true } } },
@@ -124,8 +141,36 @@ export default async function CuentaPage() {
                 </p>
                 <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
                   {p.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · {p.cuposLlenos}/
-                  {p.cuposTotales} cupos · {p.estado}
+                  {p.cuposTotales} cupos · nivel {NIVEL_LABEL[p.nivel] ?? p.nivel} · {p.estado}
                 </p>
+                {/* Para poder contactar a quien se unió — antes esta info
+                    no aparecía por ningún lado, había que ver la base
+                    directo. Solo los que de verdad se unieron (no cuenta al
+                    organizador mismo ni a quien ya se retiró). */}
+                {p.participantes.filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO').length > 0 ? (
+                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                    {p.participantes
+                      .filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO')
+                      .map((pp) => (
+                        <a
+                          key={pp.id}
+                          href={linkWhatsapp(pp.usuario.telefono ?? '')}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{
+                            fontSize: 11,
+                            fontWeight: 600,
+                            border: '1.5px solid var(--pl-line)',
+                            borderRadius: 999,
+                            padding: '3px 10px',
+                            textDecoration: 'none',
+                          }}
+                        >
+                          {pp.usuario.nombre} ↗
+                        </a>
+                      ))}
+                  </div>
+                ) : null}
               </div>
             ))}
           </div>
@@ -137,14 +182,33 @@ export default async function CuentaPage() {
           <h2 style={{ fontSize: 17 }}>Partidos a los que me uní</h2>
           <div style={{ marginTop: 10 }}>
             {participaciones.map((pp) => (
-              <div key={pp.id} style={{ padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
-                <p style={{ fontWeight: 600, fontSize: 14 }}>
-                  {DEPORTE_LABEL[pp.partido.deporte as Deporte]} · organiza {pp.partido.organizador.nombre}
-                </p>
-                <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
-                  {pp.partido.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} ·{' '}
-                  {pp.partido.cancha?.nombre ?? 'sin cancha asignada'} · {pp.partido.estado}
-                </p>
+              <div key={pp.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
+                <div>
+                  <p style={{ fontWeight: 600, fontSize: 14 }}>
+                    {DEPORTE_LABEL[pp.partido.deporte as Deporte]} · organiza {pp.partido.organizador.nombre}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
+                    {pp.partido.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} ·{' '}
+                    {pp.partido.cancha?.nombre ?? 'sin cancha asignada'} · nivel {NIVEL_LABEL[pp.partido.nivel] ?? pp.partido.nivel}
+                  </p>
+                  <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)', marginTop: 2 }}>
+                    {pp.partido.cuposLlenos}/{pp.partido.cuposTotales} jugadores · Bs{' '}
+                    {Number(pp.partido.precioPorJugador).toLocaleString('es-VE')} c/u
+                    {pp.partido.organizador.telefono ? (
+                      <>
+                        {' · '}
+                        <a href={linkWhatsapp(pp.partido.organizador.telefono)} target="_blank" rel="noopener noreferrer">
+                          WhatsApp del organizador
+                        </a>
+                      </>
+                    ) : null}
+                  </p>
+                </div>
+                <div style={{ flex: 'none', display: 'flex', alignItems: 'flex-start' }}>
+                  {pp.partido.estado === 'ABIERTO' ? <RetirarsePartido partidoId={pp.partido.id} /> : (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pl-ink-soft)' }}>{pp.partido.estado}</span>
+                  )}
+                </div>
               </div>
             ))}
           </div>

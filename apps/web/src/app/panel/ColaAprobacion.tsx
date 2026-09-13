@@ -71,8 +71,8 @@ function Fila({ p, onResuelto }: { p: PagoPendiente; onResuelto: () => void }) {
   return (
     <div style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 14 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-        <div>
-          <p style={{ fontWeight: 700 }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>
             {p.persona} · Bs {p.monto.toLocaleString('es-VE')}
             {p.esSplit ? <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pl-hard)', marginLeft: 6 }}>SPLIT</span> : null}
           </p>

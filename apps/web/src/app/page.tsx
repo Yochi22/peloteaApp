@@ -1,4 +1,6 @@
 import Link from 'next/link';
+import { prisma } from '@pelotea/db';
+import { getSesionServer } from '@/lib/session-server';
 
 const CATEGORIAS = [
   { nombre: 'Pádel', color: 'var(--pl-hard)', detalle: 'Cancha techada y al aire libre' },
@@ -25,7 +27,19 @@ function CourtSvg({ bg }: { bg: string }) {
   );
 }
 
-export default function HomePage() {
+export const dynamic = 'force-dynamic';
+
+export default async function HomePage() {
+  const sesion = await getSesionServer();
+  // Mismo criterio que /canchas: si hay sesión, mostrar "Mi cuenta" (con el
+  // badge de notificaciones sin leer) en vez de solo "Entrar" — antes la
+  // landing nunca reflejaba que ya habías iniciado sesión, así que después
+  // de loguearse parecía que no había pasado nada hasta llegar a /canchas.
+  const notisSinLeer = sesion
+    ? await prisma.notificacion.count({ where: { usuarioId: sesion.usuarioId, canal: 'IN_APP', leidaEn: null } })
+    : 0;
+  const esStaff = sesion && ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(sesion.rol);
+
   return (
     <main>
       <header
@@ -44,7 +58,32 @@ export default function HomePage() {
           <strong style={{ fontFamily: 'var(--pl-font-display)', fontSize: 20 }}>Pelotea</strong>
         </span>
         <nav style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
-          <Link href="/entrar">Entrar</Link>
+          {sesion ? (
+            <Link href={esStaff ? '/panel' : '/cuenta'} style={{ position: 'relative' }}>
+              {esStaff ? 'Panel' : 'Mi cuenta'}
+              {!esStaff && notisSinLeer > 0 ? (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -14,
+                    background: 'var(--pl-clay)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    minWidth: 16,
+                    textAlign: 'center',
+                  }}
+                >
+                  {notisSinLeer}
+                </span>
+              ) : null}
+            </Link>
+          ) : (
+            <Link href="/entrar">Entrar</Link>
+          )}
           <Link className="pl-btn" href="/canchas">
             Reservar cancha
           </Link>

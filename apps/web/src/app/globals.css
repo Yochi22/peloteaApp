@@ -8,6 +8,12 @@ html,
 body {
   margin: 0;
   padding: 0;
+  /* Seguro contra scroll horizontal en mobile: si algún bloque se desborda
+     por un bug puntual (números largos en grid, texto sin cortar, etc.),
+     esto evita que TODA la página se corra de lado y haya que alejar el
+     zoom para verla completa. `.pl-scroll-x` sigue funcionando igual — su
+     propio `overflow-x: auto` no depende de esto. */
+  overflow-x: hidden;
 }
 
 a,
@@ -154,6 +160,21 @@ button {
    propio en vez de romper el ancho de toda la página. */
 .pl-scroll-x {
   overflow-x: auto;
+}
+
+/* Panel del dueño: botones de acción (Canchas, Reservas, WhatsApp, etc.) en
+   grilla — cada botón ocupa una celda de ancho garantizado (mínimo 130px)
+   en vez de un flex-wrap que en mobile amontonaba texto de distintos
+   tamaños y obligaba a hacer zoom out para que "encajara" todo. */
+.pl-panel-actions {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .pl-panel-actions {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 /* Panel del dueño: heatmap + cola de aprobación en dos columnas en desktop,

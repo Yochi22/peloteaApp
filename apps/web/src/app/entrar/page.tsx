@@ -25,11 +25,14 @@ export default function EntrarPage() {
   const nextExplicito = params.get('next');
 
   // Si no vino un `next` explícito (p.ej. alguien que entra directo a
-  // /entrar en vez de que lo mande /panel con ?next=/panel), un admin/staff
-  // espera terminar en el panel, no en la landing pública.
+  // /entrar en vez de que lo mande /panel con ?next=/panel): un admin/staff
+  // espera terminar en el panel, y un jugador espera ver su cuenta — antes
+  // mandaba a la landing pública, que no muestra el perfil por ningún lado
+  // hasta que el usuario navega a /canchas (donde sí aparece "Mi cuenta"),
+  // así que después de entrar parecía que el login "no hizo nada".
   function destino(rol: string): string {
     if (nextExplicito) return nextExplicito;
-    return ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(rol) ? '/panel' : '/';
+    return ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(rol) ? '/panel' : '/cuenta';
   }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -161,7 +164,12 @@ export default function EntrarPage() {
       </form>
 
       <p style={{ marginTop: 18, fontSize: 13, color: 'var(--pl-ink-soft)' }}>
-        ¿No tienes cuenta? <Link href={`/registrarse?next=${encodeURIComponent(nextExplicito ?? '/')}`}>Regístrate gratis</Link>
+        ¿No tienes cuenta?{' '}
+        {/* Sin `next` explícito, se omite el parámetro — /registrarse ya
+            manda a /cuenta por defecto; forzar `/` acá pisaba ese default. */}
+        <Link href={nextExplicito ? `/registrarse?next=${encodeURIComponent(nextExplicito)}` : '/registrarse'}>
+          Regístrate gratis
+        </Link>
       </p>
     </main>
   );

@@ -14,7 +14,10 @@ function leerCookie(nombre: string): string | null {
 export default function RegistrarsePage() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') ?? '/';
+  // Igual que en /entrar: sin `next` explícito, un jugador nuevo espera ver
+  // su cuenta recién creada, no la landing pública (que no muestra nada de
+  // perfil hasta entrar a /canchas).
+  const next = params.get('next') ?? '/cuenta';
   const [form, setForm] = useState({ nombre: '', email: '', telefono: '', password: '' });
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);

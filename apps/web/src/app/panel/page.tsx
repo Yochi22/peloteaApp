@@ -105,31 +105,37 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           </Alert>
         </div>
       ) : null}
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, flexWrap: 'wrap' }}>
-        <div>
-          <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
-            Panel del club
-          </p>
-          <h1 style={{ fontSize: 26, marginTop: 4 }}>Últimos {DIAS_RANGO} días</h1>
-        </div>
-        <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
-          <Link href="/panel/canchas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard)' }}>
-            Canchas
-          </Link>
-          <Link href="/panel/reservas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass)' }}>
-            Reservas
-          </Link>
-          <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
-            Tasa de cambio
-          </Link>
-          <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-ink)' }}>
-            Configuración
-          </Link>
-          <Link href="/panel/whatsapp" className="pl-btn" style={{ textDecoration: 'none', background: '#25D366' }}>
-            WhatsApp
-          </Link>
-          <CerrarSesion />
-        </div>
+      <div>
+        <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
+          Panel del club
+        </p>
+        <h1 style={{ fontSize: 26, marginTop: 4 }}>Últimos {DIAS_RANGO} días</h1>
+      </div>
+
+      {/* Grilla (no flex-wrap ad hoc): en mobile cada botón ocupa una celda
+          de ancho garantizado en vez de amontonarse en una fila que
+          obligaba a hacer zoom out para verla completa. */}
+      <div className="pl-panel-actions" style={{ marginTop: 16 }}>
+        <Link href="/panel/canchas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard)' }}>
+          Canchas
+        </Link>
+        <Link href="/panel/reservas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass)' }}>
+          Reservas
+        </Link>
+        <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
+          Tasa de cambio
+        </Link>
+        {/* Color fijo, NO `var(--pl-ink)`: ese token se invierte en modo
+            oscuro (pasa de casi-negro a crema) pero el texto de `.pl-btn`
+            queda blanco fijo — en modo oscuro quedaba texto blanco sobre
+            fondo casi blanco, ilegible. */}
+        <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: '#1D1913' }}>
+          Configuración
+        </Link>
+        <Link href="/panel/whatsapp" className="pl-btn" style={{ textDecoration: 'none', background: '#25D366' }}>
+          WhatsApp
+        </Link>
+        <CerrarSesion />
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginTop: 20 }}>
@@ -185,7 +191,12 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
 function Kpi({ etiqueta, valor, tono }: { etiqueta: string; valor: string; tono?: 'ok' | 'danger' }) {
   return (
-    <div style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 14, background: 'var(--pl-bg-raised)' }}>
+    // `minWidth: 0`: sin esto, un número largo ("Bs 1.234.567") no se puede
+    // achicar por debajo de su ancho de contenido — la celda de grid se
+    // estira más allá de su `minmax(150px, 1fr)` y empuja TODA la página a
+    // scroll horizontal en mobile ("grid blowout", un bug clásico de CSS
+    // Grid). `overflowWrap` es el respaldo si aun así no entra.
+    <div style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 14, background: 'var(--pl-bg-raised)', minWidth: 0, overflowWrap: 'anywhere' }}>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>{etiqueta}</p>
       <p style={{ fontFamily: 'var(--pl-font-display)', fontWeight: 800, fontSize: 22, marginTop: 6, color: tono === 'danger' ? 'var(--pl-danger)' : tono === 'ok' ? 'var(--pl-ok)' : 'var(--pl-ink)' }}>
         {valor}

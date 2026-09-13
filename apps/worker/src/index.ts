@@ -75,9 +75,14 @@ async function programarBarridos() {
   );
 }
 
+// NUNCA `process.exit()` acá: un fallo transitorio de Redis al arrancar
+// (típico en Render+Upstash — el free tier duerme y el primer round-trip al
+// despertar puede tardar o fallar) mataba TODO el proceso, incluyendo el
+// servidor HTTP y Baileys, antes de que el QR llegara a generarse. `ioredis`
+// ya reintenta solo (retryStrategy por defecto) — deja que BullMQ reintente
+// también, el barrido se reprograma en el siguiente ciclo si hace falta.
 programarBarridos().catch((e) => {
-  console.error('No se pudieron programar los barridos:', e);
-  process.exit(1);
+  console.error('No se pudieron programar los barridos (se reintentará solo):', e);
 });
 
 for (const w of workers) {
