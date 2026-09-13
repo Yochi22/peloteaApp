@@ -125,6 +125,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-ink)' }}>
             Configuración
           </Link>
+          <Link href="/panel/whatsapp" className="pl-btn" style={{ textDecoration: 'none', background: '#25D366' }}>
+            WhatsApp
+          </Link>
           <CerrarSesion />
         </div>
       </div>

@@ -49,19 +49,21 @@ Render no tiene, en su plan free:
      firmada, ver
      SECURITY.md §2.8).
    - En `pelotea-worker`: la misma `REDIS_URL` de Upstash, y
-     `WHATSAPP_ADMIN_NUMBER` (el número del club, formato venezolano).
-     `WHATSAPP_QR_TOKEN` se genera solo (`generateValue: true`) — es el
-     token que hace falta para ver el QR, ver paso 6.
+     `WHATSAPP_ADMIN_NUMBER` (el número del club, formato venezolano). Las
+     variables S3_* también (el worker las usa para borrar comprobantes
+     viejos, ver más abajo). `WHATSAPP_QR_TOKEN` se genera solo
+     (`generateValue: true`) y `pelotea-web` lo copia automático vía
+     `fromService` — no hay que pegarlo a mano en ningún lado.
 5. Deploy. Render corre `pnpm install` → `pnpm db:generate` → build de cada
    servicio; `pelotea-web` además aplica `prisma migrate deploy` antes de
    arrancar (aplica el schema a la Postgres nueva).
-6. **Vincular WhatsApp**: abrir
-   `https://pelotea-worker.onrender.com/qr?token=<WHATSAPP_QR_TOKEN>`
-   (copiar el token real de las variables de entorno del servicio en el
-   dashboard de Render) — muestra el QR como imagen. Escanearlo desde
-   WhatsApp del número del club (Dispositivos vinculados → Vincular un
-   dispositivo). Si tarda en aparecer, esperar unos segundos y recargar —
-   Baileys tarda un poco en generar el primer QR al arrancar.
+6. **Vincular WhatsApp**: entra a `/panel/whatsapp` (con tu cuenta de
+   `SEDE_ADMIN`, 2FA activo) — ahí se ve el QR como imagen, protegido por tu
+   sesión de admin (nunca una URL pública con un token, como antes). Se
+   actualiza solo cada 5 segundos mientras no esté vinculado. Escanéalo
+   desde el WhatsApp del club (Dispositivos vinculados → Vincular un
+   dispositivo). Si necesitas cambiar de número o la sesión quedó rota, el
+   mismo panel tiene un botón para desvincular y generar un QR nuevo.
    - **Ojo con el sleep**: si el servicio se durmió y Render reconstruye el
      contenedor al despertar, la sesión guardada en disco (`/tmp` — no hay
      disco persistente en el free) se pierde y hay que volver a escanear.

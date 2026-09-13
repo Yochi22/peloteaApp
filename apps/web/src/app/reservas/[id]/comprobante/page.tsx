@@ -8,6 +8,7 @@ import { SplitResumen } from './SplitResumen';
 import { CompletarCuentaForm } from './CompletarCuentaForm';
 import { CancelarReserva } from './CancelarReserva';
 import { CompartirReserva } from './CompartirReserva';
+import { CopiarDatosPago } from './CopiarDatosPago';
 
 export const dynamic = 'force-dynamic';
 
@@ -82,6 +83,14 @@ export default async function ComprobantePage({
               móvil, antes de que te entreguen la pelota).
             </p>
           ) : null}
+          <CopiarDatosPago
+            datos={{
+              banco: reserva.cancha.sede.pagoMovilBanco,
+              cedulaRif: reserva.cancha.sede.pagoMovilCedulaRif,
+              telefono: reserva.cancha.sede.pagoMovilTelefono,
+              monto: Number(reserva.montoAbono).toLocaleString('es-VE'),
+            }}
+          />
         </div>
       ) : (
         <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 10 }}>

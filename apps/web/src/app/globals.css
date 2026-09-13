@@ -10,6 +10,16 @@ body {
   padding: 0;
 }
 
+a,
+button {
+  /* En mobile, tocar un link deja un resaltado del navegador (gris/blanco
+     según el motor) que se queda pegado un momento — sobre un botón de
+     fondo oscuro (ej. "Configuración", fondo negro) eso podía leerse como
+     "se puso blanco y el texto se pierde". Sin esto, cada navegador decide
+     su propio color de resaltado. */
+  -webkit-tap-highlight-color: transparent;
+}
+
 body {
   background: var(--pl-bg);
   color: var(--pl-ink);
@@ -85,10 +95,16 @@ button {
    global `a:hover { color: var(--pl-clay) }` pisaba el color del texto al
    pasar el mouse. En un botón con fondo ya naranja (--pl-clay) el texto se
    volvía invisible: naranja sobre naranja. */
-.pl-btn:hover {
+.pl-btn:hover,
+.pl-btn:active,
+.pl-btn:focus,
+.pl-btn:visited {
   color: var(--pl-primary-ink);
 }
-.pl-btn--ghost:hover {
+.pl-btn--ghost:hover,
+.pl-btn--ghost:active,
+.pl-btn--ghost:focus,
+.pl-btn--ghost:visited {
   color: var(--pl-ink);
 }
 

@@ -89,6 +89,18 @@ services:
         value: 'true'
       - key: S3_PUBLIC_ORIGIN
         sync: false
+      # El QR/estado de WhatsApp se maneja en /panel/whatsapp — la web llama
+      # al worker server-to-server con este token (nunca lo ve el navegador
+      # del admin). `fromService` copia el mismo valor que Render generó
+      # para pelotea-worker, así no hay que pegarlo a mano dos veces.
+      - key: WHATSAPP_QR_TOKEN
+        fromService:
+          name: pelotea-worker
+          type: web
+          envVarKey: WHATSAPP_QR_TOKEN
+      # Ajustar si renombras el servicio del worker.
+      - key: WORKER_BASE_URL
+        value: https://pelotea-worker.onrender.com
 
   # ── Worker: WhatsApp (Baileys) + BullMQ (hold-expiry, recordatorios, ofertas) ──
   - type: web

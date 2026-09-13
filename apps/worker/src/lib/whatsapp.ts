@@ -1,3 +1,4 @@
+import { rm } from 'node:fs/promises';
 import makeWASocket, { useMultiFileAuthState, DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
@@ -78,5 +79,29 @@ export async function enviarWhatsapp(telefono: string, mensaje: string): Promise
  * confirmara una reserva de verdad (nadie lo vería a tiempo en una demo).
  */
 export async function iniciarWhatsapp(): Promise<void> {
+  await obtenerSocket();
+}
+
+/**
+ * Borra la sesión guardada y fuerza un QR nuevo — para cuando hay que
+ * cambiar de número, la sesión quedó rota, o alguien más la vinculó por
+ * error. Cierra el socket actual primero (logout real contra WhatsApp
+ * cuando se puede, no solo local) para no dejar el número "medio
+ * vinculado" del lado de Meta.
+ */
+export async function reiniciarWhatsapp(): Promise<void> {
+  if (socket) {
+    try {
+      await socket.logout();
+    } catch {
+      // Si ya estaba desconectado del lado de WhatsApp, logout tira —
+      // no importa, igual vamos a borrar la sesión local.
+    }
+  }
+  socket = null;
+  conectando = null;
+  conectado = false;
+  qrActual = null;
+  await rm(SESSION_DIR, { recursive: true, force: true });
   await obtenerSocket();
 }
