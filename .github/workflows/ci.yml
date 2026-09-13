@@ -11,9 +11,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      # Sin `version:` acá — ya está fijada en el `packageManager` de
+      # package.json (pnpm@9.12.0); pasar las dos cosas a la vez hace que
+      # la acción falle de una con "Multiple versions of pnpm specified".
       - uses: pnpm/action-setup@v4
-        with:
-          version: 9
 
       - uses: actions/setup-node@v4
         with:
