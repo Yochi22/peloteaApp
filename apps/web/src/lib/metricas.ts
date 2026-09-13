@@ -72,7 +72,18 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
   const canceladas = await prisma.reserva.count({ where: { sedeId, estado: 'CANCELADA', inicio: { gte: desde, lt: hasta } } });
   const totalReservas = confirmadas.length + noShows + canceladas;
 
-  const ingresosConfirmados = confirmadas.reduce((s, r) => s + Number(r.precioTotal), 0);
+  // El abono de una reserva cancelada NO se devuelve si canceló el cliente
+  // (CLAUDE.md §5) — ese ingreso queda igual, así que cuenta acá aunque la
+  // reserva en sí ya no esté "confirmada". `confirmadaEn` distingue: si
+  // llegó a aprobarse antes de cancelarse, sí se cobró algo; si se canceló
+  // en pendiente_pago, no se había pagado nada todavía.
+  const canceladasConAbono = await prisma.reserva.findMany({
+    where: { sedeId, estado: 'CANCELADA', confirmadaEn: { not: null }, inicio: { gte: desde, lt: hasta } },
+    select: { montoAbono: true },
+  });
+  const ingresosRetenidos = canceladasConAbono.reduce((s, r) => s + Number(r.montoAbono), 0);
+
+  const ingresosConfirmados = confirmadas.reduce((s, r) => s + Number(r.precioTotal), 0) + ingresosRetenidos;
   const horasReservadas = confirmadas.reduce((s, r) => s + (r.fin.getTime() - r.inicio.getTime()) / 3_600_000, 0);
   const ticketPromedio = confirmadas.length ? ingresosConfirmados / confirmadas.length : 0;
 

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert } from '@pelotea/ui';
 
 export interface PorCobrarItem {
@@ -88,6 +88,10 @@ function Fila({ item, onCobrado }: { item: PorCobrarItem; onCobrado: () => void 
 
 export function PorCobrar({ inicial }: { inicial: PorCobrarItem[] }) {
   const [items, setItems] = useState(inicial);
+
+  // Igual que en ColaAprobacion: sin esto, el auto-refresco del panel no
+  // se reflejaba acá.
+  useEffect(() => setItems(inicial), [inicial]);
 
   if (items.length === 0) return null;
 

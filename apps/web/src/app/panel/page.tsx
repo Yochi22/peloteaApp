@@ -8,6 +8,7 @@ import { ColaAprobacion, type PagoPendiente } from './ColaAprobacion';
 import { PorCobrar, type PorCobrarItem } from './PorCobrar';
 import { obtenerTasaVigente, antiguedadTasaDias } from '@/lib/tasa-cambio';
 import { Alert } from '@pelotea/ui';
+import { AutoRefresh } from './AutoRefresh';
 
 export const dynamic = 'force-dynamic';
 
@@ -78,6 +79,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 1100 }}>
+      <AutoRefresh />
       {tasaAntiguaODesactualizada ? (
         <div style={{ marginBottom: 18 }}>
           <Alert

@@ -13,6 +13,7 @@ export interface ReservaFila {
   estado: string;
   monto: number;
   esDividida: boolean;
+  motivoCancelacion: string | null;
 }
 
 function leerCookie(nombre: string): string | null {
@@ -24,6 +25,7 @@ const ESTADO_LABEL: Record<string, { texto: string; tono: string }> = {
   CONFIRMADA: { texto: 'Confirmada', tono: 'var(--pl-ok)' },
   COMPLETADA: { texto: 'Jugada', tono: 'var(--pl-ink-soft)' },
   NO_SHOW: { texto: 'No llegó', tono: 'var(--pl-danger)' },
+  CANCELADA: { texto: 'Cancelada', tono: 'var(--pl-danger)' },
 };
 
 function Fila({ r, onCambio }: { r: ReservaFila; onCambio: (id: string, estado: string) => void }) {
@@ -67,6 +69,9 @@ function Fila({ r, onCambio }: { r: ReservaFila; onCambio: (id: string, estado: 
             {r.cancha} · {new Date(r.inicio).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · Bs{' '}
             {r.monto.toLocaleString('es-VE')}
           </p>
+          {r.estado === 'CANCELADA' && r.motivoCancelacion ? (
+            <p style={{ fontSize: 11, color: 'var(--pl-danger)', marginTop: 2 }}>{r.motivoCancelacion}</p>
+          ) : null}
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
           <span style={{ fontSize: 11, fontWeight: 700, color: info.tono }}>{info.texto}</span>

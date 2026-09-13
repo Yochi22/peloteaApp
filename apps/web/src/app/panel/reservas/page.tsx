@@ -17,10 +17,10 @@ export default async function ReservasPanelPage({ searchParams }: { searchParams
 
   const [total, filas] = await Promise.all([
     prisma.reserva.count({
-      where: { sedeId: sede.id, estado: { in: ['CONFIRMADA', 'COMPLETADA', 'NO_SHOW'] } },
+      where: { sedeId: sede.id, estado: { in: ['CONFIRMADA', 'COMPLETADA', 'NO_SHOW', 'CANCELADA'] } },
     }),
     prisma.reserva.findMany({
-      where: { sedeId: sede.id, estado: { in: ['CONFIRMADA', 'COMPLETADA', 'NO_SHOW'] } },
+      where: { sedeId: sede.id, estado: { in: ['CONFIRMADA', 'COMPLETADA', 'NO_SHOW', 'CANCELADA'] } },
       orderBy: { inicio: 'desc' },
       skip: (pagina - 1) * POR_PAGINA,
       take: POR_PAGINA,
@@ -37,6 +37,7 @@ export default async function ReservasPanelPage({ searchParams }: { searchParams
     estado: r.estado,
     monto: Number(r.precioTotal),
     esDividida: r.esDividida,
+    motivoCancelacion: r.motivoCancelacion,
   }));
 
   return (
@@ -47,15 +48,15 @@ export default async function ReservasPanelPage({ searchParams }: { searchParams
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 14, flexWrap: 'wrap', gap: 10 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
-            Reservas confirmadas
+            Reservas
           </p>
           <h1 style={{ fontSize: 26, marginTop: 4 }}>Últimas {total}</h1>
         </div>
       </div>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 6 }}>
-        Marca "no llegó" en un turno que ya pasó — afecta la reputación del jugador. Cancelar desde acá es una
-        cancelación del club: si ya se pagó algo, la devolución la hace el club por fuera del sistema (efectivo o
-        pago móvil de vuelta).
+        Incluye canceladas — si el cliente canceló, el abono no se devuelve y ese ingreso sigue contando; si canceló
+        el club, la devolución (si aplica) la hace el club por fuera del sistema. Marca "no llegó" en un turno que
+        ya pasó — afecta la reputación del jugador.
       </p>
 
       <div style={{ marginTop: 20 }}>

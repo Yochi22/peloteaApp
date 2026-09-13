@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert, Pagination } from '@pelotea/ui';
 
@@ -131,6 +131,13 @@ export function ColaAprobacion({
 }) {
   const router = useRouter();
   const [items, setItems] = useState(pendientes);
+
+  // `useState(pendientes)` solo lee el prop al montar — sin esto, el
+  // auto-refresco del panel (ver AutoRefresh.tsx) refresca los datos del
+  // servidor pero esta lista se quedaba congelada con lo que había al
+  // cargar la página. Se sincroniza cada vez que el padre trae datos
+  // nuevos (mismo criterio que ComprobanteForm en /reservas/[id]/comprobante).
+  useEffect(() => setItems(pendientes), [pendientes]);
 
   if (items.length === 0) {
     return <Alert tone="ok">No hay pagos pendientes por revisar.</Alert>;

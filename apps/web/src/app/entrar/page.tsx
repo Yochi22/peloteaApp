@@ -22,7 +22,15 @@ const MENSAJES: Record<string, string> = {
 export default function EntrarPage() {
   const router = useRouter();
   const params = useSearchParams();
-  const next = params.get('next') ?? '/';
+  const nextExplicito = params.get('next');
+
+  // Si no vino un `next` explícito (p.ej. alguien que entra directo a
+  // /entrar en vez de que lo mande /panel con ?next=/panel), un admin/staff
+  // espera terminar en el panel, no en la landing pública.
+  function destino(rol: string): string {
+    if (nextExplicito) return nextExplicito;
+    return ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(rol) ? '/panel' : '/';
+  }
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [desafioId, setDesafioId] = useState<string | null>(null);
@@ -49,7 +57,7 @@ export default function EntrarPage() {
         setDesafioId(body.desafioId);
         return;
       }
-      router.push(next);
+      router.push(destino(body.rol));
       router.refresh();
     } catch {
       setError('Problema de conexión. Intenta de nuevo.');
@@ -74,7 +82,7 @@ export default function EntrarPage() {
         setError(MENSAJES[body.error] ?? 'No se pudo verificar el código.');
         return;
       }
-      router.push(next);
+      router.push(destino(body.rol));
       router.refresh();
     } catch {
       setError('Problema de conexión. Intenta de nuevo.');
@@ -153,7 +161,7 @@ export default function EntrarPage() {
       </form>
 
       <p style={{ marginTop: 18, fontSize: 13, color: 'var(--pl-ink-soft)' }}>
-        ¿No tienes cuenta? <Link href={`/registrarse?next=${encodeURIComponent(next)}`}>Regístrate gratis</Link>
+        ¿No tienes cuenta? <Link href={`/registrarse?next=${encodeURIComponent(nextExplicito ?? '/')}`}>Regístrate gratis</Link>
       </p>
     </main>
   );
