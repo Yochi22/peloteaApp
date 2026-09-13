@@ -666,6 +666,11 @@ model Notificacion {
   payload   Json
   estado    EstadoNotificacion @default(PENDIENTE)
   enviadaEn DateTime?
+  // Solo aplica a canal IN_APP — "enviada" (estado ENVIADA) no es lo mismo
+  // que "vista": IN_APP se marca ENVIADA de inmediato (no hay envío real),
+  // así que sin esto no había forma de saber qué notificaciones ya vio el
+  // usuario para un contador de "no leídas".
+  leidaEn   DateTime?
   error     String?
   createdAt DateTime           @default(now())
 

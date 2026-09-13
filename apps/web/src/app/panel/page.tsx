@@ -48,6 +48,16 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
     }),
   ]);
 
+  // Antes esto se generaba solo (al cancelar dentro de la ventana crítica) y
+  // se despachaba por push/email, pero nadie del club podía verlas — la
+  // única forma de saber que existían era mirar la base directo.
+  const ofertasActivas = await prisma.oferta.findMany({
+    where: { sedeId: sede.id, estado: 'ACTIVA', ventanaFin: { gt: new Date() } },
+    orderBy: { ventanaFin: 'asc' },
+    take: 10,
+    include: { cancha: true },
+  });
+
   const porCobrar: PorCobrarItem[] = porCobrarRaw.map((r) => ({
     reservaId: r.id,
     persona: r.organizador.nombre,
@@ -140,6 +150,28 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           </div>
           <ColaAprobacion pendientes={pendientes} pagina={pagina} totalPaginas={totalPaginas} />
           <PorCobrar inicial={porCobrar} />
+
+          {ofertasActivas.length > 0 ? (
+            <div style={{ marginTop: 22 }}>
+              <h2 style={{ fontSize: 17, marginBottom: 12 }}>Ofertas de última hora activas</h2>
+              <div style={{ display: 'grid', gap: 10 }}>
+                {ofertasActivas.map((o) => (
+                  <div key={o.id} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 12 }}>
+                    <p style={{ fontWeight: 700, fontSize: 14 }}>
+                      {o.cancha.nombre} · -{o.descuentoPct}%
+                    </p>
+                    <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)', marginTop: 2 }}>
+                      {o.inicioObjetivo.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · Bs{' '}
+                      {Number(o.precioFinal).toLocaleString('es-VE')} · {o.tomada}/{o.cupo} cupos
+                    </p>
+                    <p style={{ fontSize: 11, color: 'var(--pl-warn)', marginTop: 2 }}>
+                      Vence {o.ventanaFin.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            </div>
+          ) : null}
         </div>
       </div>
     </main>

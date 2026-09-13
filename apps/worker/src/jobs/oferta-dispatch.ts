@@ -37,10 +37,10 @@ export async function procesarOfertaDispatch(_job: Job): Promise<void> {
     if (!cancha) continue;
     if (filtros.deportes?.length && !filtros.deportes.includes(cancha.deporte)) continue;
 
+    // Todo jugador con perfil recibe la notificación IN_APP (pasiva, sin
+    // opt-in) — push/email quedan atrás del opt-in de cada quien porque esos
+    // sí interrumpen.
     const candidatos = await prisma.perfilJugador.findMany({
-      where: {
-        OR: [{ recibeOfertasPush: true }, { recibeOfertasEmail: true }],
-      },
       select: { usuarioId: true, recibeOfertasPush: true, recibeOfertasEmail: true },
       take: 500,
     });
@@ -49,7 +49,13 @@ export async function procesarOfertaDispatch(_job: Job): Promise<void> {
       oferta.tipo === 'LAST_MINUTE' ? PLANTILLAS_NOTIFICACION.OFERTA_LAST_MINUTE : PLANTILLAS_NOTIFICACION.OFERTA_EXPRES;
 
     for (const c of candidatos) {
-      const canales: Array<'WEB_PUSH' | 'EMAIL'> = [
+      // IN_APP siempre, sin importar el opt-in — es el canal pasivo (el
+      // jugador lo ve si entra a revisar, nunca lo interrumpe), así que no
+      // tiene el mismo riesgo de spam que push/email. Antes esto era el
+      // único hueco real: la oferta se creaba en la base pero nadie la veía
+      // nunca, ni el jugador ni el admin, porque ninguna pantalla la leía.
+      const canales: Array<'WEB_PUSH' | 'EMAIL' | 'IN_APP'> = [
+        'IN_APP',
         ...(c.recibeOfertasPush ? (['WEB_PUSH'] as const) : []),
         ...(c.recibeOfertasEmail ? (['EMAIL'] as const) : []),
       ];

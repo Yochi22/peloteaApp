@@ -70,6 +70,7 @@ export const MONEDA_DEFAULT = 'VES';
 export const PLANTILLAS_NOTIFICACION = {
   RESERVA_CONFIRMADA: 'reserva.confirmada',
   RESERVA_RECHAZADA: 'reserva.rechazada',
+  RESERVA_CANCELADA: 'reserva.cancelada',
   COMPROBANTE_RECIBIDO: 'reserva.comprobante_recibido',
   RESERVA_POR_EXPIRAR: 'reserva.por_expirar',
   RECORDATORIO: 'reserva.recordatorio',
@@ -83,6 +84,7 @@ export const PLANTILLAS_NOTIFICACION = {
 export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMAIL' | 'IN_APP' | 'WHATSAPP'>> = {
   'reserva.confirmada': ['WHATSAPP', 'IN_APP'],
   'reserva.rechazada': ['WHATSAPP', 'IN_APP'],
+  'reserva.cancelada': ['WHATSAPP', 'IN_APP'],
   'reserva.comprobante_recibido': ['IN_APP'],
   'reserva.por_expirar': ['WHATSAPP', 'IN_APP'],
   'reserva.recordatorio': ['WHATSAPP', 'IN_APP'],

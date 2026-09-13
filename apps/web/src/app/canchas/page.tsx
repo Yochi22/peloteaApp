@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, SUPERFICIE_TOKEN, DEPORTES, type Deporte, type Superficie } from '@pelotea/shared';
 import { getSedeActivaONull } from '@/lib/sede';
+import { getSesionServer } from '@/lib/session-server';
 
 export const dynamic = 'force-dynamic';
 
@@ -26,6 +27,10 @@ function CourtSvg({ bg }: { bg: string }) {
 export default async function CanchasPage({ searchParams }: { searchParams: Promise<{ deporte?: string }> }) {
   const { deporte: deporteFiltro } = await searchParams;
   const sede = await getSedeActivaONull();
+  const sesion = await getSesionServer();
+  const notisSinLeer = sesion
+    ? await prisma.notificacion.count({ where: { usuarioId: sesion.usuarioId, canal: 'IN_APP', leidaEn: null } })
+    : 0;
 
   if (!sede) {
     return (
@@ -59,8 +64,33 @@ export default async function CanchasPage({ searchParams }: { searchParams: Prom
           </svg>
           <strong style={{ fontFamily: 'var(--pl-font-display)', fontSize: 20 }}>Pelotea</strong>
         </Link>
-        <nav>
-          <Link href="/entrar">Entrar</Link>
+        <nav style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
+          {sesion ? (
+            <Link href="/notificaciones" style={{ position: 'relative' }}>
+              Notificaciones
+              {notisSinLeer > 0 ? (
+                <span
+                  style={{
+                    position: 'absolute',
+                    top: -6,
+                    right: -14,
+                    background: 'var(--pl-clay)',
+                    color: '#fff',
+                    borderRadius: 999,
+                    fontSize: 10,
+                    fontWeight: 700,
+                    padding: '1px 5px',
+                    minWidth: 16,
+                    textAlign: 'center',
+                  }}
+                >
+                  {notisSinLeer}
+                </span>
+              ) : null}
+            </Link>
+          ) : (
+            <Link href="/entrar">Entrar</Link>
+          )}
         </nav>
       </header>
 

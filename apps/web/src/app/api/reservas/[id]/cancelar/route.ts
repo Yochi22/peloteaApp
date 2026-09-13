@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { prisma } from '@pelotea/db';
-import { cancelarReservaSchema, transicionar, debeGenerarLastMinute } from '@pelotea/shared';
+import { cancelarReservaSchema, transicionar, debeGenerarLastMinute, PLANTILLAS_NOTIFICACION } from '@pelotea/shared';
 import { guard } from '@/lib/guard';
 import { getSesion } from '@/lib/session';
 import { puedeAccederReserva } from '@/lib/acceso-reserva';
@@ -111,6 +111,17 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
           ofertaId = oferta.id;
         }
       }
+
+      // Avisar al organizador — antes cancelar no avisaba a NADIE, ni
+      // siquiera cuando el club cancelaba la reserva de otra persona.
+      const porElClub = esStaffDeLaSede || esPlataforma;
+      const payloadNotificacion = { reservaId, motivo: motivo ?? null, porElClub };
+      await tx.notificacion.createMany({
+        data: [
+          { usuarioId: reserva.organizadorId, canal: 'WHATSAPP', plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CANCELADA, payload: payloadNotificacion },
+          { usuarioId: reserva.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CANCELADA, payload: payloadNotificacion },
+        ],
+      });
 
       await tx.auditLog.create({
         data: {
