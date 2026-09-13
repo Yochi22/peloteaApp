@@ -26,7 +26,14 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/web build
+    # `NODE_ENV=development` SOLO en el install: con el `NODE_ENV=production`
+    # del servicio (abajo), pnpm salta TODAS las devDependencies del
+    # monorepo — incluye `typescript` de `apps/web`, que Next.js necesita
+    # para resolver los alias `@/*` de tsconfig.json (sin eso el build tira
+    # "Module not found" en cualquier import `@/lib/...`, aunque el archivo
+    # exista). El resto de la cadena sigue heredando el NODE_ENV real del
+    # servicio para que el build de Next quede optimizado para producción.
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/web build
     # `preDeployCommand` no existe en el plan free de Render — la migración
     # (`migrate deploy`, no `migrate dev`: no interactiva) va pegada al
     # arranque en su lugar. Es segura de repetir: solo aplica lo pendiente,
@@ -76,7 +83,9 @@ services:
     plan: free
     region: oregon
     branch: main
-    buildCommand: corepack enable && pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/worker build
+    # Mismo motivo que en pelotea-web: sin esto, pnpm salta @types/node (dev)
+    # y `tsc` falla con TS2688 al no encontrar los tipos de Node.
+    buildCommand: corepack enable && NODE_ENV=development pnpm install --frozen-lockfile && pnpm db:generate && pnpm --filter @pelotea/worker build
     startCommand: pnpm --filter @pelotea/worker start
     healthCheckPath: /health
     envVars:
