@@ -84,6 +84,9 @@ export default async function ReservasPanelPage({
           </p>
           <h1 style={{ fontSize: 26, marginTop: 4 }}>{total} en el rango</h1>
         </div>
+        <Link href="/panel/agenda" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+          Ver agenda del día →
+        </Link>
       </div>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 6 }}>
         Incluye canceladas — si el cliente canceló, el abono no se devuelve y ese ingreso sigue contando; si canceló

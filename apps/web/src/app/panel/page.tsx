@@ -122,6 +122,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         <Link href="/panel/reservas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass)' }}>
           Reservas
         </Link>
+        <Link href="/panel/agenda" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass-deep)' }}>
+          Agenda del día
+        </Link>
         <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
           Tasa de cambio
         </Link>
