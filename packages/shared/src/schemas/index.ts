@@ -260,6 +260,9 @@ export const crearCanchaSchema = z
     superficie: superficieSchema,
     techada: z.boolean().default(false),
     capacidad: z.number().int().min(1).max(60).default(4),
+    // Cuántas canchas físicas idénticas agrupa esta fila (pool por
+    // disciplina) — 1 = una cancha real de toda la vida, ver Cancha.cantidad.
+    cantidad: z.number().int().min(1).max(50).default(1),
   })
   .and(duracionesSchema);
 export type CrearCanchaInput = z.infer<typeof crearCanchaSchema>;
@@ -271,6 +274,7 @@ export const actualizarCanchaSchema = z
     superficie: superficieSchema.optional(),
     techada: z.boolean().optional(),
     capacidad: z.number().int().min(1).max(60).optional(),
+    cantidad: z.number().int().min(1).max(50).optional(),
     duracionTurnoMin: z.number().int().min(15).max(240).optional(),
     duracionMaximaMin: z.number().int().min(15).max(480).optional(),
     activa: z.boolean().optional(),

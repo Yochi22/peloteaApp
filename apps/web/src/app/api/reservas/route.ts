@@ -128,19 +128,40 @@ export async function POST(req: NextRequest) {
         },
       });
 
-      // Toma el HOLD: una fila por unidad base. Si CUALQUIER unidad ya está
-      // tomada → P2002 (unique canchaId+inicio) y la transacción entera se
-      // revierte — no queda un HOLD "a medias" sobre parte del rango.
-      await tx.slotLock.createMany({
-        data: precio.inicios.map((inicioUnidad) => ({
+      // Toma el HOLD: una fila por unidad base. `Cancha.cantidad` puede
+      // agrupar varias canchas físicas idénticas ("pool" — ver
+      // Cancha.cantidad en el schema), así que por cada hora hay que
+      // reclamar un `unidad` (1..cantidad) que esté libre a ESA hora, no
+      // asumir que siempre es la 1. Si no queda ninguna libre (alguien se
+      // adelantó) o dos requests concurrentes eligen la misma → P2002 (unique
+      // canchaId+inicio+unidad) y la transacción entera se revierte — no
+      // queda un HOLD "a medias" sobre parte del rango.
+      const dataLocks = [];
+      for (const inicioUnidad of precio.inicios) {
+        const tomados = await tx.slotLock.findMany({
+          where: { canchaId, inicio: inicioUnidad, expiraEn: { gt: new Date() } },
+          select: { unidad: true },
+        });
+        const usados = new Set(tomados.map((t) => t.unidad));
+        let unidad = 0;
+        for (let u = 1; u <= cancha.cantidad; u++) {
+          if (!usados.has(u)) {
+            unidad = u;
+            break;
+          }
+        }
+        if (!unidad) throw new HttpError(409, 'slot_ocupado');
+        dataLocks.push({
           sedeId: sede.id,
           canchaId,
           inicio: inicioUnidad,
           fin: new Date(inicioUnidad.getTime() + cancha.duracionTurnoMin * 60_000),
+          unidad,
           reservaId: nueva.id,
           expiraEn: nueva.holdExpiraEn!,
-        })),
-      });
+        });
+      }
+      await tx.slotLock.createMany({ data: dataLocks });
 
       let cuotas: Array<{ id: string; monto: number; esOrganizador: boolean; inviteToken: string | null }> = [];
       if (dividir) {

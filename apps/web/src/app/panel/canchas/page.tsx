@@ -59,6 +59,7 @@ export default async function CanchasPanelPage() {
                 <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)', marginTop: 2 }}>
                   {DEPORTE_LABEL[c.deporte as Deporte]} · {c.techada ? 'techada' : 'al aire libre'} · cupo{' '}
                   {c.capacidad}
+                  {c.cantidad > 1 ? ` · ${c.cantidad} canchas` : ''}
                   {c._count.plantillas === 0 ? ' · sin horario configurado' : ''}
                 </p>
               </div>

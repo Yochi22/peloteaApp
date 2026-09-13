@@ -49,6 +49,7 @@ export async function POST(req: NextRequest) {
       superficie: datos.superficie,
       techada: datos.techada,
       capacidad: datos.capacidad,
+      cantidad: datos.cantidad,
       duracionTurnoMin: datos.duracionTurnoMin,
       duracionMaximaMin: datos.duracionMaximaMin,
       orden: (ultima?.orden ?? -1) + 1,

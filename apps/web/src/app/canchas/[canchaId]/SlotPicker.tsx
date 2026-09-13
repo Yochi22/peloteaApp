@@ -41,6 +41,7 @@ export function SlotPicker({
   autenticado,
   duracionTurnoMin,
   politicaAbono,
+  cantidadCancha,
 }: {
   canchaId: string;
   slots: SlotDisponible[];
@@ -53,6 +54,8 @@ export function SlotPicker({
   autenticado: boolean;
   duracionTurnoMin: number;
   politicaAbono: PoliticaAbono;
+  /** Cancha.cantidad — solo si es > 1 mostramos "N libres" por horario (pool). */
+  cantidadCancha: number;
 }) {
   const hayConversion = monedaRef !== 'VES';
   const sinTasa = hayConversion && tasaCambio === null;
@@ -219,6 +222,11 @@ export function SlotPicker({
                 <span style={{ fontSize: 11, fontWeight: 700, textTransform: 'uppercase', opacity: 0.85 }}>
                   {formatoHora(s.inicioISO)} {s.estado === 'oferta' ? `· -${s.descuentoPct}%` : ''}
                 </span>
+                {cantidadCancha > 1 && s.estado !== 'ocupado' ? (
+                  <span style={{ fontSize: 10, opacity: 0.75 }}>
+                    {s.cuposLibres} de {cantidadCancha} libres
+                  </span>
+                ) : null}
                 {s.estado === 'ocupado' ? (
                   <span>Ocupado</span>
                 ) : hayConversion && s.precioRef !== null ? (

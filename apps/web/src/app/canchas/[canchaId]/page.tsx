@@ -38,6 +38,7 @@ export default async function CanchaPage({ params }: { params: Promise<{ canchaI
           <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 3 }}>
             {DEPORTE_LABEL[cancha.deporte as Deporte]} · {cancha.techada ? 'techada' : 'al aire libre'} ·{' '}
             {cancha.duracionTurnoMin} min por turno
+            {cancha.cantidad > 1 ? ` · ${cancha.cantidad} canchas` : ''}
           </p>
         </div>
       </div>
@@ -56,6 +57,7 @@ export default async function CanchaPage({ params }: { params: Promise<{ canchaI
             duracionMinMin: cancha.sede.pagoParcialDuracionMinMin,
             horasAdelanto: cancha.sede.pagoParcialHorasAdelanto,
           }}
+          cantidadCancha={cancha.cantidad}
         />
       </div>
     </main>

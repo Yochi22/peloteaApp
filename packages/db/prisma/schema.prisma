@@ -341,6 +341,14 @@ model Cancha {
   superficie      Superficie
   techada         Boolean    @default(false)
   capacidad       Int        @default(4)
+  // Cuántas canchas físicas idénticas hay de este "tipo" (ej. "Vóleibol
+  // arena" con cantidad=6) — al cliente no le importa CUÁL específica, solo
+  // que haya cupo libre para esa disciplina a esa hora; el admin asigna la
+  // cancha física cuando la gente llega. Default 1 = comportamiento de
+  // siempre (una fila = una cancha real) para no romper nada ya creado;
+  // subirlo agrupa varias canchas idénticas en una sola fila. Ver
+  // SlotLock.unidad — así es como se reparte el cupo sin fijar cuál físico.
+  cantidad        Int        @default(1)
   // Unidad base de reserva (p.ej. 60 = "por hora") y el máximo que se puede
   // encadenar en una sola reserva (p.ej. 180 = hasta 3 horas). El cliente
   // elige cuántas unidades quiere; el precio y el abono (Sede.pagoParcial*)
@@ -505,12 +513,23 @@ model SlotLock {
   cancha    Cancha   @relation(fields: [canchaId], references: [id], onDelete: Cascade)
   inicio    DateTime
   fin       DateTime
+  // Qué "cupo" de Cancha.cantidad ocupa este lock (1..cantidad) — nunca
+  // representa una cancha física puntual, es solo lo que hace falta para
+  // que dos reservas no se pisen más allá de la capacidad real. Con
+  // cantidad=1 (el default de siempre) esto es invariablemente 1, así que
+  // el comportamiento de una cancha "de toda la vida" no cambia en nada.
+  unidad    Int      @default(1)
   reservaId String
   reserva   Reserva  @relation(fields: [reservaId], references: [id], onDelete: Cascade)
   expiraEn  DateTime // para HOLD; en CONFIRMADA se extiende hasta el fin real de la reserva
   createdAt DateTime @default(now())
 
-  @@unique([canchaId, inicio]) // impide doble reserva de la misma unidad base
+  // Antes era @@unique([canchaId, inicio]) — impedía una sola reserva por
+  // unidad de tiempo sin importar cuántas canchas físicas hubiera. Ahora
+  // permite hasta `cantidad` locks concurrentes por (canchaId, inicio), uno
+  // por cada `unidad` distinta — ver cómo se reparte en precio-reserva.ts.
+  @@unique([canchaId, inicio, unidad])
+  @@index([canchaId, inicio])
   @@index([reservaId])
   @@index([expiraEn])
   @@map("slot_lock")

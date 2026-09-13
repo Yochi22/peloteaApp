@@ -12,6 +12,8 @@ export interface SlotDisponible {
   estado: 'libre' | 'ocupado' | 'oferta' | 'revision';
   ofertaId?: string;
   descuentoPct?: number;
+  /** Cuántas de las `Cancha.cantidad` unidades siguen libres a esta hora. */
+  cuposLibres: number;
   /**
    * Cuántas unidades base consecutivas y libres hay a partir de este slot
    * (incluyéndolo), tope `duracionMaximaMin / duracionTurnoMin`. Con esto la
@@ -58,7 +60,13 @@ export async function slotsDisponibles(canchaId: string, dias = 7): Promise<Disp
     activa: r.activa,
   }));
 
-  const ocupados = new Set(locks.map((l) => l.inicio.getTime()));
+  // Cuántos `unidad` de SlotLock hay tomados por horario — con
+  // `cantidad` canchas idénticas de este tipo, un horario solo está
+  // "ocupado" cuando TODAS las unidades están tomadas, no con una sola.
+  const tomadosPorInicio = new Map<number, number>();
+  for (const l of locks) {
+    tomadosPorInicio.set(l.inicio.getTime(), (tomadosPorInicio.get(l.inicio.getTime()) ?? 0) + 1);
+  }
   const ofertaPorInicio = new Map(ofertas.filter((o) => o.tomada < o.cupo).map((o) => [o.inicioObjetivo.getTime(), o]));
 
   const slots: SlotDisponible[] = [];
@@ -91,7 +99,9 @@ export async function slotsDisponibles(canchaId: string, dias = 7): Promise<Disp
         // convertirlo.
         let precioRef: number | null = total;
         let precioBs = tasa ? round2(total * tasa.tasaVES) : NaN;
-        if (ocupados.has(inicio.getTime())) {
+        const tomados = tomadosPorInicio.get(inicio.getTime()) ?? 0;
+        const cuposLibres = Math.max(0, cancha.cantidad - tomados);
+        if (cuposLibres <= 0) {
           estado = 'ocupado';
         } else if (oferta) {
           estado = 'oferta';
@@ -108,6 +118,7 @@ export async function slotsDisponibles(canchaId: string, dias = 7): Promise<Disp
           ofertaId: oferta?.id,
           descuentoPct: oferta?.descuentoPct ?? undefined,
           unidadesConsecutivas: 1,
+          cuposLibres,
         });
       }
     }

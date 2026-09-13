@@ -24,6 +24,7 @@ export function NuevaCanchaForm() {
   const [superficie, setSuperficie] = useState<Superficie>('CANCHA_DURA');
   const [techada, setTechada] = useState(false);
   const [capacidad, setCapacidad] = useState(4);
+  const [cantidad, setCantidad] = useState(1);
   const [duracionTurnoMin, setDuracionTurnoMin] = useState(60);
   const [duracionMaximaMin, setDuracionMaximaMin] = useState(180);
   const [enviando, setEnviando] = useState(false);
@@ -37,7 +38,7 @@ export function NuevaCanchaForm() {
       const res = await fetch('/api/admin/canchas', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'Idempotency-Key': crypto.randomUUID(), 'x-csrf-token': leerCookie('pl_csrf') ?? '' },
-        body: JSON.stringify({ nombre, deporte, superficie, techada, capacidad, duracionTurnoMin, duracionMaximaMin }),
+        body: JSON.stringify({ nombre, deporte, superficie, techada, capacidad, cantidad, duracionTurnoMin, duracionMaximaMin }),
       });
       const body = await res.json();
       if (!res.ok) {
@@ -112,6 +113,23 @@ export function NuevaCanchaForm() {
           style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 10, font: 'inherit' }}
         />
       </label>
+
+      <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
+        Cantidad de canchas idénticas
+        <input
+          type="number"
+          min={1}
+          max={50}
+          value={cantidad}
+          onChange={(e) => setCantidad(Number(e.target.value))}
+          style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 10, font: 'inherit' }}
+        />
+      </label>
+      <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: -6 }}>
+        Si tienes varias canchas idénticas para esta disciplina (ej. 6 canchas de vóley playa), pon esa cantidad
+        acá en vez de crear una fila por cada una — al cliente no le importa cuál específica, solo que haya cupo.
+        Asignas la cancha física cuando la gente llega.
+      </p>
 
       <div className="pl-form-grid-2" style={{ gap: 10 }}>
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>

@@ -30,6 +30,7 @@ interface CanchaVisible {
   deporte: string;
   superficie: string;
   techada: boolean;
+  cantidad: number;
   _count: { plantillas: number };
 }
 
@@ -58,6 +59,7 @@ function CanchasGrid({ canchas }: { canchas: CanchaVisible[] }) {
               <h3 style={{ fontSize: 18 }}>{c.nombre}</h3>
               <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>
                 {DEPORTE_LABEL[c.deporte as Deporte]} · {c.techada ? 'techada' : 'al aire libre'}
+                {c.cantidad > 1 ? ` · ${c.cantidad} canchas` : ''}
                 {sinHorario ? ' · próximamente' : ''}
               </p>
             </div>

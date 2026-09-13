@@ -24,6 +24,7 @@ export interface CanchaEditable {
   superficie: string;
   techada: boolean;
   capacidad: number;
+  cantidad: number;
   duracionTurnoMin: number;
   duracionMaximaMin: number;
   activa: boolean;
@@ -36,6 +37,7 @@ export function EditarCanchaForm({ cancha }: { cancha: CanchaEditable }) {
   const [superficie, setSuperficie] = useState<Superficie>(cancha.superficie as Superficie);
   const [techada, setTechada] = useState(cancha.techada);
   const [capacidad, setCapacidad] = useState(cancha.capacidad);
+  const [cantidad, setCantidad] = useState(cancha.cantidad);
   const [duracionTurnoMin, setDuracionTurnoMin] = useState(cancha.duracionTurnoMin);
   const [duracionMaximaMin, setDuracionMaximaMin] = useState(cancha.duracionMaximaMin);
   const [activa, setActiva] = useState(cancha.activa);
@@ -69,7 +71,7 @@ export function EditarCanchaForm({ cancha }: { cancha: CanchaEditable }) {
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    guardar({ nombre, deporte, superficie, techada, capacidad, duracionTurnoMin, duracionMaximaMin });
+    guardar({ nombre, deporte, superficie, techada, capacidad, cantidad, duracionTurnoMin, duracionMaximaMin });
   }
 
   return (
@@ -159,6 +161,22 @@ export function EditarCanchaForm({ cancha }: { cancha: CanchaEditable }) {
             style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 10, font: 'inherit' }}
           />
         </label>
+
+        <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
+          Cantidad de canchas idénticas
+          <input
+            type="number"
+            min={1}
+            max={50}
+            value={cantidad}
+            onChange={(e) => setCantidad(Number(e.target.value))}
+            style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 10, font: 'inherit' }}
+          />
+        </label>
+        <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: -6 }}>
+          Bajarla no afecta reservas ya hechas — solo limita cuántas se pueden tomar a la misma hora de ahora en
+          adelante.
+        </p>
 
         <div className="pl-form-grid-2" style={{ gap: 10 }}>
           <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>

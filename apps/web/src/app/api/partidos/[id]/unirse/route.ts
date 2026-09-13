@@ -150,16 +150,38 @@ async function autoReservarPartido(partidoId: string): Promise<string | null> {
 
     // Si alguien más tomó ese turno entre que se llenó el partido y este
     // momento, esto tira P2002 y la función entera se revierte (queda null).
-    await tx.slotLock.createMany({
-      data: inicios.map((inicioUnidad) => ({
+    // Mismo reparto por `unidad` que en /api/reservas — con `cantidad` > 1
+    // (pool de canchas idénticas) no alcanza con asumir la unidad 1.
+    const dataLocks = [];
+    for (const inicioUnidad of inicios) {
+      const tomados = await tx.slotLock.findMany({
+        where: { canchaId: partido.canchaId!, inicio: inicioUnidad, expiraEn: { gt: new Date() } },
+        select: { unidad: true },
+      });
+      const usados = new Set(tomados.map((t) => t.unidad));
+      let unidad = 0;
+      for (let u = 1; u <= cancha.cantidad; u++) {
+        if (!usados.has(u)) {
+          unidad = u;
+          break;
+        }
+      }
+      // Throw (no `return null`): la Reserva ya se creó en esta misma tx —
+      // un `return` acá la dejaría committeada sin SlotLock ni cuotas
+      // (huérfana). Lanzar fuerza el rollback completo; el catch de más
+      // abajo la absorbe igual que un P2002.
+      if (!unidad) throw new HttpError(409, 'slot_ocupado');
+      dataLocks.push({
         sedeId: partido.sedeId,
         canchaId: partido.canchaId!,
         inicio: inicioUnidad,
         fin: new Date(inicioUnidad.getTime() + cancha.duracionTurnoMin * 60_000),
+        unidad,
         reservaId: reserva.id,
         expiraEn: reserva.holdExpiraEn!,
-      })),
-    });
+      });
+    }
+    await tx.slotLock.createMany({ data: dataLocks });
 
     const montos = dividirEnCuotas(total, partido.participantes.length);
     await Promise.all(

@@ -51,6 +51,7 @@ export default async function EditarCanchaPage({ params }: { params: Promise<{ i
           superficie: cancha.superficie,
           techada: cancha.techada,
           capacidad: cancha.capacidad,
+          cantidad: cancha.cantidad,
           duracionTurnoMin: cancha.duracionTurnoMin,
           duracionMaximaMin: cancha.duracionMaximaMin,
           activa: cancha.activa,
