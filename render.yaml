@@ -7,7 +7,7 @@
 # `apps/worker/src/lib/server.ts`): se duerme tras ~15 min sin tráfico
 # (aceptable en una demo). Redis y el almacenamiento de comprobantes
 # (S3/MinIO) NO tienen equivalente gratis nativo en Render — se conectan a
-# servicios externos gratuitos (Upstash para Redis, Cloudflare R2 para S3)
+# servicios externos gratuitos (Upstash para Redis, Backblaze B2 para S3)
 # cuyas credenciales se pegan a mano en el dashboard de Render (variables
 # marcadas `sync: false`). Detalle completo en RENDER.md.
 #
@@ -49,7 +49,7 @@ services:
       # Usar la URL `rediss://` (TLS) que da Upstash, no `redis://`.
       - key: REDIS_URL
         sync: false
-      # S3/MinIO externo (Cloudflare R2 free tier) — pegar a mano.
+      # S3/MinIO externo (Backblaze B2 free tier) — pegar a mano.
       - key: S3_ENDPOINT
         sync: false
       - key: S3_REGION

@@ -13,8 +13,10 @@ Render no tiene, en su plan free:
   locks de slot, rate-limit e idempotencia. Solución: **Upstash** (Redis
   serverless, plan free con ~10k comandos/día — de sobra para una demo).
 - **Almacenamiento S3-compatible** (para los comprobantes) — no hay MinIO
-  gestionado en Render. Solución: **Cloudflare R2** (free hasta 10 GB, API
-  compatible con S3, el proyecto ya usa `@aws-sdk/client-s3`).
+  gestionado en Render. Solución: **Backblaze B2** (free hasta 10 GB, sin
+  pedir tarjeta para la cuenta, con una API "S3 compatible" que el proyecto
+  ya sabe hablar vía `@aws-sdk/client-s3`). Cloudflare R2 es la alternativa
+  si prefieres esa — mismo formato de variables, solo cambia el endpoint.
 - **Background Workers de verdad** — el tipo "Background Worker" de Render
   solo existe en planes pagos. Se resuelve corriendo `apps/worker` como un
   **Web Service** free más (`pelotea-worker` en `render.yaml`): le agregué
@@ -26,10 +28,12 @@ Render no tiene, en su plan free:
 
 ## Pasos
 
-1. **Cloudflare R2** (gratis): crear un bucket (p.ej. `pelotea-comprobantes`),
-   generar un API token con permiso de lectura/escritura sobre ese bucket.
-   Anotar: endpoint (`https://<account-id>.r2.cloudflarestorage.com`),
-   access key, secret key, nombre del bucket.
+1. **Backblaze B2** (gratis, sin tarjeta): crear cuenta en backblaze.com →
+   "Create a Bucket" (p.ej. `pelotea-comprobantes`, privado) → en
+   "Account" → "App Keys" → "Add a New Application Key", restringido a ese
+   bucket. Anotar: `keyID` (= access key), `applicationKey` (= secret key),
+   y el endpoint S3 que Backblaze muestra en la vista del bucket (algo como
+   `https://s3.us-west-004.backblazeb2.com` — el número de región varía).
 2. **Upstash** (gratis): crear una base Redis, copiar la `REDIS_URL` (con
    `rediss://` — TLS — no `redis://`; `ioredis` detecta TLS solo por ese
    prefijo, no hace falta configurar nada más).
@@ -39,9 +43,10 @@ Render no tiene, en su plan free:
 4. Antes de confirmar el deploy, completar en el dashboard las variables
    marcadas `sync: false`:
    - En `pelotea-web`: `REDIS_URL` (de Upstash),
-     `S3_ENDPOINT`/`S3_ACCESS_KEY`/`S3_SECRET_KEY`/`S3_BUCKET` (de R2), y
-     `S3_PUBLIC_ORIGIN` si se expone el bucket con dominio público (si no,
-     dejar vacío — los comprobantes solo se ven por URL firmada, ver
+     `S3_ENDPOINT`/`S3_ACCESS_KEY`/`S3_SECRET_KEY`/`S3_BUCKET` (de
+     Backblaze B2), y `S3_PUBLIC_ORIGIN` si se expone el bucket con dominio
+     público (si no, dejar vacío — los comprobantes solo se ven por URL
+     firmada, ver
      SECURITY.md §2.8).
    - En `pelotea-worker`: la misma `REDIS_URL` de Upstash, y
      `WHATSAPP_ADMIN_NUMBER` (el número del club, formato venezolano).
