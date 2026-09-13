@@ -7,6 +7,7 @@ import { ComprobanteForm } from './ComprobanteForm';
 import { SplitResumen } from './SplitResumen';
 import { CompletarCuentaForm } from './CompletarCuentaForm';
 import { CancelarReserva } from './CancelarReserva';
+import { CompartirReserva } from './CompartirReserva';
 
 export const dynamic = 'force-dynamic';
 
@@ -117,6 +118,10 @@ export default async function ComprobantePage({
         Un humano del club revisa cada comprobante antes de confirmar — subirlo no aprueba el pago
         automáticamente. Te avisamos por WhatsApp en cuanto lo revisen.
       </p>
+
+      {esInvitadoSinCuenta && token ? (
+        <CompartirReserva link={`${process.env.APP_BASE_URL ?? ''}/reservas/${reserva.id}/comprobante?token=${token}`} />
+      ) : null}
 
       {esInvitadoSinCuenta && token ? (
         <div style={{ marginTop: 28, display: 'grid', gap: 16 }}>
