@@ -94,31 +94,17 @@ export default async function ReservasPanelPage({
         ya pasó — afecta la reputación del jugador.
       </p>
 
-      <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'flex-end', marginTop: 18 }}>
-        <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
-          Desde
-          <input type="date" name="desde" defaultValue={fmt(desde)} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 8, font: 'inherit', fontSize: 13 }} />
-        </label>
-        <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
-          Hasta
-          <input
-            type="date"
-            name="hasta"
-            defaultValue={fmt(new Date(hasta.getTime() - 1))}
-            style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 8, font: 'inherit', fontSize: 13 }}
-          />
-        </label>
-        <label style={{ display: 'grid', gap: 4, fontSize: 12, fontWeight: 600 }}>
-          Categoría
-          <select name="deporte" defaultValue={deporteFiltro ?? ''} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 8, font: 'inherit', fontSize: 13 }}>
-            <option value="">Todas</option>
-            {deportesConCancha.map((d) => (
-              <option key={d} value={d}>
-                {DEPORTE_LABEL[d as Deporte]}
-              </option>
-            ))}
-          </select>
-        </label>
+      <form method="get" style={{ display: 'flex', gap: 10, flexWrap: 'wrap', alignItems: 'center', marginTop: 18 }}>
+        {deporteFiltro ? <input type="hidden" name="deporte" value={deporteFiltro} /> : null}
+        <input type="date" name="desde" defaultValue={fmt(desde)} className="pl-date-input" aria-label="Desde" />
+        <span style={{ color: 'var(--pl-ink-soft)', fontSize: 13 }}>–</span>
+        <input
+          type="date"
+          name="hasta"
+          defaultValue={fmt(new Date(hasta.getTime() - 1))}
+          className="pl-date-input"
+          aria-label="Hasta"
+        />
         <button className="pl-btn" type="submit" style={{ padding: '9px 16px' }}>
           Filtrar
         </button>
@@ -128,6 +114,23 @@ export default async function ReservasPanelPage({
           </Link>
         ) : null}
       </form>
+
+      {deportesConCancha.length > 1 ? (
+        <div className="pl-pill-row" style={{ marginTop: 10 }}>
+          <Link href={`/panel/reservas?desde=${fmt(desde)}&hasta=${fmt(new Date(hasta.getTime() - 1))}`} className={!deporteFiltro ? 'pl-pill pl-pill--active' : 'pl-pill'}>
+            Todas
+          </Link>
+          {deportesConCancha.map((d) => (
+            <Link
+              key={d}
+              href={`/panel/reservas?desde=${fmt(desde)}&hasta=${fmt(new Date(hasta.getTime() - 1))}&deporte=${d}`}
+              className={deporteFiltro === d ? 'pl-pill pl-pill--active' : 'pl-pill'}
+            >
+              {DEPORTE_LABEL[d as Deporte]}
+            </Link>
+          ))}
+        </div>
+      ) : null}
 
       <div style={{ marginTop: 20 }}>
         <ListaReservas reservas={reservas} pagina={pagina} totalPaginas={Math.max(1, Math.ceil(total / POR_PAGINA))} />
