@@ -86,6 +86,8 @@ export function HorarioEditor({
 
   return (
     <div style={{ marginTop: 16 }}>
+    <div className="pl-scroll-x">
+    <div style={{ minWidth: hayConversion ? 520 : 420 }}>
       {dias.map((d) => (
         <div
           key={d.diaSemana}
@@ -139,6 +141,8 @@ export function HorarioEditor({
           ) : null}
         </div>
       ))}
+    </div>
+    </div>
 
       <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: 8 }}>
         Hora de apertura · hora de cierre · tarifa base{hayConversion ? ` en ${monedaPrecio}` : ' en Bs'} por unidad

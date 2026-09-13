@@ -65,7 +65,7 @@ export function NuevaCanchaForm() {
         />
       </label>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="pl-form-grid-2" style={{ gap: 10 }}>
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
           Deporte
           <select
@@ -113,7 +113,7 @@ export function NuevaCanchaForm() {
         />
       </label>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10 }}>
+      <div className="pl-form-grid-2" style={{ gap: 10 }}>
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
           Unidad de turno (min)
           <input

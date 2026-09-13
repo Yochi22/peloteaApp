@@ -165,7 +165,7 @@ export function SlotPicker({
   }
 
   return (
-    <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 340px', gap: 24 }}>
+    <div className="pl-slot-layout">
       <div>
         <nav style={{ display: 'flex', gap: 8, marginBottom: 18, overflowX: 'auto' }} aria-label="Elegir día">
           {dias.map((d, i) => (
@@ -235,7 +235,7 @@ export function SlotPicker({
         </div>
       </div>
 
-      <aside style={{ borderLeft: '1.5px solid var(--pl-line)', paddingLeft: 24 }}>
+      <aside className="pl-slot-aside">
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
           Tu reserva
         </p>

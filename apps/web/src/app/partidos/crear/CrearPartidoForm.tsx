@@ -104,7 +104,7 @@ export function CrearPartidoForm({
         </label>
       ) : null}
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="pl-form-grid-2" style={{ gap: 12 }}>
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
           Fecha
           <input type="date" required value={form.fecha} onChange={(e) => setForm({ ...form, fecha: e.target.value })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }} />
@@ -126,7 +126,7 @@ export function CrearPartidoForm({
         </select>
       </label>
 
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+      <div className="pl-form-grid-2" style={{ gap: 12 }}>
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
           Cupos totales
           <input type="number" min={2} max={12} value={form.cuposTotales} onChange={(e) => setForm({ ...form, cuposTotales: Number(e.target.value) })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }} />

@@ -34,7 +34,8 @@ export function Heatmap({ datos }: { datos: Array<{ dia: number; hora: number; t
 
   return (
     <div style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 16, background: 'var(--pl-bg-raised)' }}>
-      <div style={{ display: 'grid', gridTemplateColumns: '64px repeat(7, 1fr)', gap: 5, fontSize: 11, color: 'var(--pl-ink-soft)' }}>
+      <div className="pl-scroll-x">
+      <div style={{ display: 'grid', gridTemplateColumns: '64px repeat(7, minmax(36px, 1fr))', gap: 5, fontSize: 11, color: 'var(--pl-ink-soft)', minWidth: 460 }}>
         <span />
         {DIAS.map((d) => (
           <span key={d} style={{ textAlign: 'center', fontWeight: 700 }}>
@@ -55,6 +56,7 @@ export function Heatmap({ datos }: { datos: Array<{ dia: number; hora: number; t
             ))}
           </Fragment>
         ))}
+      </div>
       </div>
       <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginTop: 14, fontSize: 11, color: 'var(--pl-ink-soft)' }}>
         <span>Vacío</span>

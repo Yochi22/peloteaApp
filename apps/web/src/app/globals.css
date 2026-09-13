@@ -81,3 +81,77 @@ button {
   color: var(--pl-ink);
   border: 2px solid var(--pl-ink);
 }
+
+/* ── Responsive: reservar cancha ──────────────────────────────────────────
+   La pantalla de reserva (SlotPicker) es la más visitada de toda la app —
+   antes usaba una columna lateral fija de 340px sin ningún fallback, así
+   que en un teléfono el contenido principal quedaba con casi 0px de ancho.
+   Por debajo de 860px se apila: el resumen de la reserva pasa abajo del
+   todo, como una tarjeta normal en vez de sidebar. */
+.pl-slot-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+}
+.pl-slot-aside {
+  border-left: 1.5px solid var(--pl-line);
+  padding-left: 24px;
+}
+@media (max-width: 860px) {
+  .pl-slot-layout {
+    grid-template-columns: 1fr;
+  }
+  .pl-slot-aside {
+    border-left: 0;
+    padding-left: 0;
+    border-top: 1.5px solid var(--pl-line);
+    padding-top: 20px;
+    margin-top: 4px;
+  }
+}
+
+/* Formularios de dos columnas (canchas, partidos, 2FA): una sola columna
+   en pantallas angostas — dos inputs de 1fr cada uno se vuelven ilegibles
+   por debajo de ~420px de ancho real de columna. */
+.pl-form-grid-2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+@media (max-width: 480px) {
+  .pl-form-grid-2 {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Tablas/grillas anchas (horario semanal, heatmap): scroll horizontal
+   propio en vez de romper el ancho de toda la página. */
+.pl-scroll-x {
+  overflow-x: auto;
+}
+
+/* Panel del dueño: heatmap + cola de aprobación en dos columnas en desktop,
+   apiladas en mobile (misma columna fija sin fallback que rompía SlotPicker). */
+.pl-panel-split {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 20px;
+}
+@media (max-width: 900px) {
+  .pl-panel-split {
+    grid-template-columns: 1fr;
+  }
+}
+
+/* Registro con panel de beneficios al lado: apilado en mobile. */
+.pl-register-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 300px;
+  gap: 32px;
+}
+@media (max-width: 720px) {
+  .pl-register-layout {
+    grid-template-columns: 1fr;
+  }
+}
+

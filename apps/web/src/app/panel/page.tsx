@@ -125,7 +125,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         <Kpi etiqueta="Recuperado (ofertas)" valor={`Bs ${metricas.recuperadoOfertas.toLocaleString('es-VE')}`} tono="ok" />
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) 380px', gap: 20, marginTop: 22 }}>
+      <div className="pl-panel-split" style={{ marginTop: 22 }}>
         <div>
           <h2 style={{ fontSize: 17, marginBottom: 12 }}>Mapa de calor — horas más vacías</h2>
           <Heatmap datos={metricas.heatmap} />
