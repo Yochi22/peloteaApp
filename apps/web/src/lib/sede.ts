@@ -10,10 +10,27 @@ let cache: Sede | null = null;
 
 export async function getSedeActiva(): Promise<Sede> {
   if (cache) return cache;
+  const sede = await getSedeActivaONull();
+  if (!sede) {
+    throw new Error(
+      `No existe la sede "${process.env.DEFAULT_SEDE_SLUG ?? 'club-piloto'}" todavía — falta pasar por /configurar (o correr el seed).`,
+    );
+  }
+  cache = sede;
+  return sede;
+}
+
+/**
+ * Igual que `getSedeActiva()` pero sin lanzar si todavía no existe — para
+ * páginas públicas que deben poder mostrar un estado vacío en vez de
+ * reventar (p.ej. `/canchas` recién desplegado, antes de pasar por
+ * `/configurar`).
+ */
+export async function getSedeActivaONull(): Promise<Sede | null> {
+  if (cache) return cache;
   const slug = process.env.DEFAULT_SEDE_SLUG ?? 'club-piloto';
   const sede = await prisma.sede.findUnique({ where: { slug } });
-  if (!sede) throw new Error(`No existe la sede "${slug}". Corré el seed.`);
-  cache = sede;
+  if (sede) cache = sede;
   return sede;
 }
 

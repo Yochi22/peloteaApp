@@ -1,7 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, SUPERFICIE_TOKEN, DEPORTES, type Deporte, type Superficie } from '@pelotea/shared';
-import { getSedeActiva } from '@/lib/sede';
+import { getSedeActivaONull } from '@/lib/sede';
 
 export const dynamic = 'force-dynamic';
 
@@ -25,7 +25,17 @@ function CourtSvg({ bg }: { bg: string }) {
 
 export default async function CanchasPage({ searchParams }: { searchParams: Promise<{ deporte?: string }> }) {
   const { deporte: deporteFiltro } = await searchParams;
-  const sede = await getSedeActiva();
+  const sede = await getSedeActivaONull();
+
+  if (!sede) {
+    return (
+      <main className="pl-container" style={{ paddingBlock: 60, textAlign: 'center' }}>
+        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 15 }}>
+          Todavía no hay ningún club configurado en esta instancia. Vuelve pronto.
+        </p>
+      </main>
+    );
+  }
 
   const canchas = await prisma.cancha.findMany({
     where: { sedeId: sede.id, activa: true },

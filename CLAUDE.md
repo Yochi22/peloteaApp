@@ -785,13 +785,47 @@ eliminó `QUEUES.WHATSAPP_OUT`: era una cola declarada en `index.ts` sin
 ningún productor ni consumidor real (WhatsApp se envía directo desde
 `procesarNotificaciones`) — código muerto que parecía infraestructura viva.
 
-Pendiente inmediato: primera migración contra una Postgres real (`pnpm
-infra:up && pnpm db:migrate`, bloqueado en este sandbox por no tener Docker
-disponible — para una demo rápida, ver `RENDER.md`); tests de abuso
+### Configuración inicial sin seed: `/configurar` + fix real de deploy en Render
+
+El usuario no quería depender del seed para arrancar un club — quería crear
+la Sede y su propio usuario/contraseña desde la app. Ese flujo **no
+existía**: `/registrarse` solo crea `JUGADOR`, nunca `SEDE_ADMIN`, y nunca
+crea una `Sede`. Nuevo: `/configurar` (`ConfigurarClubForm.tsx`) +
+`POST /api/setup` — crea la Sede (nombre + datos de pago móvil, opcionales)
+y el primer `SEDE_ADMIN` en una transacción, e inicia sesión de una.
+**Solo funciona una vez**: si ya existe una Sede con `DEFAULT_SEDE_SLUG`,
+la página redirige a `/entrar` y el endpoint rechaza con `ya_configurado`
+— sin este chequeo, cualquiera que encontrara la URL del deploy antes que
+el dueño real podría crearse un admin. `getSedeActivaONull()` (nuevo en
+`lib/sede.ts`) deja que `/canchas` muestre un estado vacío en vez de
+reventar cuando todavía no hay ninguna sede — antes `getSedeActiva()`
+lanzaba y esa página no tenía try/catch.
+
+**Bug real de deploy encontrado al probar en Render de verdad**: el build
+fallaba con `sh: 1: prisma: not found` en los dos servicios. Causa: Render
+exporta `NODE_ENV=production` durante el build, y con eso `pnpm install`
+**salta las devDependencies** — pero el CLI `prisma` (necesario para
+`prisma generate`/`migrate deploy`) vivía en devDependencies de
+`packages/db`. Sacando `prisma` y `tsx` a `dependencies` normales
+(`@types/node`/`typescript` sí pueden quedarse en dev, esos no hacen falta
+en runtime) se resuelve — es el mismo problema que golpea a cualquiera que
+despliegue Prisma en Vercel/Docker con `NODE_ENV=production`. Otro fix de
+la misma ronda: `render.yaml` traía `preDeployCommand`, que **no existe en
+el plan free de Render** — la migración se movió al `startCommand`
+(`prisma migrate deploy && next start`; es idempotente, así que repetirla
+en cada wake-up del free tier no hace nada si ya está al día).
+
+Pendiente inmediato: primera migración contra una Postgres real — ya no
+bloqueada (Render la corre sola al arrancar, ver arriba); tests de abuso
 end-to-end (Playwright: CSRF, doble submit, rate-limit — ya hay unit tests
 de `rate-limit`/`idempotency` con `ioredis-mock` en `packages/security`);
 una pantalla para editar `ReglaPrecio` (recargos peak/off-peak) desde el
-panel — hoy solo se carga por seed/DB directo.
+panel — hoy solo se carga por seed/DB directo; **login con Google/Gmail**
+pedido por el usuario como mejora cercana — necesita que el usuario cree
+un proyecto en Google Cloud Console y dé Client ID/Secret (no se puede
+generar solo); cuando se haga, evaluar Auth.js/next-auth en vez de rodar
+OAuth a mano, ya que la sesión propia actual seguiría sirviendo para
+email/password en paralelo.
 
 ---
 

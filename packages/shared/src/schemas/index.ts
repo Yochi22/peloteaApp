@@ -128,6 +128,22 @@ export const registrarSchema = z.object({
 });
 export type RegistrarInput = z.infer<typeof registrarSchema>;
 
+// ── Configuración inicial: crear la Sede + su primer admin ──────────────────
+// Solo corre una vez (ver /api/setup) — mientras no exista ninguna Sede con
+// el slug de DEFAULT_SEDE_SLUG. Después de eso, todo lo demás (canchas,
+// horarios, tarifas) se configura desde /panel/*, no hace falta el seed.
+
+export const configurarClubSchema = z.object({
+  sedeNombre: z.string().trim().min(2).max(120),
+  pagoMovilBanco: z.string().trim().max(80).optional(),
+  pagoMovilCedulaRif: z.string().trim().max(20).optional(),
+  pagoMovilTelefono: telefonoVeSchema.optional(),
+  adminNombre: z.string().trim().min(2).max(80),
+  adminEmail: emailSchema,
+  adminPassword: z.string().min(10).max(256),
+});
+export type ConfigurarClubInput = z.infer<typeof configurarClubSchema>;
+
 export const entrarSchema = z.object({
   email: emailSchema,
   password: z.string().min(1).max(256),

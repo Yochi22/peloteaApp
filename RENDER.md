@@ -68,21 +68,26 @@ Render no tiene, en su plan free:
      Para una demo puntual no es grave; si molesta, conviene un disco
      persistente (plan pago) o simplemente aceptar re-vincular de vez en
      cuando.
-7. **Seed inicial**: Render Blueprint no corre el seed solo. Desde la Shell
-   del servicio `pelotea-web` en el dashboard de Render, correr una vez:
-   ```bash
-   pnpm --filter @pelotea/db seed
-   ```
-   Esto crea la sede piloto, canchas de ejemplo, usuarios de prueba
-   (`admin@pelotea.app`, `club@pelotea.app`, `jugador@pelotea.app` — sin
-   password hasta que entres por `/registrarse` o completes cuenta) y la
-   tasa de cambio del día. En vez del seed genérico, también se puede armar
-   el inventario real desde `/panel/canchas`.
-8. **Activar 2FA** en la cuenta admin (`/cuenta/2fa`) antes de mostrar el
-   panel a nadie — `SEDE_ADMIN`/`PLATAFORMA_ADMIN` lo exigen para entrar.
-9. **Cargar la tasa de cambio** en `/panel/tasa-cambio` si la sede de demo
-   fija precios en USD/EUR (`Sede.precioMoneda`, configurable en
-   `/panel/configuracion`) — si no, nadie puede reservar.
+7. **Crear tu club de verdad, sin seed**: abre `https://pelotea-web.onrender.com/configurar`
+   — ahí creas el nombre del club, tus datos de pago móvil (opcional, se
+   puede cargar después) y tu cuenta de administrador (nombre, email,
+   contraseña). Esa pantalla **solo funciona la primera vez**: en cuanto
+   existe una Sede, `/configurar` redirige a `/entrar` y el endpoint la
+   rechaza — no hay forma de volver a usarla por error ni de que otra
+   persona se cree un admin después. Te deja la sesión iniciada de una.
+   (El seed genérico — `pnpm --filter @pelotea/db seed` desde la Shell de
+   `pelotea-web` — sigue existiendo si algún día quieres datos de prueba
+   rápidos, pero no hace falta para nada de esto.)
+8. **Activar 2FA**: apenas entres, `/panel` te va a mandar directo a
+   `/cuenta/2fa` — es obligatorio para `SEDE_ADMIN`/`PLATAFORMA_ADMIN`, no
+   hay forma de saltárselo.
+9. **Armar el inventario real** desde `/panel/canchas`: crear cada cancha
+   (deporte, superficie, capacidad, duración de turno) y configurarle el
+   horario semanal con su tarifa — nace sin horario, así que no acepta
+   reservas hasta que la configures.
+10. **Cargar la tasa de cambio** en `/panel/tasa-cambio` si vas a fijar
+    tarifas en USD/EUR (`Sede.precioMoneda`, elegible en
+    `/panel/configuracion`) — si no, nadie puede reservar.
 
 ## Limitaciones a tener presentes en la demo
 
