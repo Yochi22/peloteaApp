@@ -110,8 +110,8 @@ export default async function CanchasPage({ searchParams }: { searchParams: Prom
         </Link>
         <nav style={{ display: 'flex', alignItems: 'center', gap: 14 }}>
           {sesion ? (
-            <Link href="/notificaciones" style={{ position: 'relative' }}>
-              Notificaciones
+            <Link href="/cuenta" style={{ position: 'relative' }}>
+              Mi cuenta
               {notisSinLeer > 0 ? (
                 <span
                   style={{
