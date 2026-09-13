@@ -24,6 +24,50 @@ function CourtSvg({ bg }: { bg: string }) {
   );
 }
 
+interface CanchaVisible {
+  id: string;
+  nombre: string;
+  deporte: string;
+  superficie: string;
+  techada: boolean;
+  _count: { plantillas: number };
+}
+
+function CanchasGrid({ canchas }: { canchas: CanchaVisible[] }) {
+  return (
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
+      {canchas.map((c) => {
+        const sinHorario = c._count.plantillas === 0;
+        return (
+          <Link
+            key={c.id}
+            href={sinHorario ? '#' : `/canchas/${c.id}`}
+            aria-disabled={sinHorario}
+            style={{
+              borderRadius: 16,
+              overflow: 'hidden',
+              border: '1.5px solid var(--pl-line)',
+              textDecoration: 'none',
+              color: 'inherit',
+              opacity: sinHorario ? 0.6 : 1,
+              pointerEvents: sinHorario ? 'none' : 'auto',
+            }}
+          >
+            <CourtSvg bg={TOKEN_COLOR[SUPERFICIE_TOKEN[c.superficie as Superficie]]} />
+            <div style={{ padding: '16px 18px', background: 'var(--pl-bg-raised)' }}>
+              <h3 style={{ fontSize: 18 }}>{c.nombre}</h3>
+              <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>
+                {DEPORTE_LABEL[c.deporte as Deporte]} · {c.techada ? 'techada' : 'al aire libre'}
+                {sinHorario ? ' · próximamente' : ''}
+              </p>
+            </div>
+          </Link>
+        );
+      })}
+    </div>
+  );
+}
+
 export default async function CanchasPage({ searchParams }: { searchParams: Promise<{ deporte?: string }> }) {
   const { deporte: deporteFiltro } = await searchParams;
   const sede = await getSedeActivaONull();
@@ -128,37 +172,18 @@ export default async function CanchasPage({ searchParams }: { searchParams: Prom
           <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 20 }}>
             No hay canchas de esta categoría todavía.
           </p>
+        ) : filtroValido ? (
+          <CanchasGrid canchas={visibles} />
         ) : (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: 18 }}>
-            {visibles.map((c) => {
-              const sinHorario = c._count.plantillas === 0;
-              return (
-                <Link
-                  key={c.id}
-                  href={sinHorario ? '#' : `/canchas/${c.id}`}
-                  aria-disabled={sinHorario}
-                  style={{
-                    borderRadius: 16,
-                    overflow: 'hidden',
-                    border: '1.5px solid var(--pl-line)',
-                    textDecoration: 'none',
-                    color: 'inherit',
-                    opacity: sinHorario ? 0.6 : 1,
-                    pointerEvents: sinHorario ? 'none' : 'auto',
-                  }}
-                >
-                  <CourtSvg bg={TOKEN_COLOR[SUPERFICIE_TOKEN[c.superficie as Superficie]]} />
-                  <div style={{ padding: '16px 18px', background: 'var(--pl-bg-raised)' }}>
-                    <h3 style={{ fontSize: 18 }}>{c.nombre}</h3>
-                    <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>
-                      {DEPORTE_LABEL[c.deporte as Deporte]} · {c.techada ? 'techada' : 'al aire libre'}
-                      {sinHorario ? ' · próximamente' : ''}
-                    </p>
-                  </div>
-                </Link>
-              );
-            })}
-          </div>
+          // Sin filtro: agrupadas por deporte con su propio título — más
+          // organizado que una sola grilla plana cuando la sede tiene varias
+          // categorías (antes se perdían mezcladas entre sí).
+          deportesDisponibles.map((d) => (
+            <div key={d} style={{ marginBottom: 32 }}>
+              <h2 style={{ fontSize: 18, marginBottom: 12 }}>{DEPORTE_LABEL[d as Deporte]}</h2>
+              <CanchasGrid canchas={visibles.filter((c) => c.deporte === d)} />
+            </div>
+          ))
         )}
       </section>
     </main>

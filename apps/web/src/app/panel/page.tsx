@@ -9,6 +9,7 @@ import { PorCobrar, type PorCobrarItem } from './PorCobrar';
 import { obtenerTasaVigente, antiguedadTasaDias } from '@/lib/tasa-cambio';
 import { Alert } from '@pelotea/ui';
 import { AutoRefresh } from './AutoRefresh';
+import { CerrarSesion } from './CerrarSesion';
 
 export const dynamic = 'force-dynamic';
 
@@ -124,6 +125,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-ink)' }}>
             Configuración
           </Link>
+          <CerrarSesion />
         </div>
       </div>
 

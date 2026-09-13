@@ -81,6 +81,16 @@ button {
   color: var(--pl-ink);
   border: 2px solid var(--pl-ink);
 }
+/* Un `.pl-btn` casi siempre es un <Link> (una <a>) — sin esto, la regla
+   global `a:hover { color: var(--pl-clay) }` pisaba el color del texto al
+   pasar el mouse. En un botón con fondo ya naranja (--pl-clay) el texto se
+   volvía invisible: naranja sobre naranja. */
+.pl-btn:hover {
+  color: var(--pl-primary-ink);
+}
+.pl-btn--ghost:hover {
+  color: var(--pl-ink);
+}
 
 /* ── Responsive: reservar cancha ──────────────────────────────────────────
    La pantalla de reserva (SlotPicker) es la más visitada de toda la app —
