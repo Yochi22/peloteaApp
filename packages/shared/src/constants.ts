@@ -103,4 +103,5 @@ export const QUEUES = {
   OFERTA_DISPATCH: 'oferta-dispatch',
   NOTIFICACIONES: 'notificaciones',
   RECORDATORIOS: 'recordatorios',
+  LIMPIEZA_COMPROBANTES: 'limpieza-comprobantes',
 } as const;

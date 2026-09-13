@@ -128,3 +128,21 @@ services:
       # deshabilitado (nunca expuesto sin protección, ver server.ts).
       - key: WHATSAPP_QR_TOKEN
         generateValue: true
+      # Mismo bucket que pelotea-web — el worker solo BORRA comprobantes
+      # viejos (ver jobs/limpieza-comprobantes.ts), nunca sube ni lee.
+      - key: S3_ENDPOINT
+        sync: false
+      - key: S3_REGION
+        sync: false
+      - key: S3_ACCESS_KEY
+        sync: false
+      - key: S3_SECRET_KEY
+        sync: false
+      - key: S3_BUCKET
+        sync: false
+      - key: S3_FORCE_PATH_STYLE
+        value: 'true'
+      # Días que se guarda un comprobante después de aprobarse/rechazarse
+      # antes de borrarlo del bucket. Default 90 si no se define.
+      - key: COMPROBANTE_RETENCION_DIAS
+        value: '90'

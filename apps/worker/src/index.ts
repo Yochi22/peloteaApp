@@ -6,6 +6,7 @@ import { procesarRevisionExpirada } from './jobs/revision-expiry';
 import { procesarOfertaDispatch } from './jobs/oferta-dispatch';
 import { procesarNotificaciones } from './jobs/notificaciones';
 import { procesarRecordatorios } from './jobs/recordatorios';
+import { procesarLimpiezaComprobantes } from './jobs/limpieza-comprobantes';
 import { iniciarWhatsapp } from './lib/whatsapp';
 import { iniciarServidorHttp } from './lib/server';
 
@@ -41,6 +42,7 @@ export const queues = {
   ofertaDispatch: new Queue(QUEUES.OFERTA_DISPATCH, { connection, defaultJobOptions: defaultJobOpts }),
   notificaciones: new Queue(QUEUES.NOTIFICACIONES, { connection, defaultJobOptions: defaultJobOpts }),
   recordatorios: new Queue(QUEUES.RECORDATORIOS, { connection, defaultJobOptions: defaultJobOpts }),
+  limpiezaComprobantes: new Queue(QUEUES.LIMPIEZA_COMPROBANTES, { connection, defaultJobOptions: defaultJobOpts }),
 };
 
 const workers: Worker[] = [
@@ -49,6 +51,7 @@ const workers: Worker[] = [
   new Worker(QUEUES.OFERTA_DISPATCH, procesarOfertaDispatch, { connection, concurrency: 2 }),
   new Worker(QUEUES.NOTIFICACIONES, procesarNotificaciones, { connection, concurrency: 3 }),
   new Worker(QUEUES.RECORDATORIOS, procesarRecordatorios, { connection, concurrency: 2 }),
+  new Worker(QUEUES.LIMPIEZA_COMPROBANTES, procesarLimpiezaComprobantes, { connection, concurrency: 1 }),
 ];
 
 // Barrido periódico: transiciona holds/revisiones vencidos y despacha ofertas
@@ -63,6 +66,13 @@ async function programarBarridos() {
   await queues.ofertaDispatch.upsertJobScheduler('barrido-ofertas', { every: 30_000 }, { name: 'barrido' });
   await queues.notificaciones.upsertJobScheduler('barrido-notificaciones', { every: 15_000 }, { name: 'barrido' });
   await queues.recordatorios.upsertJobScheduler('barrido-recordatorios', { every: 15 * 60_000 }, { name: 'barrido' });
+  // Una vez al día alcanza de sobra — no es urgente, solo evita que el
+  // bucket de comprobantes crezca para siempre.
+  await queues.limpiezaComprobantes.upsertJobScheduler(
+    'barrido-limpieza-comprobantes',
+    { every: 24 * 60 * 60_000 },
+    { name: 'barrido' },
+  );
 }
 
 programarBarridos().catch((e) => {
