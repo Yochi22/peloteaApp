@@ -253,7 +253,11 @@ export default async function AgendaPanelPage({
         Array.from(porDeporte.entries()).map(([deporte, canchasDeporte]) => (
           <section key={deporte} style={{ marginTop: 28 }}>
             <h2 style={{ fontSize: 18, marginBottom: 12 }}>{DEPORTE_LABEL[deporte as Deporte]}</h2>
-            <div style={{ display: 'grid', gap: 24 }}>
+            {/* `gridTemplateColumns: minmax(0, 1fr)` explícito: sin piso en 0,
+                el ancho mínimo propio de la grilla de cada cancha (para su
+                scroll horizontal interno) puede empujar esta columna más
+                allá del viewport en mobile — mismo bug que el heatmap. */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr)', gap: 24 }}>
               {canchasDeporte.map((c) => (
                 <div key={c.id}>
                   <p style={{ fontWeight: 700, fontSize: 14 }}>

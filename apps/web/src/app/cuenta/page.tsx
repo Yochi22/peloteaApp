@@ -4,6 +4,7 @@ import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { getSesionServer } from '@/lib/session-server';
 import { RetirarsePartido } from './RetirarsePartido';
+import { CerrarSesion } from './CerrarSesion';
 
 const NIVEL_LABEL: Record<string, string> = {
   PRINCIPIANTE: 'principiante',
@@ -84,6 +85,7 @@ export default async function CuentaPage() {
         <Link href="/partidos/crear" className="pl-btn" style={{ textDecoration: 'none' }}>
           Crear partido
         </Link>
+        <CerrarSesion />
       </div>
 
       {/* ── Mis reservas ─────────────────────────────────────────────── */}

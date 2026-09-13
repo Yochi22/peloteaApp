@@ -293,7 +293,12 @@ button {
 }
 @media (max-width: 900px) {
   .pl-panel-split {
-    grid-template-columns: 1fr;
+    /* `minmax(0, 1fr)`, no un `1fr` a secas: sin el piso en 0, un hijo con
+       ancho mínimo propio (el heatmap trae `min-width: 460px` para su
+       scroll interno) empuja esta columna más allá del viewport — con el
+       `overflow-x: hidden` global de seguridad, eso se veía como el
+       heatmap "cortado a la mitad" en vez de con su propio scroll. */
+    grid-template-columns: minmax(0, 1fr);
   }
 }
 

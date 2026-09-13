@@ -72,16 +72,32 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
   const canceladas = await prisma.reserva.count({ where: { sedeId, estado: 'CANCELADA', inicio: { gte: desde, lt: hasta } } });
   const totalReservas = confirmadas.length + noShows + canceladas;
 
-  // El abono de una reserva cancelada NO se devuelve si canceló el cliente
-  // (CLAUDE.md §5) — ese ingreso queda igual, así que cuenta acá aunque la
-  // reserva en sí ya no esté "confirmada". `confirmadaEn` distingue: si
-  // llegó a aprobarse antes de cancelarse, sí se cobró algo; si se canceló
-  // en pendiente_pago, no se había pagado nada todavía.
-  const canceladasConAbono = await prisma.reserva.findMany({
-    where: { sedeId, estado: 'CANCELADA', confirmadaEn: { not: null }, inicio: { gte: desde, lt: hasta } },
+  // Lo que ya se cobró NUNCA se devuelve — ni si cancela el cliente, ni si
+  // no llega a jugar (no-show), sea que pagó solo el abono de la primera
+  // hora o el 100% de una reserva de 2-3h. Antes esto solo se aplicaba a
+  // CANCELADA; una reserva marcada NO_SHOW simplemente dejaba de ser
+  // CONFIRMADA y desaparecía entera de "ingresos confirmados" — como si el
+  // dinero se hubiera devuelto, cuando en realidad se quedó cobrado.
+  // `confirmadaEn` distingue una CANCELADA que sí llegó a pagarse antes de
+  // cancelarse (se cobró algo) de una cancelada en pendiente_pago (no se
+  // había pagado nada) — un NO_SHOW siempre viene de una CONFIRMADA, así que
+  // siempre tiene algo cobrado.
+  // Se cuenta `montoAbono` (lo que de verdad se recibió), no `montoAbono +
+  // montoRestante`: si un no-show tenía pago parcial, el resto se cobraría
+  // EN PERSONA al llegar (`cobrar-restante`) — y si nunca llegó, ese resto
+  // nunca se cobró. Sin pago parcial, `montoAbono` ya es el 100%.
+  const retenidas = await prisma.reserva.findMany({
+    where: {
+      sedeId,
+      inicio: { gte: desde, lt: hasta },
+      OR: [
+        { estado: 'CANCELADA', confirmadaEn: { not: null } },
+        { estado: 'NO_SHOW' },
+      ],
+    },
     select: { montoAbono: true },
   });
-  const ingresosRetenidos = canceladasConAbono.reduce((s, r) => s + Number(r.montoAbono), 0);
+  const ingresosRetenidos = retenidas.reduce((s, r) => s + Number(r.montoAbono), 0);
 
   const ingresosConfirmados = confirmadas.reduce((s, r) => s + Number(r.precioTotal), 0) + ingresosRetenidos;
   const horasReservadas = confirmadas.reduce((s, r) => s + (r.fin.getTime() - r.inicio.getTime()) / 3_600_000, 0);
