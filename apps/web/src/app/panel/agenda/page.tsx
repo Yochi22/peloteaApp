@@ -3,6 +3,7 @@ import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, DEPORTES, type Deporte } from '@pelotea/shared';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
+import { CobrarRestanteInline } from './CobrarRestanteInline';
 
 export const dynamic = 'force-dynamic';
 
@@ -44,6 +45,8 @@ interface OcupanteVisible {
   estado: string;
   monto: number;
   esDividida: boolean;
+  montoRestante: number;
+  restanteCobrado: boolean;
 }
 
 export default async function AgendaPanelPage({
@@ -121,6 +124,8 @@ export default async function AgendaPanelPage({
             estado: r.estado,
             monto: Number(r.precioTotal),
             esDividida: r.esDividida,
+            montoRestante: Number(r.montoRestante),
+            restanteCobrado: r.restanteCobrado,
           }));
         slots.push({ horaInicio: min, horaFin: min + c.duracionTurnoMin, ocupantes });
       }
@@ -278,6 +283,14 @@ export default async function AgendaPanelPage({
                                       <a href={linkWhatsapp(o.telefono)} target="_blank" rel="noopener noreferrer">
                                         WhatsApp
                                       </a>
+                                    </>
+                                  ) : null}
+                                  {/* Pago parcial (reservas largas): lo que falta se cobra en persona al
+                                      llegar — acá mismo, sin ir a buscarlo en otra pantalla. */}
+                                  {(o.estado === 'CONFIRMADA' || o.estado === 'COMPLETADA') && !o.restanteCobrado && o.montoRestante > 0 ? (
+                                    <>
+                                      {' · '}
+                                      <CobrarRestanteInline reservaId={o.reservaId} montoRestante={o.montoRestante} />
                                     </>
                                   ) : null}
                                 </span>

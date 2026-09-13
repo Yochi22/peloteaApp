@@ -25,8 +25,13 @@ export async function GET(req: NextRequest) {
   if (!parsed.success) return NextResponse.json({ error: 'validation' }, { status: 422 });
 
   const sede = await getSedeActiva();
+  // Default `hasta` = fin del día de hoy, no "ahora mismo": si no, una
+  // reserva ya CONFIRMADA para más tarde hoy quedaba fuera del rango — ver
+  // el mismo fix en /panel/page.tsx.
   const desde = parsed.data.desdeISO ? new Date(parsed.data.desdeISO) : new Date(Date.now() - 30 * 86_400_000);
   const hasta = parsed.data.hastaISO ? new Date(parsed.data.hastaISO) : new Date();
+  if (!parsed.data.desdeISO) desde.setHours(0, 0, 0, 0);
+  if (!parsed.data.hastaISO) hasta.setHours(23, 59, 59, 999);
 
   const metricas = await calcularMetricas(sede.id, desde, hasta);
   return NextResponse.json(metricas, { headers: { 'Cache-Control': 'no-store' } });

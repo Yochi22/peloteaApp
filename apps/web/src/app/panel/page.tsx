@@ -23,8 +23,17 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const { pagina: paginaRaw } = await searchParams;
   const pagina = Math.max(1, Number(paginaRaw ?? 1) || 1);
 
+  // `hasta` es el FIN del día de hoy, no "ahora mismo": con "ahora mismo",
+  // una reserva ya CONFIRMADA (pagada y aprobada) para más tarde hoy
+  // quedaba fuera de "ingresos confirmados" — ese ingreso ya está asegurado,
+  // no depende de si el turno ya pasó o no. Antes esto hacía que una
+  // reserva cancelada más temprano en el día SÍ contara (su `inicio` ya
+  // había pasado) mientras una confirmada más tarde NO contara, dando un
+  // total que no cuadraba con lo que se veía en /panel/reservas.
   const desde = new Date(Date.now() - DIAS_RANGO * 86_400_000);
+  desde.setHours(0, 0, 0, 0);
   const hasta = new Date();
+  hasta.setHours(23, 59, 59, 999);
   const tasa = sede.precioMoneda !== 'VES' ? await obtenerTasaVigente(sede.precioMoneda) : null;
   const tasaAntiguaODesactualizada = tasa ? antiguedadTasaDias(tasa.fecha) > 1 : sede.precioMoneda !== 'VES';
 
