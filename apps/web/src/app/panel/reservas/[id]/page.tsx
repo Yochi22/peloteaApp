@@ -101,7 +101,7 @@ export default async function DetalleReservaPage({ params }: { params: Promise<{
       {/* ── Dinero ───────────────────────────────────────────────────── */}
       <section style={{ marginTop: 18, border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 16 }}>
         <h2 style={{ fontSize: 15 }}>Pago</h2>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 10, fontSize: 13 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'minmax(0, 1fr) minmax(0, 1fr)', gap: 10, marginTop: 10, fontSize: 13 }}>
           <div>
             <p style={{ color: 'var(--pl-ink-soft)', fontSize: 11, textTransform: 'uppercase' }}>Total de la reserva</p>
             <p style={{ fontWeight: 700 }}>Bs {Number(reserva.precioTotal).toLocaleString('es-VE')}</p>
