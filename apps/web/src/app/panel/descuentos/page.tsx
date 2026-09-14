@@ -5,6 +5,7 @@ import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
 import { NuevaReglaDescuentoForm } from './NuevaReglaDescuentoForm';
 import { ReglaDescuentoFila } from './ReglaDescuentoFila';
+import { ConfigLastMinute } from './ConfigLastMinute';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,25 +30,38 @@ export default async function DescuentosPanelPage() {
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Recuperación de ingresos
       </p>
-      <h1 style={{ fontSize: 26, marginTop: 4 }}>Descuentos programados</h1>
+      <h1 style={{ fontSize: 26, marginTop: 4 }}>Descuentos</h1>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 6 }}>
-        Nunca aparecen solos: acá decides sobre qué cancha, qué día, qué horario y qué porcentaje — el sistema solo
-        aplica lo que programaste. (Las ofertas de última hora por cancelación siguen siendo aparte, automáticas por
-        diseño — esas sí necesitan reaccionar rápido para no perder la hora.)
+        Todo lo que da un descuento en Pelotea lo controlás: los programados de abajo (cancha, día, horario y %) los
+        creás vos entero; el de última hora se dispara solo cuando cancelan (para no perder la venta), pero el % y
+        con cuánta anticipación cuenta como "última hora" también los fijás vos, ahí mismo.
       </p>
 
-      {canchas.length === 0 ? (
-        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 24 }}>
-          Todavía no hay ninguna cancha activa — crea una primero en /panel/canchas.
+      <section style={{ marginTop: 28 }}>
+        <h2 style={{ fontSize: 17, marginBottom: 4 }}>Última hora (por cancelación)</h2>
+        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginBottom: 12 }}>
+          Se dispara sola cuando cancelan una reserva ya confirmada — necesita reaccionar rápido para no perder la
+          hora, así que no se programa como las de abajo, pero estos dos números sí los decidís.
         </p>
-      ) : (
-        <div style={{ marginTop: 22 }}>
-          <NuevaReglaDescuentoForm canchas={canchas.map((c) => ({ id: c.id, nombre: c.nombre, deporte: c.deporte }))} />
-        </div>
-      )}
+        <ConfigLastMinute cancelacionHoras={sede.cancelacionHoras} descuentoLastMinutePct={sede.descuentoLastMinutePct} />
+      </section>
 
       <section style={{ marginTop: 32 }}>
-        <h2 style={{ fontSize: 17, marginBottom: 12 }}>Reglas creadas</h2>
+        <h2 style={{ fontSize: 17, marginBottom: 4 }}>Programados</h2>
+        <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginBottom: 12 }}>
+          Nunca aparecen solos: elegís cancha, día, horario y porcentaje — el sistema solo aplica lo que programaste.
+        </p>
+        {canchas.length === 0 ? (
+          <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14 }}>
+            Todavía no hay ninguna cancha activa — crea una primero en /panel/canchas.
+          </p>
+        ) : (
+          <NuevaReglaDescuentoForm canchas={canchas.map((c) => ({ id: c.id, nombre: c.nombre, deporte: c.deporte }))} />
+        )}
+      </section>
+
+      <section style={{ marginTop: 32 }}>
+        <h2 style={{ fontSize: 17, marginBottom: 12 }}>Reglas programadas creadas</h2>
         {reglas.length === 0 ? (
           <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13 }}>Todavía no has programado ningún descuento.</p>
         ) : (

@@ -171,10 +171,16 @@ model Sede {
   pagoMovilTelefono  String?
 
   // Config de tiempos (minutos / horas)
-  holdMinutos        Int @default(15)
-  revisionHoras      Int @default(2)
-  cancelacionHoras   Int @default(6) // dentro de esta ventana, cancelar dispara oferta LAST_MINUTE
-  ventanaExpresHoras Int @default(24) // antelación máxima para ofertas exprés automáticas
+  holdMinutos            Int @default(15)
+  revisionHoras          Int @default(2)
+  cancelacionHoras       Int @default(6) // dentro de esta ventana, cancelar dispara oferta LAST_MINUTE
+  // % de descuento de esa oferta LAST_MINUTE — configurable por el admin en
+  // /panel/descuentos, ya no un número fijo en el código. Sigue siendo la
+  // única pieza automática de todo el sistema de ofertas a propósito: nace
+  // de una cancelación real, no de una regla programada, y necesita
+  // reaccionar sola para no perder la hora.
+  descuentoLastMinutePct Int @default(20)
+  ventanaExpresHoras     Int @default(24) // antelación máxima para ofertas exprés automáticas
 
   // Pago parcial ("abono"): en reservas largas, muchos clubes exigen abonar
   // por adelantado solo una parte (p.ej. la primera hora) y cobran el resto

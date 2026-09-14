@@ -100,3 +100,17 @@ Render no tiene, en su plan free:
   plan pago — bien para una demo puntual, no para dejarla corriendo meses.
 - Sin disco persistente, la sesión de WhatsApp puede pedir re-vincularse
   después de un sleep largo (ver paso 6).
+- **El sleep de `pelotea-worker` afecta a TODO lo que corre ahí, no solo a
+  WhatsApp**: mientras está dormido, ningún barrido corre — ni la
+  expiración de HOLDs, ni los recordatorios, ni el despacho de ofertas, ni
+  la alerta del cronómetro de cancha ("se acabó el tiempo"). Todo se pone
+  al día recién cuando algo despierta al worker (una visita a
+  `/panel/whatsapp`, por ejemplo), así que una alerta puede llegar minutos
+  tarde si nadie usó el panel mientras tanto. Para una demo puntual es
+  aceptable; si molesta, la solución gratis de siempre es un "pinger"
+  externo (p.ej. [UptimeRobot](https://uptimerobot.com) o
+  [cron-job.org](https://cron-job.org), ambos gratis) pegándole a
+  `https://pelotea-worker.onrender.com/health` cada 5-10 minutos para que
+  nunca llegue a dormirse — no hace falta tocar código, se configura desde
+  el panel de esos servicios. En producción real (VPS propio, CLAUDE.md
+  §4) esto no aplica: el worker nunca se duerme.

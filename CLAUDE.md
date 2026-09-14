@@ -815,6 +815,20 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Última hora configurable + filtro por cancha en la agenda (2026-09-14)
+
+- `Sede.descuentoLastMinutePct` (nuevo, default 20): el % de la oferta
+  LAST_MINUTE ya no vivía fijo en el código (`DESCUENTO_LAST_MINUTE_PCT` en
+  `cancelar/route.ts`) — ahora lo decide el admin en `/panel/descuentos`,
+  junto con `Sede.cancelacionHoras` (la ventana, ya existía sin UI). La
+  oferta en sí sigue naciendo sola al cancelarse una reserva — eso no
+  cambia, solo dejó de estar hardcodeado. `PATCH /api/admin/sede` ahora
+  acepta estos dos campos además de `precioMoneda` (los tres opcionales).
+- `/panel/agenda`: con varias canchas de la misma disciplina (ej. "Cancha
+  1" y "Cancha 2" de vóley), el filtro de disciplina solo no evitaba
+  scrollear por todas — nuevo filtro por cancha puntual (`?cancha=`,
+  pills), que muestra solo esa cancha o todas si no se elige ninguna.
+
 ### Cronómetro de cancha con alerta al staff (2026-09-14)
 
 Pedido del admin: al llegar el cliente a retirar la pelota, poder arrancar

@@ -7,9 +7,6 @@ import { puedeAccederReserva } from '@/lib/acceso-reserva';
 
 export const runtime = 'nodejs';
 
-/** Descuento por defecto de una oferta last-minute generada automáticamente. */
-const DESCUENTO_LAST_MINUTE_PCT = 20;
-
 /**
  * Cancela una reserva (dueño de la reserva, o staff/admin de la sede).
  * Si estaba CONFIRMADA y cae dentro de la ventana crítica de la sede, genera
@@ -90,7 +87,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         const sede = await tx.sede.findUniqueOrThrow({ where: { id: reserva.sedeId } });
         if (debeGenerarLastMinute(reserva.inicio, new Date(), sede.cancelacionHoras)) {
           const precioFinal = Number(
-            (Number(reserva.precioTotal) * (1 - DESCUENTO_LAST_MINUTE_PCT / 100)).toFixed(2),
+            (Number(reserva.precioTotal) * (1 - sede.descuentoLastMinutePct / 100)).toFixed(2),
           );
           const oferta = await tx.oferta.create({
             data: {
@@ -99,7 +96,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
               tipo: 'LAST_MINUTE',
               inicioObjetivo: reserva.inicio,
               finObjetivo: reserva.fin,
-              descuentoPct: DESCUENTO_LAST_MINUTE_PCT,
+              descuentoPct: sede.descuentoLastMinutePct,
               precioFinal,
               ventanaInicio: new Date(),
               ventanaFin: reserva.inicio,

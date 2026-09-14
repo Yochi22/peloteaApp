@@ -58,11 +58,11 @@ interface Ocupante {
 export default async function AgendaPanelPage({
   searchParams,
 }: {
-  searchParams: Promise<{ fecha?: string; deporte?: string }>;
+  searchParams: Promise<{ fecha?: string; deporte?: string; cancha?: string }>;
 }) {
   await requireSesionPanel('/panel/agenda');
   const sede = await getSedeActiva();
-  const { fecha: fechaRaw, deporte: deporteRaw } = await searchParams;
+  const { fecha: fechaRaw, deporte: deporteRaw, cancha: canchaRaw } = await searchParams;
 
   const hoy = fmtFecha(new Date());
   const fechaValida = fechaRaw && /^\d{4}-\d{2}-\d{2}$/.test(fechaRaw) ? fechaRaw : hoy;
@@ -77,13 +77,21 @@ export default async function AgendaPanelPage({
   const deportesConCancha = DEPORTES.filter((d) => canchasSede.some((c) => c.deporte === d));
   const deporteFiltro = deporteRaw && (deportesConCancha as readonly string[]).includes(deporteRaw) ? deporteRaw : undefined;
 
-  const qs = (fecha: string) => `/panel/agenda?fecha=${fecha}${deporteFiltro ? `&deporte=${deporteFiltro}` : ''}`;
+  const qs = (fecha: string) =>
+    `/panel/agenda?fecha=${fecha}${deporteFiltro ? `&deporte=${deporteFiltro}` : ''}${canchaFiltroQs ? `&cancha=${canchaFiltroQs}` : ''}`;
 
   const canchas = await prisma.cancha.findMany({
     where: { sedeId: sede.id, activa: true, ...(deporteFiltro ? { deporte: deporteFiltro as Deporte } : {}) },
     orderBy: [{ deporte: 'asc' }, { orden: 'asc' }],
     include: { plantillas: { where: { diaSemana, activa: true }, orderBy: { horaInicio: 'asc' } } },
   });
+
+  // Filtro por cancha puntual (además del de disciplina) — con varias
+  // canchas del mismo deporte (ej. "Cancha 1" y "Cancha 2" de vóley), el
+  // filtro de disciplina solo no alcanza para ver una sola sin scrollear
+  // por las demás.
+  const canchaFiltro = canchaRaw && canchas.some((c) => c.id === canchaRaw) ? canchaRaw : undefined;
+  const canchaFiltroQs = canchaFiltro ?? '';
 
   const reservasDelDia = await prisma.reserva.findMany({
     where: {
@@ -180,10 +188,14 @@ export default async function AgendaPanelPage({
   const totalReservasDia = new Set(reservasDelDia.map((r) => r.id)).size;
   const canchasConHorario = agenda.filter((a) => a.horas.length > 0);
   const canchasSinHorario = agenda.length - canchasConHorario.length;
+  // Con una cancha puntual elegida, se muestra solo esa — sin esto había
+  // que scrollear por todas las del mismo deporte para llegar a la que
+  // importaba.
+  const canchasAMostrar = canchaFiltro ? canchasConHorario.filter((a) => a.id === canchaFiltro) : canchasConHorario;
 
   // Agrupadas por deporte para no mezclar tipos distintos en una sola sección.
   const porDeporte = new Map<string, CanchaAgenda[]>();
-  for (const a of canchasConHorario) {
+  for (const a of canchasAMostrar) {
     const lista = porDeporte.get(a.deporte) ?? [];
     lista.push(a);
     porDeporte.set(a.deporte, lista);
@@ -225,7 +237,7 @@ export default async function AgendaPanelPage({
           <Link href={qs(manana)} className={fechaValida === manana ? 'pl-pill pl-pill--active' : 'pl-pill'}>
             Mañana
           </Link>
-          <FechaPicker fecha={fechaValida} deporte={deporteFiltro} />
+          <FechaPicker fecha={fechaValida} deporte={deporteFiltro} cancha={canchaFiltro} />
           <Link href={qs(diaSiguiente)} className="pl-pill pl-pill--icon" aria-label="Día siguiente">
             ›
           </Link>
@@ -246,9 +258,31 @@ export default async function AgendaPanelPage({
             ))}
           </div>
         ) : null}
+        {/* Filtro por cancha puntual: con varias canchas de la misma
+            disciplina (ej. "Cancha 1" y "Cancha 2" de vóley), el de arriba
+            solo no alcanza para ver una sin scrollear por las demás. */}
+        {canchas.length > 1 ? (
+          <div className="pl-pill-row">
+            <Link
+              href={`/panel/agenda?fecha=${fechaValida}${deporteFiltro ? `&deporte=${deporteFiltro}` : ''}`}
+              className={!canchaFiltro ? 'pl-pill pl-pill--active' : 'pl-pill'}
+            >
+              Todas las canchas
+            </Link>
+            {canchas.map((c) => (
+              <Link
+                key={c.id}
+                href={`/panel/agenda?fecha=${fechaValida}${deporteFiltro ? `&deporte=${deporteFiltro}` : ''}&cancha=${c.id}`}
+                className={canchaFiltro === c.id ? 'pl-pill pl-pill--active' : 'pl-pill'}
+              >
+                {c.nombre}
+              </Link>
+            ))}
+          </div>
+        ) : null}
       </div>
 
-      {canchasConHorario.length === 0 ? (
+      {canchasAMostrar.length === 0 ? (
         <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 28 }}>
           Ninguna cancha tiene horario configurado para este día.
         </p>

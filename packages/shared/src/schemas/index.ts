@@ -241,9 +241,17 @@ export type CargarTasaCambioInput = z.infer<typeof cargarTasaCambioSchema>;
 
 // ── Configuración de la sede: moneda de precios ─────────────────────────────
 
-export const actualizarSedeSchema = z.object({
-  precioMoneda: z.enum(['USD', 'EUR', 'VES']),
-});
+export const actualizarSedeSchema = z
+  .object({
+    precioMoneda: z.enum(['USD', 'EUR', 'VES']).optional(),
+    // Oferta LAST_MINUTE al cancelarse una reserva confirmada — sigue
+    // siendo automática a propósito (necesita reaccionar sola para no
+    // perder la hora), pero el % y la ventana de "cerca de la hora" sí los
+    // decide el admin.
+    cancelacionHoras: z.number().int().min(1).max(72).optional(),
+    descuentoLastMinutePct: z.number().int().min(1).max(90).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nada para actualizar.' });
 export type ActualizarSedeInput = z.infer<typeof actualizarSedeSchema>;
 
 // ── Inventario: canchas y horarios ──────────────────────────────────────────
