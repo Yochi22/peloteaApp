@@ -25,9 +25,6 @@ export default async function FinanzasPanelPage({ searchParams }: { searchParams
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 720 }}>
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Panel del club
       </p>

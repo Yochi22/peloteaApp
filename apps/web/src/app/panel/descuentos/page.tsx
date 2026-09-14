@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { requireSesionPanel } from '@/lib/panel-guard';
@@ -24,24 +23,21 @@ export default async function DescuentosPanelPage() {
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 720 }}>
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Recuperación de ingresos
       </p>
       <h1 style={{ fontSize: 26, marginTop: 4 }}>Descuentos</h1>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 6 }}>
-        Todo lo que da un descuento en Pelotea lo controlás: los programados de abajo (cancha, día, horario y %) los
-        creás vos entero; el de última hora se dispara solo cuando cancelan (para no perder la venta), pero el % y
-        con cuánta anticipación cuenta como "última hora" también los fijás vos, ahí mismo.
+        Todo lo que da un descuento en Pelotea lo controlas tú: los programados de abajo (cancha, día, horario y %)
+        los creas tú entero; el de última hora se dispara solo cuando cancelan (para no perder la venta), pero el %
+        y con cuánta anticipación cuenta como "última hora" también los fijas tú, ahí mismo.
       </p>
 
       <section style={{ marginTop: 28 }}>
         <h2 style={{ fontSize: 17, marginBottom: 4 }}>Última hora (por cancelación)</h2>
         <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginBottom: 12 }}>
           Se dispara sola cuando cancelan una reserva ya confirmada — necesita reaccionar rápido para no perder la
-          hora, así que no se programa como las de abajo, pero estos dos números sí los decidís.
+          hora, así que no se programa como las de abajo, pero estos dos números sí los decides tú.
         </p>
         <ConfigLastMinute cancelacionHoras={sede.cancelacionHoras} descuentoLastMinutePct={sede.descuentoLastMinutePct} />
       </section>
@@ -49,7 +45,7 @@ export default async function DescuentosPanelPage() {
       <section style={{ marginTop: 32 }}>
         <h2 style={{ fontSize: 17, marginBottom: 4 }}>Programados</h2>
         <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginBottom: 12 }}>
-          Nunca aparecen solos: elegís cancha, día, horario y porcentaje — el sistema solo aplica lo que programaste.
+          Nunca aparecen solos: eliges cancha, día, horario y porcentaje — el sistema solo aplica lo que programaste.
         </p>
         {canchas.length === 0 ? (
           <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14 }}>

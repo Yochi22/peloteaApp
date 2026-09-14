@@ -269,21 +269,6 @@ button {
   color: var(--pl-ink-soft);
 }
 
-/* Panel del dueño: botones de acción (Canchas, Reservas, WhatsApp, etc.) en
-   grilla — cada botón ocupa una celda de ancho garantizado (mínimo 130px)
-   en vez de un flex-wrap que en mobile amontonaba texto de distintos
-   tamaños y obligaba a hacer zoom out para que "encajara" todo. */
-.pl-panel-actions {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
-  gap: 10px;
-}
-@media (max-width: 480px) {
-  .pl-panel-actions {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
 /* Panel del dueño: heatmap + cola de aprobación en dos columnas en desktop,
    apiladas en mobile (misma columna fija sin fallback que rompía SlotPicker). */
 .pl-panel-split {
@@ -311,6 +296,127 @@ button {
 @media (max-width: 720px) {
   .pl-register-layout {
     grid-template-columns: 1fr;
+  }
+}
+
+/* ── Shell del panel: sidebar fijo en desktop, franja horizontal en mobile ──
+   Reemplaza la fila de botones de colores que se repetía arriba de cada
+   página de /panel — un solo lugar para toda la navegación. */
+.pl-panel-shell {
+  display: flex;
+  align-items: flex-start;
+  min-height: 100vh;
+}
+.pl-panel-sidebar {
+  flex: none;
+  width: 228px;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 20px 14px;
+  border-right: 1.5px solid var(--pl-line);
+  background: var(--pl-bg-raised);
+}
+.pl-panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 4px 10px 18px;
+  text-decoration: none;
+  color: var(--pl-ink);
+}
+.pl-panel-brand:hover,
+.pl-panel-brand:focus,
+.pl-panel-brand:visited {
+  color: var(--pl-ink);
+}
+.pl-panel-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  flex: 1;
+}
+.pl-panel-navlink {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  padding: 10px 12px;
+  border-radius: 9px;
+  font-weight: 600;
+  font-size: 14px;
+  color: var(--pl-ink-soft);
+  text-decoration: none;
+  white-space: nowrap;
+}
+.pl-panel-navlink:hover,
+.pl-panel-navlink:focus,
+.pl-panel-navlink:visited {
+  color: var(--pl-ink-soft);
+}
+.pl-panel-navlink svg {
+  flex: none;
+}
+/* Color fijo, NO `var(--pl-ink)`: ese token se invierte en modo oscuro —
+   mismo motivo que el botón "Configuración" de antes. `--pl-clay` es
+   siempre el mismo naranja en los dos temas, así que el blanco de encima
+   nunca pierde contraste. */
+.pl-panel-navlink--active {
+  background: var(--pl-clay);
+  color: #fff;
+}
+.pl-panel-navlink--active:hover,
+.pl-panel-navlink--active:focus,
+.pl-panel-navlink--active:visited {
+  color: #fff;
+}
+.pl-panel-sidebar-footer {
+  padding-top: 10px;
+  border-top: 1.5px solid var(--pl-line);
+}
+.pl-panel-main {
+  flex: 1;
+  min-width: 0;
+}
+@media (max-width: 900px) {
+  .pl-panel-shell {
+    flex-direction: column;
+    min-height: 0;
+  }
+  .pl-panel-sidebar {
+    position: static;
+    width: 100%;
+    height: auto;
+    flex-direction: row;
+    align-items: center;
+    border-right: 0;
+    border-bottom: 1.5px solid var(--pl-line);
+    padding: 10px 14px;
+    gap: 10px;
+  }
+  .pl-panel-brand {
+    padding: 4px;
+  }
+  .pl-panel-brand span,
+  .pl-panel-brand strong {
+    display: none;
+  }
+  .pl-panel-nav {
+    flex-direction: row;
+    overflow-x: auto;
+    gap: 6px;
+  }
+  .pl-panel-navlink {
+    padding: 9px 12px;
+    flex: none;
+  }
+  .pl-panel-sidebar-footer {
+    padding-top: 0;
+    border-top: 0;
+    flex: none;
   }
 }
 

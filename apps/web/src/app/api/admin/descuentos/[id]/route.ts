@@ -6,6 +6,7 @@ import { guard } from '@/lib/guard';
 import { redis } from '@/lib/redis';
 import { getSesion, requireRol } from '@/lib/session';
 import { getSedeActiva } from '@/lib/sede';
+import { materializarReglaAhora } from '@/lib/materializar-descuento';
 
 export const runtime = 'nodejs';
 
@@ -42,6 +43,10 @@ export async function PATCH(req: NextRequest, { params }: { params: Promise<{ id
       where: { reglaId: id, estado: 'ACTIVA', tomada: 0 },
       data: { estado: 'CANCELADA' },
     });
+  } else if (g.data.activa === true) {
+    // Se reactivó: materializa de una vez en vez de esperar el próximo
+    // barrido del worker (mismo motivo que al crearla).
+    await materializarReglaAhora(id);
   }
 
   await prisma.auditLog.create({

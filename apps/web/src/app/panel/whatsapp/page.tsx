@@ -1,5 +1,4 @@
 import { redirect } from 'next/navigation';
-import Link from 'next/link';
 import { Alert } from '@pelotea/ui';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSesionServer } from '@/lib/session-server';
@@ -27,9 +26,6 @@ export default async function WhatsappPanelPage() {
       {/* Refresca cada 5s mientras no esté conectado — el QR de WhatsApp
           expira rápido, y sin esto habría que darle F5 a mano varias veces. */}
       {!estado?.conectado ? <AutoRefresh intervaloSegundos={5} /> : null}
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Notificaciones
       </p>

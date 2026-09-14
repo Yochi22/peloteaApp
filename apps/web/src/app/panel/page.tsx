@@ -11,7 +11,6 @@ import { CronometrosActivos, type CronometroActivo } from './CronometrosActivos'
 import { obtenerTasaVigente, antiguedadTasaDias } from '@/lib/tasa-cambio';
 import { Alert } from '@pelotea/ui';
 import { AutoRefresh } from './AutoRefresh';
-import { CerrarSesion } from './CerrarSesion';
 
 export const dynamic = 'force-dynamic';
 
@@ -145,42 +144,10 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         ))}
       </div>
 
-      {/* Grilla (no flex-wrap ad hoc): en mobile cada botón ocupa una celda
-          de ancho garantizado en vez de amontonarse en una fila que
-          obligaba a hacer zoom out para verla completa. */}
-      <div className="pl-panel-actions" style={{ marginTop: 16 }}>
-        <Link href="/panel/canchas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard)' }}>
-          Canchas
-        </Link>
-        <Link href="/panel/reservas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass)' }}>
-          Reservas
-        </Link>
-        <Link href="/panel/agenda" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-grass-deep)' }}>
-          Agenda del día
-        </Link>
-        <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
-          Tasa de cambio
-        </Link>
-        <Link href="/panel/descuentos" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard-deep)' }}>
-          Descuentos
-        </Link>
-        <Link href="/panel/finanzas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay-deep)' }}>
-          Finanzas
-        </Link>
-        {/* Color fijo, NO `var(--pl-ink)`: ese token se invierte en modo
-            oscuro (pasa de casi-negro a crema) pero el texto de `.pl-btn`
-            queda blanco fijo — en modo oscuro quedaba texto blanco sobre
-            fondo casi blanco, ilegible. */}
-        <Link href="/panel/configuracion" className="pl-btn" style={{ textDecoration: 'none', background: '#1D1913' }}>
-          Configuración
-        </Link>
-        <Link href="/panel/whatsapp" className="pl-btn" style={{ textDecoration: 'none', background: '#25D366' }}>
-          WhatsApp
-        </Link>
-        <CerrarSesion />
-      </div>
-
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginTop: 20 }}>
+      {/* La navegación entre secciones ya la da el sidebar (PanelNav) — antes
+          esta fila de botones de colores duplicaba lo mismo arriba de cada
+          página. */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginTop: 24 }}>
         <Kpi
           etiqueta="Ingresos confirmados"
           valor={`Bs ${metricas.ingresosConfirmados.toLocaleString('es-VE')}`}

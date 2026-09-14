@@ -815,6 +815,24 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Sidebar del panel + descuentos reflejados al instante (2026-09-14)
+
+- `apps/web/src/app/panel/layout.tsx` + `PanelNav.tsx`: sidebar fijo en
+  desktop (franja horizontal de pills en mobile, mismo componente — CSS
+  cambia de columna a fila) para TODO `/panel/*`, reemplazando la fila de
+  botones de colores que se repetía arriba de cada página. Quitados los
+  "← Panel" de cada sub-página (redundante con el sidebar); se dejan los
+  contextuales ("← Canchas", "← Reservas") que sí aportan algo distinto.
+- Bug real: una `ReglaDescuento` recién creada no se veía como cliente
+  hasta el próximo barrido del worker (cada 30 min, y en Render free tier
+  puede estar dormido). `apps/web/src/lib/materializar-descuento.ts`
+  (misma lógica que el job del worker, para UNA regla) se llama al toque
+  desde `POST /api/admin/descuentos` y desde el `PATCH` que reactiva una
+  regla — el worker sigue corriendo para mantener el horizonte de 14 días
+  al día después de eso.
+- Corregido voseo argentino que se coló en el texto de `/panel/descuentos`
+  ("controlás", "creás", "decidís") — CLAUDE.md §7 exige tuteo venezolano.
+
 ### Panel: filtro de período, finanzas en divisa, cronómetros centralizados (2026-09-14)
 
 - `/panel` y el nuevo `/panel/finanzas` ya no muestran siempre "los últimos

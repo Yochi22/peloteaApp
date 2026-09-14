@@ -11,9 +11,6 @@ export default async function ConfiguracionPage() {
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 480 }}>
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Configuración
       </p>

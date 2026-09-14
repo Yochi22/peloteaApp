@@ -4,15 +4,18 @@ import { prisma } from '@pelotea/db';
 import { guard } from '@/lib/guard';
 import { getSesion, requireRol } from '@/lib/session';
 import { getSedeActiva } from '@/lib/sede';
+import { materializarReglaAhora } from '@/lib/materializar-descuento';
 
 export const runtime = 'nodejs';
 
 /**
  * Crea una regla de descuento EXPRES programada por el admin: sobre qué
  * cancha, qué día de la semana (o todos), qué horario y qué porcentaje.
- * Nunca se generan ofertas solas — el worker solo materializa filas de
- * `Oferta` reales para los próximos días a partir de reglas ACTIVAS que un
- * admin creó a mano (ver `jobs/materializar-descuentos.ts`).
+ * Nunca se generan ofertas solas — se materializan filas de `Oferta` reales
+ * para los próximos 14 días. Se hace AL TOQUE acá mismo (no solo esperar el
+ * barrido del worker cada 30 min) para que el admin la vea reflejada de
+ * inmediato al probarla como cliente — el worker sigue corriendo para
+ * mantener el horizonte al día después de esto.
  */
 export async function POST(req: NextRequest) {
   const sesion = await getSesion(req);
@@ -59,6 +62,8 @@ export async function POST(req: NextRequest) {
       ip: g.ip,
     },
   });
+
+  await materializarReglaAhora(regla.id);
 
   const body = { id: regla.id };
   await g.finish(body);

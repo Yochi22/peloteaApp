@@ -75,10 +75,7 @@ export default async function ReservasPanelPage({
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 900 }}>
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', marginTop: 14, flexWrap: 'wrap', gap: 10 }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end', flexWrap: 'wrap', gap: 10 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
             Reservas

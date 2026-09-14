@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
@@ -21,9 +20,6 @@ export default async function TasaCambioPage() {
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 480 }}>
-      <Link href="/panel" style={{ fontSize: 13 }}>
-        ← Panel
-      </Link>
       <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Tasa de cambio
       </p>
