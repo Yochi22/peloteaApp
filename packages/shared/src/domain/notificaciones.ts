@@ -29,7 +29,12 @@ export function renderTextoNotificacion(
       return { titulo: 'Tu partido es en unas horas ⏰', cuerpo: `Empieza a las ${hora}. ¡Nos vemos en la cancha!` };
     }
     case 'partido.completo':
-      return { titulo: 'Tu partido se llenó', cuerpo: 'Ya tienes los jugadores que faltaban.' };
+      return {
+        titulo: 'Tu partido se llenó — falta confirmar',
+        cuerpo: 'Ya tienes los jugadores que faltaban. Entra a tu cuenta para confirmar y pagar antes de que alguien más tome ese horario.',
+      };
+    case 'partido.confirmado':
+      return { titulo: 'Partido confirmado ✅', cuerpo: 'Ya se reservó la cancha y se aprobó el pago. ¡Nos vemos ahí!' };
     default:
       return { titulo: 'Pelotea', cuerpo: 'Tienes una novedad en tu cuenta.' };
   }

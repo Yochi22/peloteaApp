@@ -26,7 +26,10 @@ export function CrearPartidoForm({
 }) {
   const router = useRouter();
   const [form, setForm] = useState({
-    canchaId: canchas[0]?.id ?? '',
+    // Sin definir por defecto a propósito: el partido se crea para una
+    // categoría, no una cancha puntual — el club asigna la cancha física
+    // del pool cuando el organizador confirma y paga.
+    canchaId: '',
     deporte: deportes[0]?.value ?? 'PADEL',
     nivel: 'INTERMEDIO',
     fecha: '',
@@ -90,16 +93,22 @@ export function CrearPartidoForm({
         </select>
       </label>
 
-      {canchas.length > 0 ? (
+      {canchas.some((c) => c.deporte === form.deporte) ? (
         <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
-          Cancha (opcional — se puede reservar después)
+          Cancha específica (opcional — normalmente se deja "sin definir": el club asigna una cancha libre de esta
+          disciplina cuando confirmes y pagues)
           <select value={form.canchaId} onChange={(e) => setForm({ ...form, canchaId: e.target.value })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }}>
             <option value="">Sin definir todavía</option>
-            {canchas.map((c) => (
-              <option key={c.id} value={c.id}>
-                {c.nombre}
-              </option>
-            ))}
+            {/* Solo canchas de la disciplina elegida arriba — mostrar todas
+                sin filtrar confundía (ej. elegir una cancha de fútbol con
+                deporte=pádel). */}
+            {canchas
+              .filter((c) => c.deporte === form.deporte)
+              .map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.nombre}
+                </option>
+              ))}
           </select>
         </label>
       ) : null}

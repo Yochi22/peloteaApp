@@ -815,6 +815,39 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Partidos comunitarios: confirmación explícita del organizador (2026-09-14)
+
+Diseño pedido por el usuario, ver §3 "Matchmaking" — `PartidoAbierto` ya
+soportaba `canchaId` opcional (categoría/deporte, no cancha puntual) pero
+nada disparaba la reserva en ese caso: al llenarse el cupo,
+`autoReservarPartido()` reservaba SOLA e instantáneamente, y exigía
+`canchaId` ya fijado — con `canchaId` null (el caso comunitario) el partido
+se quedaba trabado en `COMPLETO` para siempre.
+
+Corregido: `unirse` ya no reserva nada al llenarse — solo marca `COMPLETO`
+y avisa al organizador (WhatsApp + in-app, plantilla `partido.completo`,
+repurpuesta — existía en el enum sin usarse). Nuevo
+`POST /api/partidos/[id]/confirmar` (solo el organizador): revalida
+disponibilidad en el pool de canchas de esa disciplina EN ESE MOMENTO
+(pudo cambiar desde que se llenó) — recorre las canchas activas de ese
+deporte (respetando una cancha puntual si el organizador la fijó al
+crear), busca la primera con cupo libre en TODAS las horas que dura el
+partido, y reclama las unidades atómicamente (mismo criterio que
+`/api/reservas`). El organizador elige cómo se paga:
+- **Dividir** (`dividir:true`): split entre todos los que se unieron —
+  mismo mecanismo de `Cuota` que un split armado a mano.
+- **Se encarga él** (`dividir:false`): reserva normal sin split — abono o
+  pago completo según la política de pago parcial de la sede, igual que
+  cualquier reserva individual.
+
+`PartidoAbierto.estado` pasa a `CONFIRMADO` (antes muerto en el enum, nunca
+se usaba) recién cuando la Reserva vinculada se aprueba de verdad —
+`/api/pagos/[id]/resolver` y `/api/cuotas/[id]/resolver` (split) lo
+sincronizan, y `/api/reservas/[id]/cancelar` lo devuelve a `COMPLETO` si la
+reserva se cancela (el grupo sigue armado, solo hay que reintentar
+confirmar). UI: `/cuenta` muestra "Confirmar y pagar" cuando corresponde,
+con las etiquetas de estado en español en vez del enum crudo.
+
 ### Pool de canchas por disciplina + agenda del panel + descuentos programados
 
 **Pool de canchas** (2026-09-13): `Cancha.cantidad` (default 1, no rompe

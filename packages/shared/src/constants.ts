@@ -79,6 +79,7 @@ export const PLANTILLAS_NOTIFICACION = {
   SPLIT_INVITACION: 'split.invitacion',
   SPLIT_COMPLETO: 'split.completo',
   PARTIDO_COMPLETO: 'partido.completo',
+  PARTIDO_CONFIRMADO: 'partido.confirmado',
 } as const;
 
 export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMAIL' | 'IN_APP' | 'WHATSAPP'>> = {
@@ -93,7 +94,11 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   'oferta.expres': ['WEB_PUSH', 'EMAIL', 'IN_APP'],
   'split.invitacion': ['EMAIL', 'IN_APP'],
   'split.completo': ['WEB_PUSH', 'IN_APP'],
-  'partido.completo': ['WEB_PUSH', 'IN_APP'],
+  // El organizador tiene que actuar (confirmar y pagar) para no perder el
+  // grupo — es transaccional/directo, no marketing, así que sí va por
+  // WhatsApp (CLAUDE.md §4).
+  'partido.completo': ['WHATSAPP', 'IN_APP'],
+  'partido.confirmado': ['WHATSAPP', 'IN_APP'],
 };
 
 /** Nombres de colas BullMQ. */

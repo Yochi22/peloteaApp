@@ -66,6 +66,30 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             payload: { reservaId: reserva.id },
           },
         });
+
+        // Si esta reserva viene de un partido comunitario, el partido pasa
+        // a CONFIRMADO recién ahora — no antes, porque "confirmar" solo
+        // dispara la reserva, y esta sigue pasando por la aprobación humana
+        // normal como cualquier otra. Se avisa a TODOS los que se unieron
+        // (no solo al organizador, que ya recibió el aviso de arriba).
+        if (reserva.partidoAbiertoId) {
+          await tx.partidoAbierto.update({ where: { id: reserva.partidoAbiertoId }, data: { estado: 'CONFIRMADO' } });
+          const participantes = await tx.participantePartido.findMany({
+            where: { partidoId: reserva.partidoAbiertoId, usuarioId: { not: reserva.organizadorId } },
+            select: { usuarioId: true },
+          });
+          if (participantes.length > 0) {
+            await tx.notificacion.createMany({
+              data: participantes.map((p) => ({
+                usuarioId: p.usuarioId,
+                canal: 'WHATSAPP' as const,
+                plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_CONFIRMADO,
+                payload: { partidoId: reserva.partidoAbiertoId, reservaId: reserva.id },
+              })),
+            });
+          }
+        }
+
         await tx.auditLog.create({
           data: {
             sedeId: pago.sedeId,

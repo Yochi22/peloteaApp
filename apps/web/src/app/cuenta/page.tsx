@@ -4,6 +4,7 @@ import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { getSesionServer } from '@/lib/session-server';
 import { RetirarsePartido } from './RetirarsePartido';
+import { ConfirmarPartido } from './ConfirmarPartido';
 import { CerrarSesion } from './CerrarSesion';
 
 const NIVEL_LABEL: Record<string, string> = {
@@ -11,6 +12,14 @@ const NIVEL_LABEL: Record<string, string> = {
   INTERMEDIO: 'intermedio',
   AVANZADO: 'avanzado',
   COMPETITIVO: 'competitivo',
+};
+
+const ESTADO_PARTIDO_LABEL: Record<string, { texto: string; tono: string }> = {
+  ABIERTO: { texto: 'Organizándose', tono: 'var(--pl-warn)' },
+  COMPLETO: { texto: 'Cupo lleno — falta confirmar', tono: 'var(--pl-clay-deep)' },
+  CONFIRMADO: { texto: 'Confirmado', tono: 'var(--pl-ok)' },
+  CANCELADO: { texto: 'Cancelado', tono: 'var(--pl-danger)' },
+  JUGADO: { texto: 'Jugado', tono: 'var(--pl-ink-soft)' },
 };
 
 /** Mismo criterio que `formatoJid()` del worker: normaliza a wa.me/58<número sin el 0>. */
@@ -52,7 +61,7 @@ export default async function CuentaPage() {
       where: { organizadorId: sesion.usuarioId },
       orderBy: { inicio: 'desc' },
       take: 10,
-      include: { cancha: true, participantes: { include: { usuario: true }, orderBy: { createdAt: 'asc' } } },
+      include: { cancha: true, reserva: true, participantes: { include: { usuario: true }, orderBy: { createdAt: 'asc' } } },
     }),
     prisma.participantePartido.findMany({
       // Excluye los que ya abandonó (`SALIO`) — si se retiró, ya no tiene
@@ -136,45 +145,65 @@ export default async function CuentaPage() {
           <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 8 }}>No has creado ningún partido.</p>
         ) : (
           <div style={{ marginTop: 10 }}>
-            {partidosCreados.map((p) => (
-              <div key={p.id} style={{ padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
-                <p style={{ fontWeight: 600, fontSize: 14 }}>
-                  {DEPORTE_LABEL[p.deporte as Deporte]} · {p.cancha?.nombre ?? 'sin cancha asignada'}
-                </p>
-                <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
-                  {p.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · {p.cuposLlenos}/
-                  {p.cuposTotales} cupos · nivel {NIVEL_LABEL[p.nivel] ?? p.nivel} · {p.estado}
-                </p>
-                {/* Para poder contactar a quien se unió — antes esta info
-                    no aparecía por ningún lado, había que ver la base
-                    directo. Solo los que de verdad se unieron (no cuenta al
-                    organizador mismo ni a quien ya se retiró). */}
-                {p.participantes.filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO').length > 0 ? (
-                  <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
-                    {p.participantes
-                      .filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO')
-                      .map((pp) => (
-                        <a
-                          key={pp.id}
-                          href={linkWhatsapp(pp.usuario.telefono ?? '')}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          style={{
-                            fontSize: 11,
-                            fontWeight: 600,
-                            border: '1.5px solid var(--pl-line)',
-                            borderRadius: 999,
-                            padding: '3px 10px',
-                            textDecoration: 'none',
-                          }}
-                        >
-                          {pp.usuario.nombre} ↗
-                        </a>
-                      ))}
+            {partidosCreados.map((p) => {
+              const info = ESTADO_PARTIDO_LABEL[p.estado] ?? { texto: p.estado, tono: 'var(--pl-ink-soft)' };
+              // Puede confirmar de nuevo si nunca reservó, o si la reserva
+              // que tenía se canceló/expiró (el partido vuelve a COMPLETO
+              // en ese caso — ver /api/reservas/[id]/cancelar).
+              const puedeConfirmar = p.estado === 'COMPLETO' && (!p.reserva || ['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado));
+              return (
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
+                  <div>
+                    <p style={{ fontWeight: 600, fontSize: 14 }}>
+                      {DEPORTE_LABEL[p.deporte as Deporte]} · {p.cancha?.nombre ?? 'sin cancha asignada'}
+                    </p>
+                    <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
+                      {p.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · {p.cuposLlenos}/
+                      {p.cuposTotales} cupos · nivel {NIVEL_LABEL[p.nivel] ?? p.nivel}
+                    </p>
+                    <p style={{ fontSize: 12, fontWeight: 700, color: info.tono, marginTop: 2 }}>{info.texto}</p>
+                    {p.reserva && !['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado) ? (
+                      <Link href={`/reservas/${p.reserva.id}/comprobante`} style={{ fontSize: 12 }}>
+                        Ver reserva y pagar →
+                      </Link>
+                    ) : null}
+                    {/* Para poder contactar a quien se unió — antes esta info
+                        no aparecía por ningún lado, había que ver la base
+                        directo. Solo los que de verdad se unieron (no cuenta al
+                        organizador mismo ni a quien ya se retiró). */}
+                    {p.participantes.filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO').length > 0 ? (
+                      <div style={{ marginTop: 6, display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+                        {p.participantes
+                          .filter((pp) => pp.usuarioId !== sesion.usuarioId && pp.estado !== 'SALIO')
+                          .map((pp) => (
+                            <a
+                              key={pp.id}
+                              href={linkWhatsapp(pp.usuario.telefono ?? '')}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              style={{
+                                fontSize: 11,
+                                fontWeight: 600,
+                                border: '1.5px solid var(--pl-line)',
+                                borderRadius: 999,
+                                padding: '3px 10px',
+                                textDecoration: 'none',
+                              }}
+                            >
+                              {pp.usuario.nombre} ↗
+                            </a>
+                          ))}
+                      </div>
+                    ) : null}
                   </div>
-                ) : null}
-              </div>
-            ))}
+                  {puedeConfirmar ? (
+                    <div style={{ flex: 'none' }}>
+                      <ConfirmarPartido partidoId={p.id} />
+                    </div>
+                  ) : null}
+                </div>
+              );
+            })}
           </div>
         )}
       </section>
@@ -207,8 +236,12 @@ export default async function CuentaPage() {
                   </p>
                 </div>
                 <div style={{ flex: 'none', display: 'flex', alignItems: 'flex-start' }}>
-                  {pp.partido.estado === 'ABIERTO' ? <RetirarsePartido partidoId={pp.partido.id} /> : (
-                    <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--pl-ink-soft)' }}>{pp.partido.estado}</span>
+                  {pp.partido.estado === 'ABIERTO' ? (
+                    <RetirarsePartido partidoId={pp.partido.id} />
+                  ) : (
+                    <span style={{ fontSize: 11, fontWeight: 700, color: (ESTADO_PARTIDO_LABEL[pp.partido.estado] ?? { tono: 'var(--pl-ink-soft)' }).tono }}>
+                      {(ESTADO_PARTIDO_LABEL[pp.partido.estado] ?? { texto: pp.partido.estado }).texto}
+                    </span>
                   )}
                 </div>
               </div>

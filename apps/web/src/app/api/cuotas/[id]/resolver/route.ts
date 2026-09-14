@@ -85,6 +85,28 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             payload: { reservaId: reserva.id },
           },
         });
+
+        // Split de un partido comunitario: mismo criterio que la
+        // aprobación directa de pago único — el partido pasa a CONFIRMADO
+        // recién cuando la reserva de verdad se confirma.
+        if (reserva.partidoAbiertoId) {
+          await tx.partidoAbierto.update({ where: { id: reserva.partidoAbiertoId }, data: { estado: 'CONFIRMADO' } });
+          const participantes = await tx.participantePartido.findMany({
+            where: { partidoId: reserva.partidoAbiertoId, usuarioId: { not: reserva.organizadorId } },
+            select: { usuarioId: true },
+          });
+          if (participantes.length > 0) {
+            await tx.notificacion.createMany({
+              data: participantes.map((p) => ({
+                usuarioId: p.usuarioId,
+                canal: 'WHATSAPP' as const,
+                plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_CONFIRMADO,
+                payload: { partidoId: reserva.partidoAbiertoId, reservaId: reserva.id },
+              })),
+            });
+          }
+        }
+
         return { estadoCuota: nuevoEstadoCuota, reservaConfirmada: true };
       }
       return { estadoCuota: nuevoEstadoCuota, reservaConfirmada: false };

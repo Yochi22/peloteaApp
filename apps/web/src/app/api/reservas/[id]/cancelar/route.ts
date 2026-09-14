@@ -123,6 +123,22 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         ],
       });
 
+      // Partido comunitario: si su reserva se cancela (rechazo definitivo,
+      // el hold venció, o el club/organizador la cancela), el partido
+      // vuelve a COMPLETO — el grupo sigue armado, solo hay que confirmar
+      // de nuevo (buscará otra cancha del pool si esta ya no calza).
+      if (reserva.partidoAbiertoId) {
+        await tx.partidoAbierto.update({ where: { id: reserva.partidoAbiertoId }, data: { estado: 'COMPLETO' } });
+        await tx.notificacion.create({
+          data: {
+            usuarioId: reserva.organizadorId,
+            canal: 'IN_APP',
+            plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_COMPLETO,
+            payload: { partidoId: reserva.partidoAbiertoId },
+          },
+        });
+      }
+
       await tx.auditLog.create({
         data: {
           sedeId: reserva.sedeId,

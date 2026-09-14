@@ -213,6 +213,15 @@ export type CubrirCuotaInput = z.infer<typeof cubrirCuotaSchema>;
 export const unirsePartidoSchema = z.object({}).strict();
 export type UnirsePartidoInput = z.infer<typeof unirsePartidoSchema>;
 
+/**
+ * El organizador, cuando el partido ya se llenó, decide cómo se paga: entre
+ * todos (split — cada quien su cuota, como cualquier reserva dividida) o él
+ * solo (abono o pago completo según la política de pago parcial de la
+ * sede, como cualquier reserva normal sin split).
+ */
+export const confirmarPartidoSchema = z.object({ dividir: z.boolean().default(false) });
+export type ConfirmarPartidoInput = z.infer<typeof confirmarPartidoSchema>;
+
 export const listarPartidosSchema = z.object({
   deporte: deporteSchema.optional(),
   nivel: z.enum(['PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO']).optional(),
