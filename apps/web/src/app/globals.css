@@ -384,6 +384,14 @@ button {
 @media (max-width: 900px) {
   .pl-panel-shell {
     flex-direction: column;
+    /* `stretch` (el default), no el `flex-start` de arriba: ese
+       `align-items` estaba pensado para que en desktop (fila) el sidebar y
+       el contenido no se estiraran a la misma altura — pero en columna
+       (mobile) el eje cruzado es el ANCHO, así que "flex-start" hacía que
+       `.pl-panel-main` se achicara al ancho de su propio contenido en vez
+       de ocupar el 100%, en vez de dejarlo simplemente apilado. Esto era
+       el dashboard entero viéndose roto en mobile. */
+    align-items: stretch;
     min-height: 0;
   }
   .pl-panel-sidebar {
