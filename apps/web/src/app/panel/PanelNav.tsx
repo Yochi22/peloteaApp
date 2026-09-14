@@ -1,8 +1,10 @@
 'use client';
 
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import type * as React from 'react';
+import { CerrarSesion } from './CerrarSesion';
 
 interface ItemNav {
   href: string;
@@ -111,21 +113,58 @@ const ITEMS: ItemNav[] = [
   },
 ];
 
+/**
+ * En desktop es el sidebar completo, siempre visible. En mobile colapsa
+ * detrás de un botón de hamburguesa estándar (nada de scroll horizontal,
+ * que nadie descubría que se podía deslizar) — el menú se cierra solo al
+ * navegar, para no dejarlo abierto tapando la página siguiente.
+ */
 export function PanelNav() {
   const pathname = usePathname();
+  const [abierto, setAbierto] = useState(false);
+
+  useEffect(() => setAbierto(false), [pathname]);
+
   return (
-    <nav className="pl-panel-nav" aria-label="Panel">
-      {ITEMS.map((item) => {
-        // /panel activo solo en la propia raíz, no como prefijo de todas
-        // las demás rutas (todas empiezan con "/panel").
-        const activo = item.href === '/panel' ? pathname === '/panel' : pathname.startsWith(item.href);
-        return (
-          <Link key={item.href} href={item.href} className={activo ? 'pl-panel-navlink pl-panel-navlink--active' : 'pl-panel-navlink'}>
-            {item.icon}
-            <span>{item.label}</span>
-          </Link>
-        );
-      })}
-    </nav>
+    <>
+      <div className="pl-panel-topbar">
+        <Link href="/panel" className="pl-panel-brand">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" aria-hidden>
+            <circle cx="12" cy="12" r="10" fill="var(--pl-volt)" />
+            <path d="M3.5 8.5c5.5 2.4 11.5 2.4 17 0M3.5 15.5c5.5-2.4 11.5-2.4 17 0" stroke="var(--pl-ink)" strokeWidth="1.7" />
+          </svg>
+          <strong style={{ fontFamily: 'var(--pl-font-display)', fontSize: 17 }}>Pelotea</strong>
+        </Link>
+        <button
+          type="button"
+          className="pl-panel-hamburger"
+          onClick={() => setAbierto((a) => !a)}
+          aria-expanded={abierto}
+          aria-controls="pl-panel-navlist"
+          aria-label={abierto ? 'Cerrar menú' : 'Abrir menú'}
+        >
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden>
+            {abierto ? <path d="M6 6l12 12M18 6 6 18" /> : <path d="M4 7h16M4 12h16M4 17h16" />}
+          </svg>
+        </button>
+      </div>
+
+      <nav id="pl-panel-navlist" className={abierto ? 'pl-panel-navlist pl-panel-navlist--open' : 'pl-panel-navlist'} aria-label="Panel">
+        {ITEMS.map((item) => {
+          // /panel activo solo en la propia raíz, no como prefijo de todas
+          // las demás rutas (todas empiezan con "/panel").
+          const activo = item.href === '/panel' ? pathname === '/panel' : pathname.startsWith(item.href);
+          return (
+            <Link key={item.href} href={item.href} className={activo ? 'pl-panel-navlink pl-panel-navlink--active' : 'pl-panel-navlink'}>
+              {item.icon}
+              <span>{item.label}</span>
+            </Link>
+          );
+        })}
+        <div className="pl-panel-sidebar-footer">
+          <CerrarSesion />
+        </div>
+      </nav>
+    </>
   );
 }

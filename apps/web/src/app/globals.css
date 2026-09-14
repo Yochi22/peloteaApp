@@ -299,9 +299,13 @@ button {
   }
 }
 
-/* ── Shell del panel: sidebar fijo en desktop, franja horizontal en mobile ──
+/* ── Shell del panel: sidebar fijo en desktop, menú hamburguesa en mobile ──
    Reemplaza la fila de botones de colores que se repetía arriba de cada
-   página de /panel — un solo lugar para toda la navegación. */
+   página de /panel — un solo lugar para toda la navegación. En mobile es
+   un menú desplegable estándar (nada de scroll horizontal: nadie
+   descubría que se podía deslizar, y "Cerrar sesión" competía por espacio
+   en esa franja angosta — acá vive DENTRO del menú, sin ocupar nada hasta
+   que se abre). */
 .pl-panel-shell {
   display: flex;
   align-items: flex-start;
@@ -316,10 +320,14 @@ button {
   overflow-y: auto;
   display: flex;
   flex-direction: column;
-  gap: 4px;
   padding: 20px 14px;
   border-right: 1.5px solid var(--pl-line);
   background: var(--pl-bg-raised);
+}
+.pl-panel-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 .pl-panel-brand {
   display: flex;
@@ -334,7 +342,11 @@ button {
 .pl-panel-brand:visited {
   color: var(--pl-ink);
 }
-.pl-panel-nav {
+/* Solo existe visualmente en mobile — ver media query abajo. */
+.pl-panel-hamburger {
+  display: none;
+}
+.pl-panel-navlist {
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -374,6 +386,7 @@ button {
   color: #fff;
 }
 .pl-panel-sidebar-footer {
+  margin-top: auto;
   padding-top: 10px;
   border-top: 1.5px solid var(--pl-line);
 }
@@ -398,38 +411,39 @@ button {
     position: static;
     width: 100%;
     height: auto;
-    flex-direction: row;
-    align-items: center;
+    padding: 8px 14px;
     border-right: 0;
     border-bottom: 1.5px solid var(--pl-line);
-    padding: 10px 14px;
-    gap: 10px;
   }
   .pl-panel-brand {
     padding: 4px;
   }
-  .pl-panel-brand span,
-  .pl-panel-brand strong {
-    display: none;
-  }
-  .pl-panel-nav {
-    flex-direction: row;
-    overflow-x: auto;
-    gap: 6px;
-    /* Sin esto, una barra con más links de los que caben se ve igual que
-       una con uno solo — nada avisa que hay más deslizando a la derecha.
-       Difumina el borde derecho como pista de que sigue scrolleando. */
-    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
-    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
-  }
-  .pl-panel-navlink {
-    padding: 9px 12px;
+  .pl-panel-hamburger {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
     flex: none;
+    border-radius: 9px;
+    border: 1.5px solid var(--pl-line);
+    background: var(--pl-bg-raised);
+    color: var(--pl-ink);
+    cursor: pointer;
+  }
+  /* Colapsado por defecto — se abre con la clase `--open` que pone React
+     al tocar el botón, nunca con solo CSS: necesita recordar el estado. */
+  .pl-panel-navlist {
+    display: none;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1.5px solid var(--pl-line);
+  }
+  .pl-panel-navlist--open {
+    display: flex;
   }
   .pl-panel-sidebar-footer {
-    padding-top: 0;
-    border-top: 0;
-    flex: none;
+    margin-top: 6px;
   }
 }
 
