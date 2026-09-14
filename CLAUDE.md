@@ -815,6 +815,26 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Cronómetro de cancha con alerta al staff (2026-09-14)
+
+Pedido del admin: al llegar el cliente a retirar la pelota, poder arrancar
+una cuenta regresiva de esa reserva y que avise cuándo hay que recogerla —
+sin depender de que alguien se quede mirando la pantalla.
+
+`Reserva.tiempoIniciadoEn` (nullable) + `tiempoAlertaEnviada`:
+`POST /api/reservas/[id]/iniciar-tiempo` (staff/admin, solo sobre una
+CONFIRMADA) lo arranca — cuenta `duracionMin` desde ESE instante, no desde
+`Reserva.inicio` (el cliente puede llegar tarde); `DELETE` en la misma ruta
+lo reinicia si se apretó por error. `apps/worker/src/jobs/alerta-cronometro.ts`
+(barrido cada 1 min, más seguido que el resto porque es una alerta en
+vivo) avisa por WhatsApp + in-app a CADA `SEDE_STAFF`/`SEDE_ADMIN` de la
+sede cuando el tiempo se cumple — no a un número genérico, cada uno en su
+propio teléfono, reusando la `Notificacion` de siempre.
+`apps/web/src/app/panel/Cronometro.tsx` es la cuenta regresiva en vivo
+(cliente, `setInterval` de 1s contra un timestamp fijo, sigue contando en
+rojo pasado el cero — "tiempo extra", no desaparece) montada en
+`/panel/agenda` (cada celda ocupada) y en `/panel/reservas/[id]`.
+
 ### Partidos comunitarios: confirmación explícita del organizador (2026-09-14)
 
 Diseño pedido por el usuario, ver §3 "Matchmaking" — `PartidoAbierto` ya

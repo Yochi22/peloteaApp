@@ -4,6 +4,7 @@ import { prisma } from '@pelotea/db';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
 import { ComprobanteInline } from './ComprobanteInline';
+import { Cronometro } from '../../Cronometro';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,6 +75,17 @@ export default async function DetalleReservaPage({ params }: { params: Promise<{
           {reserva.estado}
         </span>
       </div>
+
+      {reserva.estado === 'CONFIRMADA' ? (
+        <div style={{ marginTop: 14 }}>
+          <Cronometro
+            reservaId={reserva.id}
+            inicio={reserva.inicio.toISOString()}
+            fin={reserva.fin.toISOString()}
+            tiempoIniciadoEn={reserva.tiempoIniciadoEn?.toISOString() ?? null}
+          />
+        </div>
+      ) : null}
 
       {/* ── Organizador ─────────────────────────────────────────────── */}
       <section style={{ marginTop: 24, border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 16 }}>

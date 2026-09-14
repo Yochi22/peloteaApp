@@ -8,6 +8,7 @@ import { procesarNotificaciones } from './jobs/notificaciones';
 import { procesarRecordatorios } from './jobs/recordatorios';
 import { procesarLimpiezaComprobantes } from './jobs/limpieza-comprobantes';
 import { procesarMaterializarDescuentos } from './jobs/materializar-descuentos';
+import { procesarAlertaCronometro } from './jobs/alerta-cronometro';
 import { iniciarWhatsapp } from './lib/whatsapp';
 import { iniciarServidorHttp } from './lib/server';
 
@@ -67,6 +68,7 @@ export const queues = {
   recordatorios: new Queue(QUEUES.RECORDATORIOS, { connection, defaultJobOptions: defaultJobOpts }),
   limpiezaComprobantes: new Queue(QUEUES.LIMPIEZA_COMPROBANTES, { connection, defaultJobOptions: defaultJobOpts }),
   materializarDescuentos: new Queue(QUEUES.MATERIALIZAR_DESCUENTOS, { connection, defaultJobOptions: defaultJobOpts }),
+  alertaCronometro: new Queue(QUEUES.ALERTA_CRONOMETRO, { connection, defaultJobOptions: defaultJobOpts }),
 };
 // BullMQ duplica la conexión de Redis por dentro de cada Queue/Worker (la
 // necesita para los comandos "blocking") — cada una de esas conexiones
@@ -84,6 +86,7 @@ const workers: Worker[] = [
   new Worker(QUEUES.RECORDATORIOS, procesarRecordatorios, { connection, concurrency: 2 }),
   new Worker(QUEUES.LIMPIEZA_COMPROBANTES, procesarLimpiezaComprobantes, { connection, concurrency: 1 }),
   new Worker(QUEUES.MATERIALIZAR_DESCUENTOS, procesarMaterializarDescuentos, { connection, concurrency: 1 }),
+  new Worker(QUEUES.ALERTA_CRONOMETRO, procesarAlertaCronometro, { connection, concurrency: 2 }),
 ];
 
 // Barrido periódico: transiciona holds/revisiones vencidos y despacha ofertas
@@ -114,6 +117,10 @@ async function programarBarridos() {
     { every: 30 * 60_000 },
     { name: 'barrido' },
   );
+  // Cada minuto, no cada 15-30 como los otros: es una alerta en vivo ("ya
+  // se cumplió la hora, ve a recoger la pelota") — un retraso largo le
+  // quita el sentido.
+  await queues.alertaCronometro.upsertJobScheduler('barrido-alerta-cronometro', { every: 60_000 }, { name: 'barrido' });
 }
 
 // NUNCA `process.exit()` acá: un fallo transitorio de Redis al arrancar

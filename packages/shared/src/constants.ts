@@ -80,6 +80,7 @@ export const PLANTILLAS_NOTIFICACION = {
   SPLIT_COMPLETO: 'split.completo',
   PARTIDO_COMPLETO: 'partido.completo',
   PARTIDO_CONFIRMADO: 'partido.confirmado',
+  CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
 export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMAIL' | 'IN_APP' | 'WHATSAPP'>> = {
@@ -99,6 +100,9 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   // WhatsApp (CLAUDE.md §4).
   'partido.completo': ['WHATSAPP', 'IN_APP'],
   'partido.confirmado': ['WHATSAPP', 'IN_APP'],
+  // Va al staff/admin del club, no al cliente — transaccional y con
+  // urgencia real (hay que ir a recoger la pelota).
+  'reserva.cronometro_terminado': ['WHATSAPP', 'IN_APP'],
 };
 
 /** Nombres de colas BullMQ. */
@@ -110,4 +114,5 @@ export const QUEUES = {
   RECORDATORIOS: 'recordatorios',
   LIMPIEZA_COMPROBANTES: 'limpieza-comprobantes',
   MATERIALIZAR_DESCUENTOS: 'materializar-descuentos',
+  ALERTA_CRONOMETRO: 'alerta-cronometro',
 } as const;

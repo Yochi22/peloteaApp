@@ -469,6 +469,15 @@ model Reserva {
   restanteCobradoEn    DateTime?
   restanteCobradoPorId String?
 
+  // Cronómetro de cancha: el staff lo arranca cuando el cliente retira la
+  // pelota (no cuando "debería" haber empezado el turno — a veces llega
+  // tarde) y cuenta regresivo `duracionMin` minutos desde ese instante
+  // exacto, no desde `inicio`. `tiempoAlertaEnviada` evita mandar la alerta
+  // de "se acabó" más de una vez cuando el barrido del worker corre de
+  // nuevo.
+  tiempoIniciadoEn    DateTime?
+  tiempoAlertaEnviada Boolean   @default(false)
+
   ofertaId         String?
   oferta           Oferta?         @relation(fields: [ofertaId], references: [id])
   partidoAbiertoId String?         @unique

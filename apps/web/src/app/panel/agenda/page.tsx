@@ -5,6 +5,7 @@ import { DEPORTE_LABEL, DEPORTES, type Deporte } from '@pelotea/shared';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
 import { CobrarRestanteInline } from './CobrarRestanteInline';
+import { Cronometro } from '../Cronometro';
 import { FechaPicker } from './FechaPicker';
 
 export const dynamic = 'force-dynamic';
@@ -51,6 +52,7 @@ interface Ocupante {
   restanteCobrado: boolean;
   inicio: Date;
   fin: Date;
+  tiempoIniciadoEn: Date | null;
 }
 
 export default async function AgendaPanelPage({
@@ -125,6 +127,7 @@ export default async function AgendaPanelPage({
         restanteCobrado: r.restanteCobrado,
         inicio: r.inicio,
         fin: r.fin,
+        tiempoIniciadoEn: r.tiempoIniciadoEn,
       }),
     );
 
@@ -313,6 +316,14 @@ export default async function AgendaPanelPage({
                                 ) : null}
                                 {(o.estado === 'CONFIRMADA' || o.estado === 'COMPLETADA') && !o.restanteCobrado && o.montoRestante > 0 ? (
                                   <CobrarRestanteInline reservaId={o.reservaId} montoRestante={o.montoRestante} />
+                                ) : null}
+                                {o.estado === 'CONFIRMADA' ? (
+                                  <Cronometro
+                                    reservaId={o.reservaId}
+                                    inicio={o.inicio.toISOString()}
+                                    fin={o.fin.toISOString()}
+                                    tiempoIniciadoEn={o.tiempoIniciadoEn?.toISOString() ?? null}
+                                  />
                                 ) : null}
                               </div>
                             );

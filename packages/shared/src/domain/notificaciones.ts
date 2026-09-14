@@ -35,6 +35,11 @@ export function renderTextoNotificacion(
       };
     case 'partido.confirmado':
       return { titulo: 'Partido confirmado ✅', cuerpo: 'Ya se reservó la cancha y se aprobó el pago. ¡Nos vemos ahí!' };
+    case 'reserva.cronometro_terminado':
+      return {
+        titulo: '⏰ Se acabó el tiempo',
+        cuerpo: `${payload.cancha ?? 'La cancha'} — ${payload.persona ?? 'el cliente'} ya cumplió su hora. Hay que ir a recoger la pelota.`,
+      };
     default:
       return { titulo: 'Pelotea', cuerpo: 'Tienes una novedad en tu cuenta.' };
   }
