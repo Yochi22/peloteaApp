@@ -416,6 +416,11 @@ button {
     flex-direction: row;
     overflow-x: auto;
     gap: 6px;
+    /* Sin esto, una barra con más links de los que caben se ve igual que
+       una con uno solo — nada avisa que hay más deslizando a la derecha.
+       Difumina el borde derecho como pista de que sigue scrolleando. */
+    -webkit-mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
+    mask-image: linear-gradient(to right, black calc(100% - 28px), transparent 100%);
   }
   .pl-panel-navlink {
     padding: 9px 12px;

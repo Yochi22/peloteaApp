@@ -21,7 +21,7 @@ function Icon({ children }: { children: React.ReactNode }) {
 const ITEMS: ItemNav[] = [
   {
     href: '/panel',
-    label: 'Dashboard',
+    label: 'Inicio',
     icon: (
       <Icon>
         <rect x="3" y="3" width="7" height="9" rx="1.5" />

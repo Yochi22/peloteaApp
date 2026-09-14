@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { redirect } from 'next/navigation';
 import { prisma } from '@pelotea/db';
 import { getSesionServer } from '@/lib/session-server';
 
@@ -31,6 +32,13 @@ export const dynamic = 'force-dynamic';
 
 export default async function HomePage() {
   const sesion = await getSesionServer();
+  // Un admin/staff con sesión no tiene ningún motivo para ver la landing de
+  // cliente ("Reservar cancha", categorías, etc.) — antes se quedaba viendo
+  // esa página como si fuera un jugador más. Directo a su panel, mismo
+  // criterio que ya usan /entrar y /cuenta para estos roles.
+  if (sesion && ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(sesion.rol)) {
+    redirect('/panel');
+  }
   // Mismo criterio que /canchas: si hay sesión, mostrar "Mi cuenta" (con el
   // badge de notificaciones sin leer) en vez de solo "Entrar" — antes la
   // landing nunca reflejaba que ya habías iniciado sesión, así que después
@@ -38,7 +46,6 @@ export default async function HomePage() {
   const notisSinLeer = sesion
     ? await prisma.notificacion.count({ where: { usuarioId: sesion.usuarioId, canal: 'IN_APP', leidaEn: null } })
     : 0;
-  const esStaff = sesion && ['SEDE_STAFF', 'SEDE_ADMIN', 'PLATAFORMA_ADMIN'].includes(sesion.rol);
 
   return (
     <main>
@@ -58,10 +65,12 @@ export default async function HomePage() {
           <strong style={{ fontFamily: 'var(--pl-font-display)', fontSize: 20 }}>Pelotea</strong>
         </span>
         <nav style={{ display: 'flex', gap: 14, alignItems: 'center' }}>
+          {/* Solo llega acá un JUGADOR (o nadie) — staff/admin ya se
+              redirigió a /panel arriba. */}
           {sesion ? (
-            <Link href={esStaff ? '/panel' : '/cuenta'} style={{ position: 'relative' }}>
-              {esStaff ? 'Panel' : 'Mi cuenta'}
-              {!esStaff && notisSinLeer > 0 ? (
+            <Link href="/cuenta" style={{ position: 'relative' }}>
+              Mi cuenta
+              {notisSinLeer > 0 ? (
                 <span
                   style={{
                     position: 'absolute',
