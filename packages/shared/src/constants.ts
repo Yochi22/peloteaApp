@@ -80,6 +80,7 @@ export const PLANTILLAS_NOTIFICACION = {
   SPLIT_COMPLETO: 'split.completo',
   PARTIDO_COMPLETO: 'partido.completo',
   PARTIDO_CONFIRMADO: 'partido.confirmado',
+  PARTIDO_EXPIRADO: 'partido.expirado',
   CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
@@ -100,6 +101,9 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   // WhatsApp (CLAUDE.md §4).
   'partido.completo': ['WHATSAPP', 'IN_APP'],
   'partido.confirmado': ['WHATSAPP', 'IN_APP'],
+  // Rutina, no urgente — solo in-app, no vale la pena un WhatsApp para "no
+  // se completó a tiempo".
+  'partido.expirado': ['IN_APP'],
   // Va al staff/admin del club, no al cliente — transaccional y con
   // urgencia real (hay que ir a recoger la pelota).
   'reserva.cronometro_terminado': ['WHATSAPP', 'IN_APP'],
@@ -116,4 +120,5 @@ export const QUEUES = {
   MATERIALIZAR_DESCUENTOS: 'materializar-descuentos',
   ALERTA_CRONOMETRO: 'alerta-cronometro',
   LIMPIEZA_TASA_CAMBIO: 'limpieza-tasa-cambio',
+  EXPIRAR_PARTIDOS: 'expirar-partidos',
 } as const;

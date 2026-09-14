@@ -815,6 +815,26 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Partidos comunitarios expiran de verdad (2026-09-14)
+
+Gap real: un partido comunitario ABIERTO (nunca se llenó) o COMPLETO (se
+llenó pero el organizador nunca confirmó y pagó) se quedaba
+"organizándose" para siempre, aunque su `inicio` ya hubiera pasado —
+`GET /api/partidos` solo lo ocultaba del listado público (filtro
+`inicio: {gt: ahora}`), pero la fila seguía viva y el organizador todavía
+podía intentar `confirmar` una hora que ya pasó.
+
+Nuevo estado `EstadoPartido.EXPIRADO` (mismo criterio que `Reserva.EXPIRADA`).
+`apps/worker/src/jobs/expirar-partidos.ts` (barrido cada 5 min): marca
+EXPIRADO cualquier ABIERTO/COMPLETO cuyo `inicio` ya pasó y que no tenga
+una Reserva activa vinculada (uno que el organizador SÍ llegó a confirmar
+sigue su curso normal, pase lo que pase con la hora del turno). Avisa
+in-app (no urgente, no WhatsApp) al organizador y a todos los que se
+unieron. `/api/partidos/[id]/unirse` y `/confirmar` también rechazan
+directo (`partido_ya_paso`) si `inicio` ya pasó — respaldo por si el
+barrido todavía no corrió (worker dormido en Render free tier, etc.).
+`/cuenta` muestra el estado "Expiró" en vez del enum crudo.
+
 ### Sidebar del panel + descuentos reflejados al instante (2026-09-14)
 
 - `apps/web/src/app/panel/layout.tsx` + `PanelNav.tsx`: sidebar fijo en

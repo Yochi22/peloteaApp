@@ -10,6 +10,7 @@ import { procesarLimpiezaComprobantes } from './jobs/limpieza-comprobantes';
 import { procesarMaterializarDescuentos } from './jobs/materializar-descuentos';
 import { procesarAlertaCronometro } from './jobs/alerta-cronometro';
 import { procesarLimpiezaTasaCambio } from './jobs/limpieza-tasa-cambio';
+import { procesarExpirarPartidos } from './jobs/expirar-partidos';
 import { iniciarWhatsapp } from './lib/whatsapp';
 import { iniciarServidorHttp } from './lib/server';
 
@@ -71,6 +72,7 @@ export const queues = {
   materializarDescuentos: new Queue(QUEUES.MATERIALIZAR_DESCUENTOS, { connection, defaultJobOptions: defaultJobOpts }),
   alertaCronometro: new Queue(QUEUES.ALERTA_CRONOMETRO, { connection, defaultJobOptions: defaultJobOpts }),
   limpiezaTasaCambio: new Queue(QUEUES.LIMPIEZA_TASA_CAMBIO, { connection, defaultJobOptions: defaultJobOpts }),
+  expirarPartidos: new Queue(QUEUES.EXPIRAR_PARTIDOS, { connection, defaultJobOptions: defaultJobOpts }),
 };
 // BullMQ duplica la conexión de Redis por dentro de cada Queue/Worker (la
 // necesita para los comandos "blocking") — cada una de esas conexiones
@@ -90,6 +92,7 @@ const workers: Worker[] = [
   new Worker(QUEUES.MATERIALIZAR_DESCUENTOS, procesarMaterializarDescuentos, { connection, concurrency: 1 }),
   new Worker(QUEUES.ALERTA_CRONOMETRO, procesarAlertaCronometro, { connection, concurrency: 2 }),
   new Worker(QUEUES.LIMPIEZA_TASA_CAMBIO, procesarLimpiezaTasaCambio, { connection, concurrency: 1 }),
+  new Worker(QUEUES.EXPIRAR_PARTIDOS, procesarExpirarPartidos, { connection, concurrency: 2 }),
 ];
 
 // Barrido periódico: transiciona holds/revisiones vencidos y despacha ofertas
@@ -126,6 +129,10 @@ async function programarBarridos() {
   await queues.alertaCronometro.upsertJobScheduler('barrido-alerta-cronometro', { every: 60_000 }, { name: 'barrido' });
   // Una vez al día alcanza — mismo criterio que la limpieza de comprobantes.
   await queues.limpiezaTasaCambio.upsertJobScheduler('barrido-limpieza-tasa-cambio', { every: 24 * 60 * 60_000 }, { name: 'barrido' });
+  // Cada 5 min: un partido comunitario cuya hora ya pasó sin completarse
+  // (o sin que el organizador confirmara y pagara) no debe quedar
+  // "organizándose" para siempre.
+  await queues.expirarPartidos.upsertJobScheduler('barrido-expirar-partidos', { every: 5 * 60_000 }, { name: 'barrido' });
 }
 
 // NUNCA `process.exit()` acá: un fallo transitorio de Redis al arrancar

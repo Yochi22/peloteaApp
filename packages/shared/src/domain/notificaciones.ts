@@ -35,6 +35,11 @@ export function renderTextoNotificacion(
       };
     case 'partido.confirmado':
       return { titulo: 'Partido confirmado ✅', cuerpo: 'Ya se reservó la cancha y se aprobó el pago. ¡Nos vemos ahí!' };
+    case 'partido.expirado':
+      return {
+        titulo: 'El partido no se completó a tiempo',
+        cuerpo: 'Pasó la hora sin llenarse el cupo o sin confirmarse el pago — el partido quedó cerrado. Puedes crear uno nuevo.',
+      };
     case 'reserva.cronometro_terminado':
       return {
         titulo: '⏰ Se acabó el tiempo',

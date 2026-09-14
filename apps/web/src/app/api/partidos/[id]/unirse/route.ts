@@ -45,6 +45,9 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const partido = await tx.partidoAbierto.findUnique({ where: { id: partidoId } });
       if (!partido) throw new HttpError(404, 'partido_no_encontrado');
       if (partido.estado !== 'ABIERTO') throw new HttpError(409, 'partido_no_disponible');
+      // Respaldo del barrido del worker (cada 5 min) — no depender solo de
+      // que ya haya corrido para rechazar unirse a algo cuya hora ya pasó.
+      if (partido.inicio <= new Date()) throw new HttpError(409, 'partido_ya_paso');
 
       const yaParticipa = await tx.participantePartido.findUnique({
         where: { partidoId_usuarioId: { partidoId, usuarioId: sesion.usuarioId } },

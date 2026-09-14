@@ -51,6 +51,10 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       if (partido.reserva && !['CANCELADA', 'EXPIRADA'].includes(partido.reserva.estado)) {
         throw new HttpError(409, 'ya_tiene_reserva');
       }
+      // Respaldo del barrido del worker (cada 5 min) — no dejar confirmar
+      // (y menos aún pagar) una hora que ya pasó solo porque el barrido
+      // todavía no corrió.
+      if (partido.inicio <= new Date()) throw new HttpError(409, 'partido_ya_paso');
 
       const sede = await tx.sede.findUniqueOrThrow({ where: { id: partido.sedeId } });
       const duracionMin = Math.round((partido.fin.getTime() - partido.inicio.getTime()) / 60_000);

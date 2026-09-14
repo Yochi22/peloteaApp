@@ -109,6 +109,10 @@ enum EstadoPartido {
   CONFIRMADO
   CANCELADO
   JUGADO
+  // Pasó `inicio` sin llenarse (ABIERTO) o sin que el organizador
+  // confirmara y pagara a tiempo (COMPLETO) — nunca se reserva nada para
+  // una hora que ya pasó. Ver jobs/expirar-partidos.ts en el worker.
+  EXPIRADO
 }
 
 enum EstadoParticipante {

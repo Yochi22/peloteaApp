@@ -20,6 +20,7 @@ const ESTADO_PARTIDO_LABEL: Record<string, { texto: string; tono: string }> = {
   CONFIRMADO: { texto: 'Confirmado', tono: 'var(--pl-ok)' },
   CANCELADO: { texto: 'Cancelado', tono: 'var(--pl-danger)' },
   JUGADO: { texto: 'Jugado', tono: 'var(--pl-ink-soft)' },
+  EXPIRADO: { texto: 'Expiró — pasó la hora sin completarse', tono: 'var(--pl-ink-soft)' },
 };
 
 /** Mismo criterio que `formatoJid()` del worker: normaliza a wa.me/58<número sin el 0>. */
