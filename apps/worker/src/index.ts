@@ -20,9 +20,31 @@ import { iniciarServidorHttp } from './lib/server';
  * Si WhatsApp se cae o nos banean, la web sigue funcionando.
  */
 
-const connection: ConnectionOptions = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
+// Red de seguridad final: Baileys (WhatsApp) reconecta agresivamente por
+// dentro y puede tirar un rechazo o una excepción que no pase por ninguno
+// de los `.catch`/`.on('error')` de este archivo. Sin esto, cualquiera de
+// esos casos mataba el proceso completo — exactamente el síntoma reportado
+// ("nunca aparece el QR", "reiniciar no encuentra el worker"): un
+// crash-loop constante nunca deja a Baileys terminar de conectar. Loguear
+// y seguir vivo es mejor que reiniciar todo por un error que ya se maneja
+// solo (reconexión) en otro lado.
+process.on('unhandledRejection', (err) => console.error('unhandledRejection (el proceso sigue vivo):', err));
+process.on('uncaughtException', (err) => console.error('uncaughtException (el proceso sigue vivo):', err));
+
+const redisConexion = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:6379', {
   maxRetriesPerRequest: null,
 });
+// CRÍTICO: un EventEmitter de Node que emite 'error' sin ningún listener
+// tira una excepción no capturada y MATA el proceso entero — de fábrica,
+// `ioredis` no tiene ningún listener puesto. Blips de conexión normales en
+// Render+Upstash free tier (timeout, ECONNRESET, el primer round-trip al
+// despertar de un sleep) generan justo ese 'error', y sin este listener
+// cada uno de esos blips reiniciaba TODO el worker — WhatsApp incluido —
+// aunque `ioredis` ya iba a reconectar solo un instante después. Mismo
+// motivo por el que se quitó el `process.exit(1)` de `programarBarridos`
+// más abajo: nunca dejar que un hiccup de Redis tumbe el proceso.
+redisConexion.on('error', (err) => console.error('Redis (ioredis) error — reconectando solo:', err.message));
+const connection: ConnectionOptions = redisConexion;
 
 const defaultJobOpts = {
   attempts: 5,
@@ -46,6 +68,13 @@ export const queues = {
   limpiezaComprobantes: new Queue(QUEUES.LIMPIEZA_COMPROBANTES, { connection, defaultJobOptions: defaultJobOpts }),
   materializarDescuentos: new Queue(QUEUES.MATERIALIZAR_DESCUENTOS, { connection, defaultJobOptions: defaultJobOpts }),
 };
+// BullMQ duplica la conexión de Redis por dentro de cada Queue/Worker (la
+// necesita para los comandos "blocking") — cada una de esas conexiones
+// duplicadas puede emitir su propio 'error' independiente del `connection`
+// de arriba. Mismo riesgo de "EventEmitter sin listener mata el proceso".
+for (const q of Object.values(queues)) {
+  q.on('error', (err) => console.error(`[cola ${q.name}] error de conexión — reconectando solo:`, err.message));
+}
 
 const workers: Worker[] = [
   new Worker(QUEUES.HOLD_EXPIRY, procesarHoldExpirado, { connection, concurrency: 5 }),
@@ -99,6 +128,9 @@ programarBarridos().catch((e) => {
 
 for (const w of workers) {
   w.on('failed', (job, err) => console.error(`[${w.name}] job ${job?.id} falló:`, err.message));
+  // Mismo motivo que en `queues` arriba: sin esto, un error de conexión en
+  // la copia interna de Redis de este Worker tumbaba el proceso entero.
+  w.on('error', (err) => console.error(`[worker ${w.name}] error de conexión — reconectando solo:`, err.message));
 }
 
 // Se conecta al arrancar (no espera al primer mensaje) para que el QR de

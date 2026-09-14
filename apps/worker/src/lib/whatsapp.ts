@@ -1,5 +1,16 @@
 import { rm } from 'node:fs/promises';
-import makeWASocket, { useMultiFileAuthState, DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
+// Export NOMBRADO, no el default: `@whiskeysockets/baileys` es CJS
+// (`exports.default = Socket_1.default` + `exports.makeWASocket = ...`) y
+// este paquete corre bajo ESM real (`"type": "module"`, vía `tsx`) — el
+// interop de Node para un default import de un módulo CJS entrega el
+// objeto `module.exports` completo tal cual, no lo "desenvuelve" siguiendo
+// `.default` (eso es un comportamiento de Babel/`esModuleInterop`, no de
+// Node ESM nativo). Con el default import, `makeWASocket` terminaba siendo
+// el objeto de exports entero — de ahí "makeWASocket is not a function" y
+// WhatsApp nunca llegaba a conectar. El named import sí funciona: Node
+// analiza el CJS con `cjs-module-lexer` y expone `exports.makeWASocket`
+// como un named export real.
+import { makeWASocket, useMultiFileAuthState, DisconnectReason, type WASocket } from '@whiskeysockets/baileys';
 import { Boom } from '@hapi/boom';
 import pino from 'pino';
 
