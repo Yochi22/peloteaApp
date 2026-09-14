@@ -1,4 +1,5 @@
 import { notFound, redirect } from 'next/navigation';
+import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { BeneficiosCuenta } from '@pelotea/ui';
 import { getSesionServer } from '@/lib/session-server';
@@ -48,7 +49,14 @@ export default async function ComprobantePage({
 
   return (
     <main className="pl-container" style={{ maxWidth: 460, paddingBlock: 32 }}>
-      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
+      {/* Sin link "volver" para invitados por token: llegan por un enlace
+          único, no hay a dónde volver salvo que tengan cuenta iniciada. */}
+      {sesion ? (
+        <Link href="/cuenta" style={{ fontSize: 13 }}>
+          ← Mi cuenta
+        </Link>
+      ) : null}
+      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: sesion ? 14 : 0 }}>
         {reserva.esDividida ? 'Pago dividido' : 'Pago móvil'}
       </p>
       <h1 style={{ fontSize: 26, marginTop: 4 }}>

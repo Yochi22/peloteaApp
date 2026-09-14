@@ -125,7 +125,10 @@ export default function EntrarPage() {
 
   return (
     <main className="pl-container" style={{ maxWidth: 400, paddingBlock: 48 }}>
-      <h1 style={{ fontSize: 28 }}>Entrar</h1>
+      <Link href="/" style={{ fontSize: 13 }}>
+        ← Inicio
+      </Link>
+      <h1 style={{ fontSize: 28, marginTop: 14 }}>Entrar</h1>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 6 }}>
         Ofertas de última hora, dividir pagos y partidos abiertos te esperan.
       </p>

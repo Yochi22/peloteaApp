@@ -7,6 +7,7 @@ import { procesarOfertaDispatch } from './jobs/oferta-dispatch';
 import { procesarNotificaciones } from './jobs/notificaciones';
 import { procesarRecordatorios } from './jobs/recordatorios';
 import { procesarLimpiezaComprobantes } from './jobs/limpieza-comprobantes';
+import { procesarMaterializarDescuentos } from './jobs/materializar-descuentos';
 import { iniciarWhatsapp } from './lib/whatsapp';
 import { iniciarServidorHttp } from './lib/server';
 
@@ -43,6 +44,7 @@ export const queues = {
   notificaciones: new Queue(QUEUES.NOTIFICACIONES, { connection, defaultJobOptions: defaultJobOpts }),
   recordatorios: new Queue(QUEUES.RECORDATORIOS, { connection, defaultJobOptions: defaultJobOpts }),
   limpiezaComprobantes: new Queue(QUEUES.LIMPIEZA_COMPROBANTES, { connection, defaultJobOptions: defaultJobOpts }),
+  materializarDescuentos: new Queue(QUEUES.MATERIALIZAR_DESCUENTOS, { connection, defaultJobOptions: defaultJobOpts }),
 };
 
 const workers: Worker[] = [
@@ -52,6 +54,7 @@ const workers: Worker[] = [
   new Worker(QUEUES.NOTIFICACIONES, procesarNotificaciones, { connection, concurrency: 3 }),
   new Worker(QUEUES.RECORDATORIOS, procesarRecordatorios, { connection, concurrency: 2 }),
   new Worker(QUEUES.LIMPIEZA_COMPROBANTES, procesarLimpiezaComprobantes, { connection, concurrency: 1 }),
+  new Worker(QUEUES.MATERIALIZAR_DESCUENTOS, procesarMaterializarDescuentos, { connection, concurrency: 1 }),
 ];
 
 // Barrido periódico: transiciona holds/revisiones vencidos y despacha ofertas
@@ -71,6 +74,15 @@ async function programarBarridos() {
   await queues.limpiezaComprobantes.upsertJobScheduler(
     'barrido-limpieza-comprobantes',
     { every: 24 * 60 * 60_000 },
+    { name: 'barrido' },
+  );
+  // Convierte reglas de descuento activas (que el admin programó a mano en
+  // /panel/descuentos) en filas de Oferta reales para los próximos días —
+  // idempotente por @@unique([reglaId, inicioObjetivo]), así que cada media
+  // hora alcanza sin trackear qué ya se hizo.
+  await queues.materializarDescuentos.upsertJobScheduler(
+    'barrido-materializar-descuentos',
+    { every: 30 * 60_000 },
     { name: 'barrido' },
   );
 }

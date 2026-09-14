@@ -1,4 +1,5 @@
 import { notFound } from 'next/navigation';
+import Link from 'next/link';
 import { prisma } from '@pelotea/db';
 import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { slotsDisponibles } from '@/lib/disponibilidad';
@@ -16,13 +17,19 @@ export default async function CanchaPage({ params }: { params: Promise<{ canchaI
 
   return (
     <main>
+      <div className="pl-container" style={{ paddingTop: 18 }}>
+        <Link href="/canchas" style={{ fontSize: 13 }}>
+          ← Canchas
+        </Link>
+      </div>
       <div
         className="pl-container"
         style={{
           display: 'flex',
           alignItems: 'center',
           gap: 16,
-          paddingBlock: 22,
+          paddingBlock: 14,
+          paddingTop: 8,
           borderBottom: '1.5px solid var(--pl-line)',
         }}
       >

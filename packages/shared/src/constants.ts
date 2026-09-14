@@ -104,4 +104,5 @@ export const QUEUES = {
   NOTIFICACIONES: 'notificaciones',
   RECORDATORIOS: 'recordatorios',
   LIMPIEZA_COMPROBANTES: 'limpieza-comprobantes',
+  MATERIALIZAR_DESCUENTOS: 'materializar-descuentos',
 } as const;

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSesionServer } from '@/lib/session-server';
 import { prisma } from '@pelotea/db';
 import { getSedeActivaONull } from '@/lib/sede';
@@ -25,7 +26,10 @@ export default async function CrearPartidoPage() {
 
   return (
     <main className="pl-container" style={{ maxWidth: 480, paddingBlock: 32 }}>
-      <h1 style={{ fontSize: 26 }}>Crear partido abierto</h1>
+      <Link href="/partidos" style={{ fontSize: 13 }}>
+        ← Partidos
+      </Link>
+      <h1 style={{ fontSize: 26, marginTop: 14 }}>Crear partido abierto</h1>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 6 }}>
         Elige cancha, fecha y cuántos faltan — el resto de la comunidad lo ve en /partidos.
       </p>

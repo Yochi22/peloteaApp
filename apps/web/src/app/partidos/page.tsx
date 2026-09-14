@@ -45,7 +45,10 @@ export default async function PartidosPage() {
 
   return (
     <main className="pl-container" style={{ paddingBlock: 32, maxWidth: 720 }}>
-      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12 }}>
+      <Link href="/" style={{ fontSize: 13 }}>
+        ← Inicio
+      </Link>
+      <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', gap: 12, marginTop: 14 }}>
         <div>
           <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
             Pelotea · comunidad

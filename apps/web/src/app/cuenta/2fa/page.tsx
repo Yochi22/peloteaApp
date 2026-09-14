@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { getSesionServer } from '@/lib/session-server';
 import { Alert } from '@pelotea/ui';
 import { Configurar2FA } from './Configurar2FA';
@@ -21,7 +22,13 @@ export default async function Cuenta2FAPage({
 
   return (
     <main className="pl-container" style={{ maxWidth: 420, paddingBlock: 40 }}>
-      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
+      {/* Sin escape en el bloqueo duro a propósito: hay que activar 2FA antes de volver al panel. */}
+      {!esBloqueoDuro ? (
+        <Link href={esAdmin ? '/panel' : '/cuenta'} style={{ fontSize: 13 }}>
+          ← {esAdmin ? 'Panel' : 'Mi cuenta'}
+        </Link>
+      ) : null}
+      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: esBloqueoDuro ? 0 : 14 }}>
         Seguridad de la cuenta
       </p>
       <h1 style={{ fontSize: 26, marginTop: 4 }}>Verificación en dos pasos</h1>

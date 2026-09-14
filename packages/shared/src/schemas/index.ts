@@ -302,6 +302,32 @@ export const actualizarHorarioSchema = z.object({
 });
 export type ActualizarHorarioInput = z.infer<typeof actualizarHorarioSchema>;
 
+// ── Descuentos programados (EXPRES) — el admin decide cancha/horario/día/%,
+//    nunca automático. Ver ReglaDescuento en el schema de Prisma. ─────────────
+
+export const crearReglaDescuentoSchema = z
+  .object({
+    canchaId: z.string().min(1),
+    // null/undefined = todos los días de la semana.
+    diaSemana: z.number().int().min(0).max(6).nullable().optional(),
+    horaInicio: z.number().int().min(0).max(1439),
+    horaFin: z.number().int().min(1).max(1440),
+    descuentoPct: z.number().int().min(1).max(90),
+  })
+  .refine((v) => v.horaFin > v.horaInicio, {
+    message: 'La hora de cierre debe ser después de la de apertura.',
+    path: ['horaFin'],
+  });
+export type CrearReglaDescuentoInput = z.infer<typeof crearReglaDescuentoSchema>;
+
+export const actualizarReglaDescuentoSchema = z
+  .object({
+    activa: z.boolean().optional(),
+    descuentoPct: z.number().int().min(1).max(90).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nada para actualizar.' });
+export type ActualizarReglaDescuentoInput = z.infer<typeof actualizarReglaDescuentoSchema>;
+
 // ── Pago parcial: cobrar el resto en sitio ──────────────────────────────────
 
 export const cobrarRestanteSchema = z.object({

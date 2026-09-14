@@ -137,6 +137,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         <Link href="/panel/tasa-cambio" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay)' }}>
           Tasa de cambio
         </Link>
+        <Link href="/panel/descuentos" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard-deep)' }}>
+          Descuentos
+        </Link>
         {/* Color fijo, NO `var(--pl-ink)`: ese token se invierte en modo
             oscuro (pasa de casi-negro a crema) pero el texto de `.pl-btn`
             queda blanco fijo — en modo oscuro quedaba texto blanco sobre

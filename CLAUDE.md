@@ -815,6 +815,50 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Pool de canchas por disciplina + agenda del panel + descuentos programados
+
+**Pool de canchas** (2026-09-13): `Cancha.cantidad` (default 1, no rompe
+nada existente) agrupa varias canchas físicas idénticas de la misma
+disciplina en una sola fila — al cliente no le importa cuál específica,
+solo que haya cupo. `SlotLock.unidad` + `@@unique([canchaId, inicio,
+unidad])` (antes `@@unique([canchaId, inicio])`) reparte el cupo real:
+`/api/reservas` y `autoReservarPartido()` reclaman atómicamente una unidad
+libre por hora dentro de la misma transacción. `disponibilidad.ts` expone
+`cuposLibres` por horario. UI: cantidad en crear/editar cancha, "N de M
+libres" en `SlotPicker`.
+
+**Agenda del día** (`/panel/agenda`): `/panel/reservas` era solo una lista
+plana, ilegible con muchas canchas/horarios/reservas del mismo tipo a la
+misma hora. La agenda muestra cada tipo de cancha como grilla tipo
+calendario (filas = franja horaria, columnas = un cupo del pool) con
+columna estable por reserva multi-hora (mismo algoritmo de un calendario
+para eventos solapados). Filtros como pills (`.pl-pill`, `.pl-date-input`
+en `globals.css`) en vez de `<select>`/`<input>` con skin de navegador.
+Incluye acción de "cobrar el resto" (pago parcial) inline.
+
+**Bug de dinero real, dos veces**: `calcularMetricas()` (`@/lib/metricas`)
+usaba `hasta = new Date()` (instante exacto) como fin de "últimos 30 días"
+— una reserva ya CONFIRMADA para más tarde hoy quedaba afuera. Y marcar
+NO_SHOW sacaba la reserva entera de "ingresos confirmados" (solo suma
+CONFIRMADA/COMPLETADA) como si el abono ya cobrado se hubiera devuelto.
+Ambos corregidos: `hasta` = fin del día de hoy, y el mismo "ingresos
+retenidos" que ya existía para CANCELADA-con-abono ahora también cubre
+NO_SHOW — lo cobrado NUNCA se devuelve, sea abono o 100%, cancele el
+cliente o no llegue.
+
+**Descuentos programados, no automáticos** (`/panel/descuentos`): las
+ofertas EXPRES nunca tuvieron una forma de crearse — solo existían
+LAST_MINUTE (automáticas, al cancelarse una reserva dentro de la ventana
+crítica, y así se quedan: esas SÍ necesitan reaccionar solas para no perder
+la hora). Nuevo modelo `ReglaDescuento` (cancha, día de semana o todos,
+horario, % — creada a mano por un admin, `activa` toggle). El worker
+(`jobs/materializar-descuentos.ts`, barrido cada 30 min) convierte cada
+regla ACTIVA en filas de `Oferta` reales para los próximos 14 días
+—idempotente por `@@unique([reglaId, inicioObjetivo])`, nunca duplica—
+reusando toda la UI/notificación que ya existía para `Oferta` sin tocarla.
+Al desactivar/borrar una regla, se cancelan las ofertas ya materializadas
+que nadie tomó todavía (las que ya alguien reservó se dejan igual).
+
 Pendiente inmediato: primera migración contra una Postgres real — ya no
 bloqueada (Render la corre sola al arrancar, ver arriba); tests de abuso
 end-to-end (Playwright: CSRF, doble submit, rate-limit — ya hay unit tests

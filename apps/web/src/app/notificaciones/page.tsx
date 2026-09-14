@@ -21,7 +21,10 @@ export default async function NotificacionesPage() {
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 560 }}>
-      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
+      <Link href="/cuenta" style={{ fontSize: 13 }}>
+        ← Mi cuenta
+      </Link>
+      <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)', marginTop: 14 }}>
         Tu cuenta
       </p>
       <h1 style={{ fontSize: 26, marginTop: 4 }}>Notificaciones</h1>

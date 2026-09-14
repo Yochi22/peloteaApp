@@ -49,7 +49,10 @@ export default function RegistrarsePage() {
   return (
     <main className="pl-container pl-register-layout" style={{ paddingBlock: 48, maxWidth: 780 }}>
       <div>
-        <h1 style={{ fontSize: 28 }}>Crea tu cuenta</h1>
+        <Link href="/" style={{ fontSize: 13 }}>
+          ← Inicio
+        </Link>
+        <h1 style={{ fontSize: 28, marginTop: 14 }}>Crea tu cuenta</h1>
         <p style={{ color: 'var(--pl-ink-soft)', fontSize: 14, marginTop: 6 }}>Es gratis y toma menos de un minuto.</p>
 
         <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 22 }}>
