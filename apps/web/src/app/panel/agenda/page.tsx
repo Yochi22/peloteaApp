@@ -71,6 +71,9 @@ export default async function AgendaPanelPage({
   const diaAnterior = fmtFecha(new Date(diaInicio.getTime() - 24 * 60 * 60_000));
   const diaSiguiente = fmtFecha(new Date(diaInicio.getTime() + 24 * 60 * 60_000));
   const manana = fmtFecha(new Date(new Date(`${hoy}T00:00:00`).getTime() + 24 * 60 * 60_000));
+  // El cronómetro no tiene sentido viendo la agenda de un día ya pasado —
+  // comparación de strings YYYY-MM-DD, coincide con el orden cronológico.
+  const esHoyOFuturo = fechaValida >= hoy;
   const diaSemana = diaInicio.getDay();
 
   const canchasSede = await prisma.cancha.findMany({ where: { sedeId: sede.id }, select: { deporte: true } });
@@ -351,7 +354,7 @@ export default async function AgendaPanelPage({
                                 {(o.estado === 'CONFIRMADA' || o.estado === 'COMPLETADA') && !o.restanteCobrado && o.montoRestante > 0 ? (
                                   <CobrarRestanteInline reservaId={o.reservaId} montoRestante={o.montoRestante} />
                                 ) : null}
-                                {o.estado === 'CONFIRMADA' ? (
+                                {o.estado === 'CONFIRMADA' && (esHoyOFuturo || !!o.tiempoIniciadoEn) ? (
                                   <Cronometro
                                     reservaId={o.reservaId}
                                     inicio={o.inicio.toISOString()}

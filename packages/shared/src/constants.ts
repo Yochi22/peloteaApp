@@ -115,4 +115,5 @@ export const QUEUES = {
   LIMPIEZA_COMPROBANTES: 'limpieza-comprobantes',
   MATERIALIZAR_DESCUENTOS: 'materializar-descuentos',
   ALERTA_CRONOMETRO: 'alerta-cronometro',
+  LIMPIEZA_TASA_CAMBIO: 'limpieza-tasa-cambio',
 } as const;

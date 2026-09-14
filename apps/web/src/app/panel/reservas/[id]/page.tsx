@@ -55,6 +55,16 @@ export default async function DetalleReservaPage({ params }: { params: Promise<{
   const wa = waLink(reserva.organizador.telefono);
   const totalPagado = reserva.pagos.filter((p) => p.estado === 'APROBADO').reduce((s, p) => s + Number(p.monto), 0);
   const faltaPorPagar = Math.max(0, Number(reserva.precioTotal) - totalPagado);
+  // Antes no se veía en ningún lado cuántas horas se reservó — solo la
+  // hora de inicio. Redondeado a un decimal por si algún día hay medias
+  // horas (hoy siempre cae justo, pero no cuesta nada ser exacto).
+  const duracionHoras = Math.round(((reserva.fin.getTime() - reserva.inicio.getTime()) / 3_600_000) * 10) / 10;
+  // El cronómetro no tiene sentido en una reserva de un día ya pasado —
+  // solo se muestra hoy/a futuro, o si ya se había iniciado (para poder
+  // seguir viéndolo aunque cruce medianoche).
+  const inicioDeHoy = new Date();
+  inicioDeHoy.setHours(0, 0, 0, 0);
+  const mostrarCronometro = reserva.estado === 'CONFIRMADA' && (reserva.inicio >= inicioDeHoy || !!reserva.tiempoIniciadoEn);
 
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 640 }}>
@@ -70,13 +80,18 @@ export default async function DetalleReservaPage({ params }: { params: Promise<{
           <h1 style={{ fontSize: 24, marginTop: 4 }}>
             {reserva.inicio.toLocaleString('es-VE', { dateStyle: 'full', timeStyle: 'short' })}
           </h1>
+          <p style={{ fontSize: 13, color: 'var(--pl-ink-soft)', marginTop: 4 }}>
+            {reserva.inicio.toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' })} –{' '}
+            {reserva.fin.toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' })} · {duracionHoras}{' '}
+            {duracionHoras === 1 ? 'hora' : 'horas'}
+          </p>
         </div>
         <span style={{ fontSize: 12, fontWeight: 700, padding: '4px 10px', borderRadius: 999, border: '1.5px solid var(--pl-line)' }}>
           {reserva.estado}
         </span>
       </div>
 
-      {reserva.estado === 'CONFIRMADA' ? (
+      {mostrarCronometro ? (
         <div style={{ marginTop: 14 }}>
           <Cronometro
             reservaId={reserva.id}

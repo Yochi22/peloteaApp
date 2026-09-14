@@ -26,14 +26,15 @@ export default async function ReservasPanelPage({
   const { pagina: paginaRaw, desde: desdeRaw, hasta: hastaRaw, deporte: deporteRaw } = await searchParams;
   const pagina = Math.max(1, Number(paginaRaw ?? 1) || 1);
 
-  // Sin filtro de fecha: el mes actual completo — evita que la lista por
-  // defecto sea "todo el historial" (con meses de uso real, sería
-  // interminable) sin obligar a nadie a elegir algo antes de ver nada.
+  // Sin filtro de fecha: solo HOY — la vista operativa del día a día es la
+  // agenda (/panel/agenda); esta lista es para revisar/filtrar, y por
+  // defecto mostrar el mes entero era demasiado (una sede con uso real
+  // fácilmente pasa de la primera página sin decir nada útil de un
+  // vistazo). Quien quiera más rango lo pide con el filtro de abajo.
   const hoy = inicioDeHoyLocal();
-  const inicioMesActual = new Date(hoy.getFullYear(), hoy.getMonth(), 1);
-  const finMesActual = new Date(hoy.getFullYear(), hoy.getMonth() + 1, 1);
-  const desde = desdeRaw ? new Date(`${desdeRaw}T00:00:00`) : inicioMesActual;
-  const hasta = hastaRaw ? new Date(`${hastaRaw}T23:59:59.999`) : finMesActual;
+  const mañana = new Date(hoy.getTime() + 24 * 60 * 60_000);
+  const desde = desdeRaw ? new Date(`${desdeRaw}T00:00:00`) : hoy;
+  const hasta = hastaRaw ? new Date(`${hastaRaw}T23:59:59.999`) : mañana;
 
   // No listar categorías que la sede ni siquiera tiene — mismo criterio que /canchas.
   const canchasSede = await prisma.cancha.findMany({ where: { sedeId: sede.id }, select: { deporte: true } });

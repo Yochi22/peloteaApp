@@ -3,9 +3,11 @@ import { prisma } from '@pelotea/db';
 import { requireSesionPanel } from '@/lib/panel-guard';
 import { getSedeActiva } from '@/lib/sede';
 import { calcularMetricas } from '@/lib/metricas';
+import { calcularRangoPeriodo, PERIODO_LABEL, type Periodo } from '@/lib/periodo';
 import { Heatmap } from './Heatmap';
 import { ColaAprobacion, type PagoPendiente } from './ColaAprobacion';
 import { PorCobrar, type PorCobrarItem } from './PorCobrar';
+import { CronometrosActivos, type CronometroActivo } from './CronometrosActivos';
 import { obtenerTasaVigente, antiguedadTasaDias } from '@/lib/tasa-cambio';
 import { Alert } from '@pelotea/ui';
 import { AutoRefresh } from './AutoRefresh';
@@ -14,30 +16,28 @@ import { CerrarSesion } from './CerrarSesion';
 export const dynamic = 'force-dynamic';
 
 const POR_PAGINA = 8;
-const DIAS_RANGO = 30;
+const PERIODOS: Periodo[] = ['hoy', 'semana', 'mes'];
 
-export default async function PanelPage({ searchParams }: { searchParams: Promise<{ pagina?: string }> }) {
+export default async function PanelPage({ searchParams }: { searchParams: Promise<{ pagina?: string; periodo?: string }> }) {
   await requireSesionPanel('/panel');
 
   const sede = await getSedeActiva();
-  const { pagina: paginaRaw } = await searchParams;
+  const { pagina: paginaRaw, periodo: periodoRaw } = await searchParams;
   const pagina = Math.max(1, Number(paginaRaw ?? 1) || 1);
-
-  // `hasta` es el FIN del día de hoy, no "ahora mismo": con "ahora mismo",
-  // una reserva ya CONFIRMADA (pagada y aprobada) para más tarde hoy
-  // quedaba fuera de "ingresos confirmados" — ese ingreso ya está asegurado,
-  // no depende de si el turno ya pasó o no. Antes esto hacía que una
-  // reserva cancelada más temprano en el día SÍ contara (su `inicio` ya
-  // había pasado) mientras una confirmada más tarde NO contara, dando un
-  // total que no cuadraba con lo que se veía en /panel/reservas.
-  const desde = new Date(Date.now() - DIAS_RANGO * 86_400_000);
-  desde.setHours(0, 0, 0, 0);
-  const hasta = new Date();
-  hasta.setHours(23, 59, 59, 999);
+  // Por defecto "hoy" — antes eran siempre los últimos 30 días fijos, sin
+  // ninguna forma de ver solo el día de hoy o la semana; las estadísticas
+  // se "reinician" cada día con este default en vez de arrastrar un
+  // rolling window para siempre.
+  const periodo: Periodo = PERIODOS.includes(periodoRaw as Periodo) ? (periodoRaw as Periodo) : 'hoy';
+  const { desde, hasta } = calcularRangoPeriodo(periodo);
   const tasa = sede.precioMoneda !== 'VES' ? await obtenerTasaVigente(sede.precioMoneda) : null;
   const tasaAntiguaODesactualizada = tasa ? antiguedadTasaDias(tasa.fecha) > 1 : sede.precioMoneda !== 'VES';
 
-  const [metricas, totalPendientes, pendientesRaw, porCobrarRaw] = await Promise.all([
+  const inicioDeHoy = new Date();
+  inicioDeHoy.setHours(0, 0, 0, 0);
+  const finDeHoy = new Date(inicioDeHoy.getTime() + 24 * 60 * 60_000);
+
+  const [metricas, totalPendientes, pendientesRaw, porCobrarRaw, cronometrosRaw] = await Promise.all([
     calcularMetricas(sede.id, desde, hasta),
     prisma.pago.count({ where: { sedeId: sede.id, estado: 'EN_REVISION' } }),
     prisma.pago.findMany({
@@ -56,7 +56,23 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
       take: 20,
       include: { cancha: true, organizador: true },
     }),
+    // Cronómetros de hoy ya iniciados — para poder ver la cuenta regresiva
+    // de todos sin entrar reserva por reserva.
+    prisma.reserva.findMany({
+      where: { sedeId: sede.id, estado: 'CONFIRMADA', tiempoIniciadoEn: { not: null }, inicio: { gte: inicioDeHoy, lt: finDeHoy } },
+      orderBy: { tiempoIniciadoEn: 'asc' },
+      include: { cancha: true, organizador: true },
+    }),
   ]);
+
+  const cronometros: CronometroActivo[] = cronometrosRaw.map((r) => ({
+    reservaId: r.id,
+    persona: r.organizador.nombre,
+    cancha: r.cancha.nombre,
+    inicio: r.inicio.toISOString(),
+    fin: r.fin.toISOString(),
+    tiempoIniciadoEn: r.tiempoIniciadoEn!.toISOString(),
+  }));
 
   // Antes esto se generaba solo (al cancelar dentro de la ventana crítica) y
   // se despachaba por push/email, pero nadie del club podía verlas — la
@@ -118,7 +134,15 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         <p style={{ fontSize: 10, fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'var(--pl-ink-soft)' }}>
           Panel del club
         </p>
-        <h1 style={{ fontSize: 26, marginTop: 4 }}>Últimos {DIAS_RANGO} días</h1>
+        <h1 style={{ fontSize: 26, marginTop: 4 }}>{PERIODO_LABEL[periodo]}</h1>
+      </div>
+
+      <div className="pl-pill-row" style={{ marginTop: 12 }}>
+        {PERIODOS.map((p) => (
+          <Link key={p} href={`/panel?periodo=${p}`} className={periodo === p ? 'pl-pill pl-pill--active' : 'pl-pill'}>
+            {PERIODO_LABEL[p]}
+          </Link>
+        ))}
       </div>
 
       {/* Grilla (no flex-wrap ad hoc): en mobile cada botón ocupa una celda
@@ -140,6 +164,9 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
         <Link href="/panel/descuentos" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-hard-deep)' }}>
           Descuentos
         </Link>
+        <Link href="/panel/finanzas" className="pl-btn" style={{ textDecoration: 'none', background: 'var(--pl-clay-deep)' }}>
+          Finanzas
+        </Link>
         {/* Color fijo, NO `var(--pl-ink)`: ese token se invierte en modo
             oscuro (pasa de casi-negro a crema) pero el texto de `.pl-btn`
             queda blanco fijo — en modo oscuro quedaba texto blanco sobre
@@ -154,14 +181,34 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
       </div>
 
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(150px, 1fr))', gap: 12, marginTop: 20 }}>
-        <Kpi etiqueta="Ingresos confirmados" valor={`Bs ${metricas.ingresosConfirmados.toLocaleString('es-VE')}`} />
+        <Kpi
+          etiqueta="Ingresos confirmados"
+          valor={`Bs ${metricas.ingresosConfirmados.toLocaleString('es-VE')}`}
+          subvalor={metricas.monedaRef !== 'VES' ? `≈ ${metricas.monedaRef} ${metricas.ingresosConfirmadosRef.toLocaleString('es-VE')}` : undefined}
+        />
         <Kpi etiqueta="Horas reservadas" valor={metricas.horasReservadas.toLocaleString('es-VE')} />
         <Kpi etiqueta="Ocupación" valor={metricas.ocupacionPct !== null ? `${metricas.ocupacionPct}%` : '—'} />
         <Kpi etiqueta="No-shows" valor={String(metricas.noShows)} tono="danger" />
         <Kpi etiqueta="Tasa de cancelación" valor={`${metricas.tasaCancelacionPct}%`} />
-        <Kpi etiqueta="Ticket promedio" valor={`Bs ${metricas.ticketPromedio.toLocaleString('es-VE')}`} />
+        <Kpi
+          etiqueta="Ticket promedio"
+          valor={`Bs ${metricas.ticketPromedio.toLocaleString('es-VE')}`}
+          subvalor={metricas.monedaRef !== 'VES' ? `≈ ${metricas.monedaRef} ${metricas.ticketPromedioRef.toLocaleString('es-VE')}` : undefined}
+        />
         <Kpi etiqueta="Recuperado (ofertas)" valor={`Bs ${metricas.recuperadoOfertas.toLocaleString('es-VE')}`} tono="ok" />
       </div>
+      <p style={{ marginTop: 10 }}>
+        <Link href="/panel/finanzas" style={{ fontSize: 13 }}>
+          Ver finanzas con más detalle →
+        </Link>
+      </p>
+
+      {cronometros.length > 0 ? (
+        <div style={{ marginTop: 22 }}>
+          <h2 style={{ fontSize: 17, marginBottom: 12 }}>Cronómetros activos hoy</h2>
+          <CronometrosActivos items={cronometros} />
+        </div>
+      ) : null}
 
       <div className="pl-panel-split" style={{ marginTop: 22 }}>
         <div>
@@ -204,7 +251,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   );
 }
 
-function Kpi({ etiqueta, valor, tono }: { etiqueta: string; valor: string; tono?: 'ok' | 'danger' }) {
+function Kpi({ etiqueta, valor, subvalor, tono }: { etiqueta: string; valor: string; subvalor?: string; tono?: 'ok' | 'danger' }) {
   return (
     // `minWidth: 0`: sin esto, un número largo ("Bs 1.234.567") no se puede
     // achicar por debajo de su ancho de contenido — la celda de grid se
@@ -216,6 +263,7 @@ function Kpi({ etiqueta, valor, tono }: { etiqueta: string; valor: string; tono?
       <p style={{ fontFamily: 'var(--pl-font-display)', fontWeight: 800, fontSize: 22, marginTop: 6, color: tono === 'danger' ? 'var(--pl-danger)' : tono === 'ok' ? 'var(--pl-ok)' : 'var(--pl-ink)' }}>
         {valor}
       </p>
+      {subvalor ? <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)', marginTop: 2 }}>{subvalor}</p> : null}
     </div>
   );
 }

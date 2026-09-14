@@ -815,6 +815,38 @@ el plan free de Render** — la migración se movió al `startCommand`
 (`prisma migrate deploy && next start`; es idempotente, así que repetirla
 en cada wake-up del free tier no hace nada si ya está al día).
 
+### Panel: filtro de período, finanzas en divisa, cronómetros centralizados (2026-09-14)
+
+- `/panel` y el nuevo `/panel/finanzas` ya no muestran siempre "los últimos
+  30 días" fijos — pills Hoy/Esta semana/Este mes (`@/lib/periodo.ts`,
+  default "Hoy": las estadísticas se "reinician" cada día en vez de un
+  rolling window para siempre).
+- `calcularMetricas()` ahora también devuelve `ingresosConfirmadosRef`/
+  `ticketPromedioRef`/`monedaRef` — el equivalente en la divisa en la que
+  el club fija tarifas (`Sede.precioMoneda`), calculado con la tasa
+  CONGELADA de cada reserva (`Reserva.tasaCambio`/`precioTotalRef`), nunca
+  la tasa de hoy — el número en Bs solo no dice cuánto "vale" de verdad un
+  ingreso de un día para otro, porque la tasa cambia a diario.
+  `/panel/finanzas` es el detalle de esto (separado de los KPIs
+  compactos de `/panel`).
+- Nuevo widget "Cronómetros activos hoy" en `/panel` (`CronometrosActivos.tsx`)
+  — antes había que entrar reserva por reserva (o a la agenda) para ver
+  cada cuenta regresiva; ahora se ven todas juntas sin navegar a ningún
+  lado. El cronómetro tampoco se muestra más en reservas de un día ya
+  pasado (no tenía sentido "iniciar tiempo" de algo que ya ocurrió) — se
+  mantiene visible si ya se había iniciado antes, aunque el día haya
+  cambiado.
+- `/panel/reservas` pasa a mostrar solo HOY por defecto (antes el mes
+  completo) — la vista operativa día a día es la agenda; esta lista es
+  para filtrar/revisar historial, no para ser el default abrumador.
+  Detalle de reserva (`/panel/reservas/[id]`) ahora también muestra la
+  duración (horas) — antes solo la hora de inicio.
+- `apps/worker/src/jobs/limpieza-tasa-cambio.ts` (barrido diario): borra
+  `TasaCambio` de más de 7 días — MENOS la fila más reciente de cada
+  moneda, aunque ya tenga más de 7 días, porque `obtenerTasaVigente()` la
+  necesita para poder seguir cobrando si el club se atrasa en cargar una
+  nueva.
+
 ### Última hora configurable + filtro por cancha en la agenda (2026-09-14)
 
 - `Sede.descuentoLastMinutePct` (nuevo, default 20): el % de la oferta

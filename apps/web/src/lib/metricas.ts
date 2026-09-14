@@ -3,12 +3,22 @@ import { prisma } from '@pelotea/db';
 export interface Metricas {
   rango: { desde: Date; hasta: Date };
   ingresosConfirmados: number;
+  // Mismo ingreso, pero en la moneda en la que el club fija tarifas (ver
+  // Sede.precioMoneda) — la tasa Bs/divisa cambia a diario, así que el
+  // número en Bs solo no dice cuánto "vale" de verdad ese ingreso de un día
+  // para otro; el equivalente en divisa sí es un número estable para
+  // comparar. Cada reserva ya trae su propia tasa CONGELADA al momento de
+  // reservarse (`Reserva.tasaCambio`), así que esto nunca recalcula con la
+  // tasa de hoy — sería incorrecto para reservas viejas.
+  ingresosConfirmadosRef: number;
+  monedaRef: string;
   horasReservadas: number;
   horasDisponibles: number;
   ocupacionPct: number | null;
   noShows: number;
   tasaCancelacionPct: number;
   ticketPromedio: number;
+  ticketPromedioRef: number;
   recuperadoOfertas: number;
   heatmap: Array<{ dia: number; hora: number; total: number }>;
 }
@@ -64,9 +74,10 @@ async function calcularHorasDisponibles(sedeId: string, desde: Date, hasta: Date
  * TEMPLATE (parametrizado por Prisma) — nunca `$queryRawUnsafe`.
  */
 export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date): Promise<Metricas> {
+  const sede = await prisma.sede.findUniqueOrThrow({ where: { id: sedeId }, select: { precioMoneda: true } });
   const confirmadas = await prisma.reserva.findMany({
     where: { sedeId, estado: { in: ['CONFIRMADA', 'COMPLETADA'] }, inicio: { gte: desde, lt: hasta } },
-    select: { precioTotal: true, inicio: true, fin: true, ofertaId: true },
+    select: { precioTotal: true, precioTotalRef: true, inicio: true, fin: true, ofertaId: true },
   });
   const noShows = await prisma.reserva.count({ where: { sedeId, estado: 'NO_SHOW', inicio: { gte: desde, lt: hasta } } });
   const canceladas = await prisma.reserva.count({ where: { sedeId, estado: 'CANCELADA', inicio: { gte: desde, lt: hasta } } });
@@ -95,13 +106,19 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
         { estado: 'NO_SHOW' },
       ],
     },
-    select: { montoAbono: true },
+    select: { montoAbono: true, tasaCambio: true },
   });
   const ingresosRetenidos = retenidas.reduce((s, r) => s + Number(r.montoAbono), 0);
+  // Reversa la conversión con la tasa CONGELADA de esa reserva (nunca la de
+  // hoy) — es lo mismo que hace `precioTotalRef` para las confirmadas, pero
+  // acá solo se retuvo el abono, no el total.
+  const ingresosRetenidosRef = retenidas.reduce((s, r) => s + Number(r.montoAbono) / Number(r.tasaCambio), 0);
 
   const ingresosConfirmados = confirmadas.reduce((s, r) => s + Number(r.precioTotal), 0) + ingresosRetenidos;
+  const ingresosConfirmadosRef = confirmadas.reduce((s, r) => s + Number(r.precioTotalRef), 0) + ingresosRetenidosRef;
   const horasReservadas = confirmadas.reduce((s, r) => s + (r.fin.getTime() - r.inicio.getTime()) / 3_600_000, 0);
   const ticketPromedio = confirmadas.length ? ingresosConfirmados / confirmadas.length : 0;
+  const ticketPromedioRef = confirmadas.length ? ingresosConfirmadosRef / confirmadas.length : 0;
 
   const idsConOferta = confirmadas.filter((r) => r.ofertaId).map((r) => r.ofertaId as string);
   const ofertas = idsConOferta.length
@@ -128,12 +145,15 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
   return {
     rango: { desde, hasta },
     ingresosConfirmados: round2(ingresosConfirmados),
+    ingresosConfirmadosRef: round2(ingresosConfirmadosRef),
+    monedaRef: sede.precioMoneda,
     horasReservadas: round2(horasReservadas),
     horasDisponibles: round2(horasDisponibles),
     ocupacionPct: horasDisponibles > 0 ? round2((horasReservadas / horasDisponibles) * 100) : null,
     noShows,
     tasaCancelacionPct: totalReservas ? round2((canceladas / totalReservas) * 100) : 0,
     ticketPromedio: round2(ticketPromedio),
+    ticketPromedioRef: round2(ticketPromedioRef),
     recuperadoOfertas: round2(recuperadoOfertas),
     heatmap: heatmap.map((h) => ({ dia: h.dia, hora: h.hora, total: Number(h.total) })),
   };
