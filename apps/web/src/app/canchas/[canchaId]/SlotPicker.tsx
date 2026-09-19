@@ -148,6 +148,8 @@ export function SlotPicker({
           faltan_datos_invitado: 'Escribe tu nombre y tu número de teléfono para continuar.',
           demasiadas_reservas_pendientes: 'Ya tienes una reserva sin pagar. Complétala o cancélala antes de crear otra.',
           sin_tasa_cambio: 'El club todavía no cargó la tasa de cambio de hoy. Intenta más tarde.',
+          invitado_bloqueado: 'Este número tiene reservas sin asistir. Crea una cuenta gratis o contacta al club para reservar.',
+          horario_bloqueado: 'El club cerró ese horario (feriado, mantenimiento o torneo). Elige otro.',
         };
         setError(mensajes[body.error] ?? 'No se pudo crear la reserva. Intenta de nuevo.');
         return;

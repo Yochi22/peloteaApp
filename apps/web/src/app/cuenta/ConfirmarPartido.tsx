@@ -15,6 +15,7 @@ const MENSAJES: Record<string, string> = {
   ya_tiene_reserva: 'Este partido ya tiene una reserva en curso.',
   partido_ya_paso: 'Ya pasó la hora de este partido — expiró. Crea uno nuevo si quieres organizar otro.',
   sin_tasa_cambio: 'El club todavía no cargó la tasa de cambio de hoy. Intenta más tarde.',
+  horario_bloqueado: 'El club cerró ese horario (feriado, mantenimiento o torneo).',
   rate_limited: 'Demasiados intentos. Espera un momento.',
 };
 

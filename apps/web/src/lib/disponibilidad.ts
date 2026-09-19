@@ -42,13 +42,28 @@ export interface Disponibilidad {
  */
 export async function slotsDisponibles(canchaId: string, dias = 7): Promise<Disponibilidad> {
   const cancha = await prisma.cancha.findUniqueOrThrow({ where: { id: canchaId }, include: { sede: true } });
-  const [plantillas, reglas, locks, ofertas, tasa] = await Promise.all([
+  const desde = new Date();
+  desde.setHours(0, 0, 0, 0);
+  const hasta = new Date(desde);
+  hasta.setDate(hasta.getDate() + dias);
+  const [plantillas, reglas, locks, ofertas, tasa, excepciones] = await Promise.all([
     prisma.plantillaHorario.findMany({ where: { canchaId, activa: true } }),
     prisma.reglaPrecio.findMany({ where: { sedeId: cancha.sedeId, activa: true, OR: [{ canchaId }, { canchaId: null }] } }),
     prisma.slotLock.findMany({ where: { canchaId, expiraEn: { gt: new Date() } } }),
     prisma.oferta.findMany({ where: { canchaId, estado: 'ACTIVA', ventanaFin: { gt: new Date() } } }),
     obtenerTasaVigente(cancha.sede.precioMoneda),
+    prisma.excepcionHorario.findMany({
+      where: { sedeId: cancha.sedeId, OR: [{ canchaId }, { canchaId: null }], fecha: { gte: desde, lt: hasta } },
+    }),
   ]);
+  // Un día bloqueado por completo (sin horaInicio/horaFin) → clave "YYYY-MM-DD".
+  const diasBloqueados = new Set(
+    excepciones.filter((e) => e.horaInicio == null).map((e) => e.fecha.toISOString().slice(0, 10)),
+  );
+  // Franjas puntuales bloqueadas dentro de un día que sigue abierto el resto del día.
+  const franjasBloqueadas = excepciones
+    .filter((e) => e.horaInicio != null)
+    .map((e) => ({ fecha: e.fecha.toISOString().slice(0, 10), horaInicio: e.horaInicio!, horaFin: e.horaFin! }));
 
   const reglasInput: ReglaPrecioInput[] = reglas.map((r) => ({
     diaSemana: r.diaSemana,
@@ -77,12 +92,17 @@ export async function slotsDisponibles(canchaId: string, dias = 7): Promise<Disp
     dia.setDate(dia.getDate() + d);
     dia.setHours(0, 0, 0, 0);
     const diaSemana = dia.getDay();
+    const claveDia = dia.toISOString().slice(0, 10);
+    if (diasBloqueados.has(claveDia)) continue; // feriado/cierre de todo el día
 
     for (const plantilla of plantillas.filter((p) => p.diaSemana === diaSemana)) {
       for (let min = plantilla.horaInicio; min + cancha.duracionTurnoMin <= plantilla.horaFin; min += cancha.duracionTurnoMin) {
         const inicio = new Date(dia);
         inicio.setMinutes(min);
         if (inicio.getTime() <= ahora.getTime()) continue; // no ofrecer horas pasadas
+        if (franjasBloqueadas.some((f) => f.fecha === claveDia && min < f.horaFin && min + cancha.duracionTurnoMin > f.horaInicio)) {
+          continue; // mantenimiento/torneo puntual ese día
+        }
 
         const fin = new Date(inicio.getTime() + cancha.duracionTurnoMin * 60_000);
         const { total } = calcularPrecio({

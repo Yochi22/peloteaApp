@@ -64,6 +64,16 @@ const ITEMS: ItemNav[] = [
     ),
   },
   {
+    href: '/panel/excepciones',
+    label: 'Cierres',
+    icon: (
+      <Icon>
+        <circle cx="12" cy="12" r="9" />
+        <path d="M8 8l8 8" />
+      </Icon>
+    ),
+  },
+  {
     href: '/panel/finanzas',
     label: 'Finanzas',
     icon: (

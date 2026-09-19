@@ -319,6 +319,31 @@ export const actualizarHorarioSchema = z.object({
 });
 export type ActualizarHorarioInput = z.infer<typeof actualizarHorarioSchema>;
 
+// ── Excepciones de horario (feriados, mantenimiento, torneos) ──────────────
+//    Bloquean reservas nuevas en la fecha/franja indicada — ver
+//    ExcepcionHorario en el schema de Prisma y `@/lib/disponibilidad`.
+
+export const crearExcepcionSchema = z
+  .object({
+    // null/undefined = aplica a TODAS las canchas de la sede.
+    canchaId: z.string().min(1).nullable().optional(),
+    fechaISO: z.string().datetime(),
+    tipo: z.enum(['CIERRE', 'HORARIO_ESPECIAL', 'MANTENIMIENTO', 'TORNEO']),
+    // null/undefined en ambos = bloquea el día completo.
+    horaInicio: z.number().int().min(0).max(1439).nullable().optional(),
+    horaFin: z.number().int().min(1).max(1440).nullable().optional(),
+    nota: z.string().trim().max(200).nullable().optional(),
+  })
+  .refine((v) => (v.horaInicio == null) === (v.horaFin == null), {
+    message: 'Da ambas horas o ninguna (día completo).',
+    path: ['horaFin'],
+  })
+  .refine((v) => v.horaInicio == null || v.horaFin! > v.horaInicio, {
+    message: 'La hora de fin debe ser después de la de inicio.',
+    path: ['horaFin'],
+  });
+export type CrearExcepcionInput = z.infer<typeof crearExcepcionSchema>;
+
 // ── Descuentos programados (EXPRES) — el admin decide cancha/horario/día/%,
 //    nunca automático. Ver ReglaDescuento en el schema de Prisma. ─────────────
 

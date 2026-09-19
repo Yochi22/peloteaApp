@@ -40,6 +40,11 @@ export function renderTextoNotificacion(
         titulo: 'El partido no se completó a tiempo',
         cuerpo: 'Pasó la hora sin llenarse el cupo o sin confirmarse el pago — el partido quedó cerrado. Puedes crear uno nuevo.',
       };
+    case 'partido.cancelado':
+      return {
+        titulo: 'El organizador canceló el partido',
+        cuerpo: 'El partido al que te uniste ya no va a jugarse. Busca otro o crea uno nuevo.',
+      };
     case 'reserva.cronometro_terminado':
       return {
         titulo: '⏰ Se acabó el tiempo',

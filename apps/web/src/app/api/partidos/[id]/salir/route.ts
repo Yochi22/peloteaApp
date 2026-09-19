@@ -22,7 +22,7 @@ class HttpError extends Error {
  * (`autoReservarPartido()`); retirarse después de eso rompería ese split, así
  * que en ese punto hay que hablar con el organizador o el club. El
  * organizador tampoco puede "retirarse" de su propio partido — eso es
- * cancelarlo, que es una acción distinta (no existe todavía en la UI).
+ * cancelarlo, una acción distinta (`/api/partidos/[id]/cancelar`).
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: partidoId } = await params;

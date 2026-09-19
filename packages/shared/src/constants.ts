@@ -63,6 +63,15 @@ export const DEFAULT_CANCELACION_HORAS = 6;
 export const MAX_RESERVAS_ACTIVAS_SIN_CONFIRMAR = 2;
 export const REPUTACION_INICIAL = 100;
 export const PENALIZACION_NO_SHOW = 15;
+/**
+ * Un invitado no tiene cuenta ni `PerfilJugador` — cada reserva suya crea un
+ * `Usuario` nuevo, así que no hay reputación que penalizar ahí. Lo único que
+ * sobrevive entre una reserva de invitado y la siguiente es su teléfono: si
+ * ese número ya acumuló este número de no-shows, se bloquea reservar como
+ * invitado (puede seguir reservando si crea una cuenta — igual que dividir
+ * el pago, ya exige cuenta).
+ */
+export const MAX_NO_SHOWS_INVITADO = 2;
 
 export const MONEDA_DEFAULT = 'VES';
 
@@ -81,6 +90,7 @@ export const PLANTILLAS_NOTIFICACION = {
   PARTIDO_COMPLETO: 'partido.completo',
   PARTIDO_CONFIRMADO: 'partido.confirmado',
   PARTIDO_EXPIRADO: 'partido.expirado',
+  PARTIDO_CANCELADO: 'partido.cancelado',
   CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
@@ -104,6 +114,9 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   // Rutina, no urgente — solo in-app, no vale la pena un WhatsApp para "no
   // se completó a tiempo".
   'partido.expirado': ['IN_APP'],
+  // El organizador lo canceló a propósito — avisar a los demás para que no
+  // se queden esperando algo que ya no va a pasar.
+  'partido.cancelado': ['IN_APP'],
   // Va al staff/admin del club, no al cliente — transaccional y con
   // urgencia real (hay que ir a recoger la pelota).
   'reserva.cronometro_terminado': ['WHATSAPP', 'IN_APP'],

@@ -122,6 +122,27 @@ export async function calcularPrecioReserva(
     });
     if (!plantilla) throw new HttpError(409, 'horario_no_disponible');
 
+    // Defensa en profundidad: `slotsDisponibles()` ya no ofrece estas horas
+    // en la UI, pero esto es lo que de verdad decide si se cobra — nunca
+    // confiar en que el cliente mandó un horario que ya no está bloqueado
+    // por un feriado/mantenimiento/torneo cargado después de que abrió la
+    // pantalla de reserva.
+    const inicioDelDia = new Date(inicioUnidad);
+    inicioDelDia.setHours(0, 0, 0, 0);
+    const finDelDia = new Date(inicioDelDia);
+    finDelDia.setDate(finDelDia.getDate() + 1);
+    const excepciones = await tx.excepcionHorario.findMany({
+      where: {
+        sedeId: cancha.sedeId,
+        OR: [{ canchaId: cancha.id }, { canchaId: null }],
+        fecha: { gte: inicioDelDia, lt: finDelDia },
+      },
+    });
+    const bloqueado = excepciones.some(
+      (e) => e.horaInicio == null || (minutosDelDia < e.horaFin! && minutosDelDia + cancha.duracionTurnoMin > e.horaInicio),
+    );
+    if (bloqueado) throw new HttpError(409, 'horario_bloqueado');
+
     // `precioBase` está en `Sede.precioMoneda` (USD/EUR) o directo en Bs si
     // la sede no convierte — calcularPrecio() no sabe ni le importa cuál.
     const r = calcularPrecio({

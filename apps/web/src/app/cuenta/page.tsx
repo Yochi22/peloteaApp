@@ -5,6 +5,7 @@ import { DEPORTE_LABEL, type Deporte } from '@pelotea/shared';
 import { getSesionServer } from '@/lib/session-server';
 import { RetirarsePartido } from './RetirarsePartido';
 import { ConfirmarPartido } from './ConfirmarPartido';
+import { CancelarPartido } from './CancelarPartido';
 import { CerrarSesion } from './CerrarSesion';
 
 const NIVEL_LABEL: Record<string, string> = {
@@ -152,6 +153,8 @@ export default async function CuentaPage() {
               // que tenía se canceló/expiró (el partido vuelve a COMPLETO
               // en ese caso — ver /api/reservas/[id]/cancelar).
               const puedeConfirmar = p.estado === 'COMPLETO' && (!p.reserva || ['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado));
+              const puedeCancelar =
+                ['ABIERTO', 'COMPLETO'].includes(p.estado) && (!p.reserva || ['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado));
               return (
                 <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
                   <div>
@@ -197,9 +200,10 @@ export default async function CuentaPage() {
                       </div>
                     ) : null}
                   </div>
-                  {puedeConfirmar ? (
-                    <div style={{ flex: 'none' }}>
-                      <ConfirmarPartido partidoId={p.id} />
+                  {puedeConfirmar || puedeCancelar ? (
+                    <div style={{ flex: 'none', display: 'grid', gap: 8, justifyItems: 'end' }}>
+                      {puedeConfirmar ? <ConfirmarPartido partidoId={p.id} /> : null}
+                      {puedeCancelar ? <CancelarPartido partidoId={p.id} /> : null}
                     </div>
                   ) : null}
                 </div>

@@ -1,5 +1,11 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { crearReservaSchema, transicionar, dividirEnCuotas, MAX_RESERVAS_ACTIVAS_SIN_CONFIRMAR } from '@pelotea/shared';
+import {
+  crearReservaSchema,
+  transicionar,
+  dividirEnCuotas,
+  MAX_RESERVAS_ACTIVAS_SIN_CONFIRMAR,
+  MAX_NO_SHOWS_INVITADO,
+} from '@pelotea/shared';
 import { prisma, Prisma } from '@pelotea/db';
 import { guard } from '@/lib/guard';
 import { getSesion } from '@/lib/session';
@@ -57,6 +63,30 @@ export async function POST(req: NextRequest) {
 
   const sede = await getSedeActiva();
   const inicio = new Date(inicioISO);
+
+  // Anti-abuso: un invitado no tiene cuenta ni PerfilJugador — cada reserva
+  // suya crea un Usuario nuevo, así que un no-show no le baja reputación a
+  // nadie reconocible. Lo único que persiste entre una reserva y la
+  // siguiente es el teléfono que declara: si ese número ya se ausentó
+  // demasiadas veces, se bloquea reservar como invitado (puede seguir
+  // reservando si crea una cuenta).
+  if (!sesion && invitado) {
+    const noShowsPrevios = await prisma.reserva.count({
+      where: {
+        estado: 'NO_SHOW',
+        organizador: { esInvitado: true, telefono: invitado.telefono },
+      },
+    });
+    if (noShowsPrevios >= MAX_NO_SHOWS_INVITADO) {
+      return NextResponse.json(
+        {
+          error: 'invitado_bloqueado',
+          message: 'Este número tiene reservas sin asistir. Crea una cuenta o contacta al club para reservar.',
+        },
+        { status: 403 },
+      );
+    }
+  }
 
   // Anti-abuso: sin este tope, una cuenta podía apartar (HOLD) muchos turnos
   // a la vez sin pagar ninguno, dejando la agenda del club bloqueada 15 min
