@@ -996,11 +996,33 @@ reusando toda la UI/notificación que ya existía para `Oferta` sin tocarla.
 Al desactivar/borrar una regla, se cancelan las ofertas ya materializadas
 que nadie tomó todavía (las que ya alguien reservó se dejan igual).
 
+### Pruebas de abuso end-to-end con Playwright (2026-09-18)
+
+`apps/web/e2e/{csrf,doble-submit,rate-limit}.spec.ts` — pegan directo a
+`POST /api/reservas` (el flujo de invitado, porque el seed no le pone
+contraseña a ningún usuario, así que es el único camino que no exige login)
+con la fixture `request` de Playwright, sin navegador (`npx playwright
+install` no hace falta). Cubren exactamente lo que pedía este pendiente:
+Origin/Referer + token double-submit (CSRF), `Idempotency-Key` repetido no
+crea una segunda `Reserva`/`SlotLock` (doble envío), y el sexto intento de
+reservar como invitado en la misma hora devuelve 429 (`guestBooking`, 5/hora
+por IP). `apps/web/e2e/helpers.ts` calcula un horario siempre válido contra
+el horario semanal que carga el seed (06:00–23:00 todos los días) y limpia
+el cupo de rate-limit en Redis antes de cada corrida para que la suite se
+pueda repetir sin esperar la ventana de una hora.
+
+**Sin ejecutar todavía**: se escribieron y se verificó que Playwright las
+lista bien (`pnpm --filter @pelotea/web test:e2e -- --list`) y que
+`typecheck`/`lint` pasan, pero no se corrieron de verdad — este entorno no
+tiene Docker, así que no hay Postgres/Redis/servidor real disponibles para
+levantar `pnpm infra:up` + `pnpm dev`. Antes de confiar en ellas de verdad:
+`pnpm infra:up && pnpm db:migrate && pnpm db:seed && pnpm --filter
+@pelotea/web dev` en una terminal, `pnpm --filter @pelotea/web test:e2e` en
+otra.
+
 Pendiente inmediato: primera migración contra una Postgres real — ya no
-bloqueada (Render la corre sola al arrancar, ver arriba); tests de abuso
-end-to-end (Playwright: CSRF, doble submit, rate-limit — ya hay unit tests
-de `rate-limit`/`idempotency` con `ioredis-mock` en `packages/security`);
-una pantalla para editar `ReglaPrecio` (recargos peak/off-peak) desde el
+bloqueada (Render la corre sola al arrancar, ver arriba); una pantalla para
+editar `ReglaPrecio` (recargos peak/off-peak) desde el
 panel — hoy solo se carga por seed/DB directo; **login con Google/Gmail**
 pedido por el usuario como mejora cercana — necesita que el usuario cree
 un proyecto en Google Cloud Console y dé Client ID/Secret (no se puede

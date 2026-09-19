@@ -34,3 +34,7 @@ apps/worker/.wa-session/
 coverage/
 .vercel
 *.local
+
+# playwright
+apps/web/playwright-report/
+apps/web/test-results/
