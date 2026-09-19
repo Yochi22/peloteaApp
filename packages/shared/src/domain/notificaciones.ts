@@ -45,6 +45,11 @@ export function renderTextoNotificacion(
         titulo: 'El organizador canceló el partido',
         cuerpo: 'El partido al que te uniste ya no va a jugarse. Busca otro o crea uno nuevo.',
       };
+    case 'partido.sin_disponibilidad':
+      return {
+        titulo: 'No se pudo confirmar el partido',
+        cuerpo: 'Se llenaron los cupos pero ya no había ninguna cancha libre a esa hora. El organizador puede reintentar más tarde o el partido se cae.',
+      };
     case 'reserva.cronometro_terminado':
       return {
         titulo: '⏰ Se acabó el tiempo',

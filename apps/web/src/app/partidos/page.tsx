@@ -70,6 +70,10 @@ export default async function PartidosPage() {
         Unirte a un partido y crear el tuyo exige una cuenta gratis — así el club y los demás jugadores saben
         con quién van a jugar.
       </p>
+      <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 4 }}>
+        Unirte no reserva la cancha todavía: eso pasa recién cuando se llenan los cupos y el organizador confirma y
+        paga. Si para ese momento ya no hay cancha libre a esa hora, el partido no se puede jugar y te avisamos.
+      </p>
 
       <div style={{ marginTop: 22 }}>
         <ListaPartidos inicial={items} autenticado={!!sesion} />

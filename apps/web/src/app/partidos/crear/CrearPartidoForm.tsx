@@ -151,6 +151,12 @@ export function CrearPartidoForm({
         <textarea maxLength={280} value={form.notas} onChange={(e) => setForm({ ...form, notas: e.target.value })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit', resize: 'vertical', minHeight: 60 }} />
       </label>
 
+      <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
+        Publicar el partido no reserva ninguna cancha todavía. Cuando se llenen los cupos, te toca a ti confirmar y
+        pagar — ahí se revisa si sigue habiendo una cancha libre de esta disciplina a esta hora. Si ya no queda
+        ninguna, el partido no se puede jugar en ese horario y hay que avisarle al grupo.
+      </p>
+
       {error ? (
         <Alert tone="danger" live>
           {error}

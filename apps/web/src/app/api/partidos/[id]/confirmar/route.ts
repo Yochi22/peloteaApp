@@ -204,6 +204,18 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     await g.finish(body);
     return NextResponse.json(body, { status: 201 });
   } catch (err) {
+    // `sin_disponibilidad` (y el choque de última hora, P2002) antes solo lo
+    // veía el organizador, y solo si seguía mirando la pantalla en ese
+    // instante — el partido se quedaba en COMPLETO en silencio para el resto
+    // del grupo hasta que expirara solo por hora. Avisa a TODOS
+    // (organizador incluido, por si navegó a otra pantalla) sin bloquear la
+    // respuesta al que hizo el intento.
+    if (
+      (err instanceof HttpError && err.code === 'sin_disponibilidad') ||
+      (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002')
+    ) {
+      void avisarSinDisponibilidad(partidoId).catch((e) => console.error('avisarSinDisponibilidad', e));
+    }
     if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
       return NextResponse.json({ error: 'slot_ocupado', message: 'Alguien más tomó ese horario justo ahora. Intenta de nuevo.' }, { status: 409 });
     }
@@ -213,4 +225,32 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     console.error('POST /api/partidos/[id]/confirmar', err);
     return NextResponse.json({ error: 'error_interno' }, { status: 500 });
   }
+}
+
+async function avisarSinDisponibilidad(partidoId: string): Promise<void> {
+  // Evita saturar de notificaciones si el organizador reintenta varias
+  // veces seguidas contra el mismo hueco de disponibilidad.
+  const reciente = await prisma.notificacion.findFirst({
+    where: {
+      plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_SIN_DISPONIBILIDAD,
+      payload: { path: ['partidoId'], equals: partidoId },
+      createdAt: { gt: new Date(Date.now() - 10 * 60_000) },
+    },
+    select: { id: true },
+  });
+  if (reciente) return;
+
+  const participantes = await prisma.participantePartido.findMany({
+    where: { partidoId, estado: 'UNIDO' },
+    select: { usuarioId: true },
+  });
+  if (participantes.length === 0) return;
+  await prisma.notificacion.createMany({
+    data: participantes.map((p) => ({
+      usuarioId: p.usuarioId,
+      canal: 'IN_APP' as const,
+      plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_SIN_DISPONIBILIDAD,
+      payload: { partidoId },
+    })),
+  });
 }

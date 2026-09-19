@@ -166,6 +166,12 @@ export default async function CuentaPage() {
                       {p.cuposTotales} cupos · nivel {NIVEL_LABEL[p.nivel] ?? p.nivel}
                     </p>
                     <p style={{ fontSize: 12, fontWeight: 700, color: info.tono, marginTop: 2 }}>{info.texto}</p>
+                    {puedeConfirmar ? (
+                      <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: 2, maxWidth: 320 }}>
+                        Confirma cuanto antes: mientras más esperes, más riesgo de que ya no quede cancha libre a
+                        esa hora.
+                      </p>
+                    ) : null}
                     {p.reserva && !['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado) ? (
                       <Link href={`/reservas/${p.reserva.id}/comprobante`} style={{ fontSize: 12 }}>
                         Ver reserva y pagar →

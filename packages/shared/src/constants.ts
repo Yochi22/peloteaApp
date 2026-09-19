@@ -91,6 +91,7 @@ export const PLANTILLAS_NOTIFICACION = {
   PARTIDO_CONFIRMADO: 'partido.confirmado',
   PARTIDO_EXPIRADO: 'partido.expirado',
   PARTIDO_CANCELADO: 'partido.cancelado',
+  PARTIDO_SIN_DISPONIBILIDAD: 'partido.sin_disponibilidad',
   CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
@@ -117,6 +118,10 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   // El organizador lo canceló a propósito — avisar a los demás para que no
   // se queden esperando algo que ya no va a pasar.
   'partido.cancelado': ['IN_APP'],
+  // El organizador intentó confirmar y pagar pero ya no había cancha libre
+  // a esa hora — antes esto solo lo veía el organizador (y solo si estaba
+  // mirando la pantalla en ese momento); ahora se avisa a todo el grupo.
+  'partido.sin_disponibilidad': ['IN_APP'],
   // Va al staff/admin del club, no al cliente — transaccional y con
   // urgencia real (hay que ir a recoger la pelota).
   'reserva.cronometro_terminado': ['WHATSAPP', 'IN_APP'],
