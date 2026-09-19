@@ -9,8 +9,10 @@ import { ColaAprobacion, type PagoPendiente } from './ColaAprobacion';
 import { PorCobrar, type PorCobrarItem } from './PorCobrar';
 import { CronometrosActivos, type CronometroActivo } from './CronometrosActivos';
 import { obtenerTasaVigente, antiguedadTasaDias } from '@/lib/tasa-cambio';
+import { calcularChecklistOnboarding } from '@/lib/onboarding';
 import { Alert } from '@pelotea/ui';
 import { AutoRefresh } from './AutoRefresh';
+import { OnboardingChecklist } from './OnboardingChecklist';
 
 export const dynamic = 'force-dynamic';
 
@@ -31,6 +33,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   const { desde, hasta } = calcularRangoPeriodo(periodo);
   const tasa = sede.precioMoneda !== 'VES' ? await obtenerTasaVigente(sede.precioMoneda) : null;
   const tasaAntiguaODesactualizada = tasa ? antiguedadTasaDias(tasa.fecha) > 1 : sede.precioMoneda !== 'VES';
+  const pasosOnboarding = await calcularChecklistOnboarding(sede);
 
   const inicioDeHoy = new Date();
   inicioDeHoy.setHours(0, 0, 0, 0);
@@ -115,6 +118,7 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
   return (
     <main className="pl-container" style={{ paddingBlock: 28, maxWidth: 1100 }}>
       <AutoRefresh />
+      <OnboardingChecklist pasos={pasosOnboarding} />
       {tasaAntiguaODesactualizada ? (
         <div style={{ marginBottom: 18 }}>
           <Alert
