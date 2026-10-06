@@ -34,7 +34,13 @@ export default async function CrearPartidoPage() {
         Elige cancha, fecha y cuántos faltan — el resto de la comunidad lo ve en /partidos.
       </p>
       <CrearPartidoForm
-        canchas={canchas.map((c) => ({ id: c.id, nombre: c.nombre, deporte: c.deporte }))}
+        canchas={canchas.map((c) => ({
+          id: c.id,
+          nombre: c.nombre,
+          deporte: c.deporte,
+          duracionTurnoMin: c.duracionTurnoMin,
+          duracionMaximaMin: c.duracionMaximaMin,
+        }))}
         deportes={DEPORTES.map((d) => ({ value: d, label: DEPORTE_LABEL[d] }))}
       />
     </main>

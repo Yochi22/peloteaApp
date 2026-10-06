@@ -123,16 +123,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       // Partido comunitario: si su reserva se cancela (rechazo definitivo,
       // el hold venció, o el club/organizador la cancela), el partido
       // vuelve a COMPLETO — el grupo sigue armado, solo hay que confirmar
-      // de nuevo (buscará otra cancha del pool si esta ya no calza).
+      // de nuevo (buscará otra cancha del pool si esta ya no calza). Antes
+      // solo se avisaba al organizador — si la cancela EL CLUB (ej.
+      // mantenimiento), el resto del grupo se quedaba sin saber que su
+      // partido ya no tenía cancha, hasta que el organizador les avisara
+      // a mano por fuera de la app.
       if (reserva.partidoAbiertoId) {
         await tx.partidoAbierto.update({ where: { id: reserva.partidoAbiertoId }, data: { estado: 'COMPLETO' } });
-        await tx.notificacion.create({
-          data: {
-            usuarioId: reserva.organizadorId,
-            canal: 'IN_APP',
+        const participantes = await tx.participantePartido.findMany({
+          where: { partidoId: reserva.partidoAbiertoId, estado: 'UNIDO' },
+          select: { usuarioId: true },
+        });
+        const destinatarios = new Set(participantes.map((p) => p.usuarioId));
+        destinatarios.add(reserva.organizadorId);
+        await tx.notificacion.createMany({
+          data: Array.from(destinatarios).map((usuarioId) => ({
+            usuarioId,
+            canal: 'IN_APP' as const,
             plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_COMPLETO,
             payload: { partidoId: reserva.partidoAbiertoId },
-          },
+          })),
         });
       }
 

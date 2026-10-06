@@ -99,7 +99,11 @@ export const crearPartidoSchema = z.object({
   canchaId: idSchema.optional(),
   deporte: deporteSchema,
   inicioISO: z.string().datetime(),
-  finISO: z.string().datetime(),
+  // Minutos, no `finISO`: así el servidor calcula el fin real y puede
+  // validar que la duración de verdad calce con alguna cancha de esa
+  // disciplina antes de crear el partido — nunca confiar en un fin que
+  // venga armado del cliente (mismo criterio que /api/reservas).
+  duracionMin: z.number().int().min(15).max(480),
   nivel: z.enum(['PRINCIPIANTE', 'INTERMEDIO', 'AVANZADO', 'COMPETITIVO']),
   cuposTotales: z.number().int().min(2).max(12),
   precioPorJugador: z.number().nonnegative().max(100000),

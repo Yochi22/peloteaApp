@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type * as React from 'react';
 import { useRouter } from 'next/navigation';
 import { Alert } from '@pelotea/ui';
@@ -17,11 +17,43 @@ const NIVELES = [
   { value: 'COMPETITIVO', label: 'Competitivo' },
 ];
 
+const MENSAJES: Record<string, string> = {
+  fecha_invalida: 'Elige una fecha y hora futuras.',
+  cancha_no_encontrada: 'Esa cancha ya no existe.',
+  cancha_no_coincide: 'Esa cancha no es de la disciplina elegida.',
+  duracion_incompatible: 'Esa duración no calza con el turno de ninguna cancha de esta disciplina. Elige otra.',
+  rate_limited: 'Demasiados intentos. Espera un momento.',
+};
+
+function formatoDuracion(min: number): string {
+  const horas = min / 60;
+  return horas % 1 === 0 ? `${horas} h` : `${Math.floor(horas)} h ${min % 60} min`;
+}
+
+interface CanchaForm {
+  id: string;
+  nombre: string;
+  deporte: string;
+  duracionTurnoMin: number;
+  duracionMaximaMin: number;
+}
+
+/** Todas las duraciones (minutos) que calzan con el turno de AL MENOS una de estas canchas. */
+function opcionesDuracion(canchas: CanchaForm[]): number[] {
+  const set = new Set<number>();
+  for (const c of canchas) {
+    for (let min = c.duracionTurnoMin; min <= c.duracionMaximaMin; min += c.duracionTurnoMin) {
+      set.add(min);
+    }
+  }
+  return Array.from(set).sort((a, b) => a - b);
+}
+
 export function CrearPartidoForm({
   canchas,
   deportes,
 }: {
-  canchas: Array<{ id: string; nombre: string; deporte: string }>;
+  canchas: CanchaForm[];
   deportes: Array<{ value: string; label: string }>;
 }) {
   const router = useRouter();
@@ -34,7 +66,7 @@ export function CrearPartidoForm({
     nivel: 'INTERMEDIO',
     fecha: '',
     hora: '',
-    duracionMin: 90,
+    duracionMin: 60,
     cuposTotales: 4,
     precioPorJugador: 150,
     notas: '',
@@ -42,14 +74,35 @@ export function CrearPartidoForm({
   const [enviando, setEnviando] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  // Solo las canchas de la disciplina elegida (y de la puntual, si se fijó
+  // una) — la duración que se puede elegir depende de ESTAS, nunca de todas
+  // las canchas del club (eso es lo que antes dejaba crear partidos con una
+  // duración que ninguna cancha podía jugar nunca).
+  const candidatas = useMemo(
+    () => canchas.filter((c) => c.deporte === form.deporte && (!form.canchaId || c.id === form.canchaId)),
+    [canchas, form.deporte, form.canchaId],
+  );
+  const duraciones = useMemo(() => opcionesDuracion(candidatas), [candidatas]);
+
+  // Si cambia el deporte/cancha y la duración ya elegida deja de ser válida
+  // (o todavía no se eligió ninguna), cae en la primera opción disponible.
+  useEffect(() => {
+    if (duraciones.length > 0 && !duraciones.includes(form.duracionMin)) {
+      setForm((f) => ({ ...f, duracionMin: duraciones[0]! }));
+    }
+  }, [duraciones, form.duracionMin]);
+
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!form.fecha || !form.hora) {
       setError('Elige fecha y hora.');
       return;
     }
+    if (duraciones.length === 0) {
+      setError('Este club no tiene ninguna cancha activa de esta disciplina todavía.');
+      return;
+    }
     const inicio = new Date(`${form.fecha}T${form.hora}:00`);
-    const fin = new Date(inicio.getTime() + form.duracionMin * 60_000);
 
     setEnviando(true);
     setError(null);
@@ -62,14 +115,15 @@ export function CrearPartidoForm({
           deporte: form.deporte,
           nivel: form.nivel,
           inicioISO: inicio.toISOString(),
-          finISO: fin.toISOString(),
+          duracionMin: form.duracionMin,
           cuposTotales: form.cuposTotales,
           precioPorJugador: form.precioPorJugador,
           notas: form.notas || undefined,
         }),
       });
       if (!res.ok) {
-        setError('No se pudo crear el partido. Revisa los datos.');
+        const body = await res.json().catch(() => ({}));
+        setError(MENSAJES[body.error] ?? 'No se pudo crear el partido. Revisa los datos.');
         return;
       }
       router.push('/partidos');
@@ -84,7 +138,11 @@ export function CrearPartidoForm({
     <form onSubmit={onSubmit} style={{ display: 'grid', gap: 12, marginTop: 20 }}>
       <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
         Deporte
-        <select value={form.deporte} onChange={(e) => setForm({ ...form, deporte: e.target.value })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }}>
+        <select
+          value={form.deporte}
+          onChange={(e) => setForm({ ...form, deporte: e.target.value, canchaId: '' })}
+          style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }}
+        >
           {deportes.map((d) => (
             <option key={d.value} value={d.value}>
               {d.label}
@@ -122,6 +180,37 @@ export function CrearPartidoForm({
           Hora
           <input type="time" required value={form.hora} onChange={(e) => setForm({ ...form, hora: e.target.value })} style={{ border: '1.5px solid var(--pl-line)', borderRadius: 8, padding: 9, font: 'inherit' }} />
         </label>
+      </div>
+
+      <div style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
+        Duración
+        {duraciones.length === 0 ? (
+          <p style={{ fontSize: 12, fontWeight: 400, color: 'var(--pl-danger)' }}>
+            Este club no tiene ninguna cancha activa de esta disciplina todavía.
+          </p>
+        ) : (
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+            {duraciones.map((min) => (
+              <button
+                key={min}
+                type="button"
+                onClick={() => setForm({ ...form, duracionMin: min })}
+                style={{
+                  border: form.duracionMin === min ? '2px solid var(--pl-clay)' : '1.5px solid var(--pl-line)',
+                  background: form.duracionMin === min ? 'var(--pl-clay)' : 'var(--pl-bg-raised)',
+                  color: form.duracionMin === min ? '#fff' : 'var(--pl-ink)',
+                  borderRadius: 8,
+                  padding: '7px 14px',
+                  fontWeight: 700,
+                  fontSize: 13,
+                  cursor: 'pointer',
+                }}
+              >
+                {formatoDuracion(min)}
+              </button>
+            ))}
+          </div>
+        )}
       </div>
 
       <label style={{ display: 'grid', gap: 5, fontSize: 13, fontWeight: 600 }}>
@@ -163,7 +252,7 @@ export function CrearPartidoForm({
         </Alert>
       ) : null}
 
-      <button className="pl-btn" type="submit" disabled={enviando}>
+      <button className="pl-btn" type="submit" disabled={enviando || duraciones.length === 0}>
         {enviando ? 'Creando…' : 'Publicar partido'}
       </button>
     </form>
