@@ -123,9 +123,10 @@ export default async function CuentaPage() {
                     borderBottom: '1.5px solid var(--pl-line)',
                     textDecoration: 'none',
                     color: 'inherit',
+                    flexWrap: 'wrap',
                   }}
                 >
-                  <div>
+                  <div style={{ minWidth: 0 }}>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>{r.cancha.nombre}</p>
                     <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
                       {r.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })} · Bs{' '}
@@ -156,8 +157,8 @@ export default async function CuentaPage() {
               const puedeCancelar =
                 ['ABIERTO', 'COMPLETO'].includes(p.estado) && (!p.reserva || ['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado));
               return (
-                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
-                  <div>
+                <div key={p.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)', flexWrap: 'wrap' }}>
+                  <div style={{ minWidth: 0 }}>
                     <p style={{ fontWeight: 600, fontSize: 14 }}>
                       {DEPORTE_LABEL[p.deporte as Deporte]} · {p.cancha?.nombre ?? 'sin cancha asignada'}
                     </p>
@@ -224,8 +225,8 @@ export default async function CuentaPage() {
           <h2 style={{ fontSize: 17 }}>Partidos a los que me uní</h2>
           <div style={{ marginTop: 10 }}>
             {participaciones.map((pp) => (
-              <div key={pp.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
-                <div>
+              <div key={pp.id} style={{ display: 'flex', justifyContent: 'space-between', gap: 10, padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)', flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
                   <p style={{ fontWeight: 600, fontSize: 14 }}>
                     {DEPORTE_LABEL[pp.partido.deporte as Deporte]} · organiza {pp.partido.organizador.nombre}
                   </p>

@@ -102,7 +102,7 @@ export default async function CanchasPage({ searchParams }: { searchParams: Prom
 
   return (
     <main>
-      <header className="pl-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 20 }}>
+      <header className="pl-container" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 20, flexWrap: 'wrap', gap: 10 }}>
         <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none', color: 'inherit' }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
             <circle cx="12" cy="12" r="10" fill="var(--pl-volt)" />

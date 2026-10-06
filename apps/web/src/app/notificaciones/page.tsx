@@ -50,9 +50,10 @@ export default async function NotificacionesPage() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   gap: 10,
+                  flexWrap: 'wrap',
                 }}
               >
-                <div>
+                <div style={{ minWidth: 0 }}>
                   <p style={{ fontWeight: 700, fontSize: 14 }}>{texto.titulo}</p>
                   <p style={{ fontSize: 13, color: 'var(--pl-ink-soft)', marginTop: 2 }}>{texto.cuerpo}</p>
                   <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: 4 }}>

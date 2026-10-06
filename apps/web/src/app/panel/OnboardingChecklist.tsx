@@ -16,8 +16,8 @@ export function OnboardingChecklist({ pasos }: { pasos: PasoOnboarding[] }) {
       </h2>
       <div style={{ display: 'grid', gap: 8, marginTop: 12 }}>
         {pasos.map((p) => (
-          <div key={p.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, color: p.hecho ? 'var(--pl-ink-soft)' : 'var(--pl-ink)', textDecoration: p.hecho ? 'line-through' : 'none' }}>
+          <div key={p.label} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+            <span style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 13, minWidth: 0, color: p.hecho ? 'var(--pl-ink-soft)' : 'var(--pl-ink)', textDecoration: p.hecho ? 'line-through' : 'none' }}>
               <span
                 aria-hidden
                 style={{

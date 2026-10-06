@@ -229,14 +229,14 @@ export function SplitResumen({
           const esMia = misCuotaIds.has(c.id);
           return (
             <div key={c.id} style={{ padding: '10px 0', borderBottom: '1.5px solid var(--pl-line)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10 }}>
-                <div>
-                  <p style={{ fontWeight: 600 }}>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+                <div style={{ minWidth: 0 }}>
+                  <p style={{ fontWeight: 600, overflowWrap: 'anywhere' }}>
                     {esMia ? 'Tú' : c.nombreInvitado || 'Invitado sin registrarse'}
                   </p>
                   <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>Bs {c.monto.toLocaleString('es-VE')}</p>
                 </div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexWrap: 'wrap' }}>
                   <span
                     style={{
                       fontSize: 11,

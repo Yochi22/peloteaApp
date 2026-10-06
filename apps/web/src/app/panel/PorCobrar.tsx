@@ -45,9 +45,9 @@ function Fila({ item, onCobrado }: { item: PorCobrarItem; onCobrado: () => void 
 
   return (
     <div style={{ border: '1.5px solid var(--pl-line)', borderRadius: 'var(--pl-radius)', padding: 12 }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10 }}>
-        <div>
-          <p style={{ fontWeight: 700 }}>{item.persona}</p>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
+        <div style={{ minWidth: 0 }}>
+          <p style={{ fontWeight: 700, overflowWrap: 'anywhere' }}>{item.persona}</p>
           <p style={{ fontSize: 12, color: 'var(--pl-ink-soft)' }}>
             {item.cancha} · {new Date(item.inicio).toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}
           </p>

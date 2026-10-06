@@ -51,7 +51,7 @@ export default async function HomePage() {
     <main>
       <header
         className="pl-container"
-        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 20 }}
+        style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingBlock: 20, flexWrap: 'wrap', gap: 10 }}
       >
         <span style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
           <svg width="26" height="26" viewBox="0 0 24 24" fill="none" aria-hidden>
