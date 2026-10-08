@@ -18,7 +18,7 @@ export async function procesarExpirarPartidos(_job: Job): Promise<void> {
   const ahora = new Date();
   const candidatos = await prisma.partidoAbierto.findMany({
     where: { estado: { in: ['ABIERTO', 'COMPLETO'] }, inicio: { lt: ahora } },
-    include: { reserva: true, participantes: { select: { usuarioId: true } } },
+    include: { reserva: true, participantes: { where: { estado: 'UNIDO' }, select: { usuarioId: true } } },
   });
 
   for (const p of candidatos) {

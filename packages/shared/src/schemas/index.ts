@@ -148,6 +148,29 @@ export const configurarClubSchema = z.object({
 });
 export type ConfigurarClubInput = z.infer<typeof configurarClubSchema>;
 
+// ── Gestión de staff (/panel/equipo) ────────────────────────────────────────
+// Antes la única cuenta SEDE_ADMIN era la que corrió /configurar — no había
+// forma de agregar más personal con su propia cuenta, así que todo el
+// personal terminaba compartiendo una sola sesión (mala trazabilidad de
+// quién aprobó qué pago, y un riesgo de seguridad real).
+
+export const crearStaffSchema = z.object({
+  nombre: z.string().trim().min(2).max(80),
+  email: emailSchema,
+  telefono: telefonoVeSchema.optional(),
+  password: z.string().min(10).max(256),
+  rol: z.enum(['SEDE_STAFF', 'SEDE_ADMIN']),
+});
+export type CrearStaffInput = z.infer<typeof crearStaffSchema>;
+
+export const actualizarStaffSchema = z
+  .object({
+    rol: z.enum(['SEDE_STAFF', 'SEDE_ADMIN']).optional(),
+    activa: z.boolean().optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nada para actualizar.' });
+export type ActualizarStaffInput = z.infer<typeof actualizarStaffSchema>;
+
 export const entrarSchema = z.object({
   email: emailSchema,
   password: z.string().min(1).max(256),

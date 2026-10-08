@@ -92,10 +92,13 @@ export default async function FinanzasPanelPage({ searchParams }: { searchParams
         </div>
       </div>
 
-      <p style={{ marginTop: 20 }}>
+      <p style={{ marginTop: 20, display: 'flex', gap: 14, flexWrap: 'wrap' }}>
         <Link href="/panel/reservas" style={{ fontSize: 13 }}>
           Ver el detalle de cada reserva →
         </Link>
+        <a href={`/api/admin/reservas/export?desde=${desde.toISOString().slice(0, 10)}&hasta=${new Date(hasta.getTime() - 1).toISOString().slice(0, 10)}`} style={{ fontSize: 13 }}>
+          Descargar este período (CSV) →
+        </a>
       </p>
     </main>
   );

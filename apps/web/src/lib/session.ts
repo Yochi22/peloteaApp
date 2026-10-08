@@ -21,9 +21,12 @@ export async function getSesion(req: NextRequest): Promise<Sesion | null> {
 
   const row = await prisma.sesion.findUnique({
     where: { token },
-    select: { expiraEn: true, usuario: { select: { id: true, rol: true, sedeId: true, twoFactorEnabled: true } } },
+    select: { expiraEn: true, usuario: { select: { id: true, rol: true, sedeId: true, twoFactorEnabled: true, activa: true } } },
   });
   if (!row || row.expiraEn.getTime() < Date.now()) return null;
+  // Una cuenta de staff desactivada corta el acceso de inmediato, aunque
+  // ya tenga una sesión abierta — no solo bloquea logins nuevos.
+  if (!row.usuario.activa) return null;
 
   return {
     usuarioId: row.usuario.id,

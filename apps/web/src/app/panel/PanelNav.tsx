@@ -112,6 +112,17 @@ const ITEMS: ItemNav[] = [
     ),
   },
   {
+    href: '/panel/equipo',
+    label: 'Equipo',
+    icon: (
+      <Icon>
+        <circle cx="9" cy="8" r="3.2" />
+        <path d="M3 20c0-3.3 2.7-6 6-6s6 2.7 6 6" />
+        <path d="M16 8.5a3 3 0 1 1 1.8 5.4M19.5 20c0-2.6-1.8-4.8-4.3-5.6" />
+      </Icon>
+    ),
+  },
+  {
     href: '/panel/configuracion',
     label: 'Configuración',
     icon: (

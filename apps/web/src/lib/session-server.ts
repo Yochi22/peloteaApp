@@ -10,9 +10,12 @@ export async function getSesionServer(): Promise<Sesion | null> {
 
   const row = await prisma.sesion.findUnique({
     where: { token },
-    select: { expiraEn: true, usuario: { select: { id: true, rol: true, sedeId: true, twoFactorEnabled: true } } },
+    select: { expiraEn: true, usuario: { select: { id: true, rol: true, sedeId: true, twoFactorEnabled: true, activa: true } } },
   });
   if (!row || row.expiraEn.getTime() < Date.now()) return null;
+  // Mismo criterio que getSesion(): una cuenta de staff desactivada pierde
+  // el acceso de inmediato, aunque ya tenga una sesión abierta.
+  if (!row.usuario.activa) return null;
 
   return {
     usuarioId: row.usuario.id,

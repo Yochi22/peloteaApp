@@ -14,6 +14,7 @@ function leerCookie(nombre: string): string | null {
 const MENSAJES: Record<string, string> = {
   credenciales_invalidas: 'Email o contraseña incorrectos.',
   cuenta_bloqueada: 'Demasiados intentos. Prueba de nuevo en unos minutos.',
+  cuenta_desactivada: 'Esta cuenta fue desactivada. Habla con el admin del club.',
   rate_limited: 'Demasiados intentos. Espera un momento.',
   desafio_invalido_o_vencido: 'Se venció el tiempo para el código. Entra de nuevo.',
   codigo_invalido: 'Código incorrecto.',

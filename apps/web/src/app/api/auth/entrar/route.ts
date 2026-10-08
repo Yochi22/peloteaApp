@@ -33,7 +33,7 @@ export async function POST(req: NextRequest) {
 
   if (usuario?.loginBloqueadoHasta && usuario.loginBloqueadoHasta.getTime() > Date.now()) {
     return NextResponse.json(
-      { error: 'cuenta_bloqueada', message: 'Demasiados intentos. Probá de nuevo más tarde.' },
+      { error: 'cuenta_bloqueada', message: 'Demasiados intentos. Prueba de nuevo más tarde.' },
       { status: 423 },
     );
   }
@@ -57,6 +57,13 @@ export async function POST(req: NextRequest) {
     where: { id: usuario.id },
     data: { loginIntentosFallidos: 0, loginBloqueadoHasta: null },
   });
+
+  if (!usuario.activa) {
+    return NextResponse.json(
+      { error: 'cuenta_desactivada', message: 'Esta cuenta fue desactivada. Habla con el admin del club.' },
+      { status: 403 },
+    );
+  }
 
   // Contraseña correcta, pero la cuenta tiene 2FA: no se crea sesión todavía
   // — se deja un desafío de un solo uso en Redis (5 min) y el cliente

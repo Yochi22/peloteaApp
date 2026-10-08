@@ -68,7 +68,26 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         },
       });
 
-      if (decision !== 'APROBAR') return { estadoCuota: nuevoEstadoCuota, reservaConfirmada: false };
+      if (decision !== 'APROBAR') {
+        // Antes esto no avisaba a nadie — quien subió el comprobante de su
+        // parte se enteraba del rechazo solo si volvía a revisar la página
+        // por su cuenta. Solo se puede notificar si la cuota tiene
+        // `participanteId` (cuenta real) — un invitado del split sin
+        // cuenta (solo `inviteToken`) no tiene Usuario al que avisarle;
+        // en los partidos comunitarios SIEMPRE hay `participanteId` (todos
+        // los que se unen a un partido tienen cuenta).
+        if (cuota.participanteId) {
+          await tx.notificacion.create({
+            data: {
+              usuarioId: cuota.participanteId,
+              canal: 'WHATSAPP',
+              plantilla: PLANTILLAS_NOTIFICACION.CUOTA_RECHAZADA,
+              payload: { reservaId: cuota.reservaId, cuotaId, motivo: motivoRechazo ?? null },
+            },
+          });
+        }
+        return { estadoCuota: nuevoEstadoCuota, reservaConfirmada: false };
+      }
 
       const cuotas = await tx.cuota.findMany({ where: { reservaId: cuota.reservaId } });
       if (splitCompleto(cuotas) && cuota.reserva.estado !== 'CONFIRMADA') {

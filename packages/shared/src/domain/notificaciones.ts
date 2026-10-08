@@ -22,6 +22,8 @@ export function renderTextoNotificacion(
       return { titulo: 'Descuento exprés disponible', cuerpo: `Precio especial: Bs ${payload.precioFinal}.` };
     case 'split.completo':
       return { titulo: 'Split completo — reserva confirmada', cuerpo: 'Todos pagaron su parte. ¡A jugar!' };
+    case 'cuota.rechazada':
+      return { titulo: 'Tu comprobante fue rechazado', cuerpo: `El club no pudo validarlo. ${payload.motivo ?? ''}`.trim() };
     case 'reserva.recordatorio': {
       const hora = payload.inicio
         ? new Date(String(payload.inicio)).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' })
@@ -44,6 +46,11 @@ export function renderTextoNotificacion(
       return {
         titulo: 'El organizador canceló el partido',
         cuerpo: 'El partido al que te uniste ya no va a jugarse. Busca otro o crea uno nuevo.',
+      };
+    case 'partido.recordatorio_confirmar':
+      return {
+        titulo: 'Falta confirmar y pagar tu partido',
+        cuerpo: 'Ya se llenaron los cupos pero todavía no confirmas — mientras más esperes, más riesgo de que ya no quede cancha libre a esa hora.',
       };
     case 'partido.sin_disponibilidad':
       return {

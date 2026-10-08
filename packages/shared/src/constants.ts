@@ -87,11 +87,13 @@ export const PLANTILLAS_NOTIFICACION = {
   OFERTA_EXPRES: 'oferta.expres',
   SPLIT_INVITACION: 'split.invitacion',
   SPLIT_COMPLETO: 'split.completo',
+  CUOTA_RECHAZADA: 'cuota.rechazada',
   PARTIDO_COMPLETO: 'partido.completo',
   PARTIDO_CONFIRMADO: 'partido.confirmado',
   PARTIDO_EXPIRADO: 'partido.expirado',
   PARTIDO_CANCELADO: 'partido.cancelado',
   PARTIDO_SIN_DISPONIBILIDAD: 'partido.sin_disponibilidad',
+  PARTIDO_RECORDATORIO_CONFIRMAR: 'partido.recordatorio_confirmar',
   CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
@@ -107,11 +109,18 @@ export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMA
   'oferta.expres': ['WEB_PUSH', 'EMAIL', 'IN_APP'],
   'split.invitacion': ['EMAIL', 'IN_APP'],
   'split.completo': ['WEB_PUSH', 'IN_APP'],
+  // Le rechazaron el comprobante de su parte — tiene que volver a subir uno.
+  // Mismo criterio que reserva.rechazada: transaccional, con acción
+  // pendiente, sí va por WhatsApp.
+  'cuota.rechazada': ['WHATSAPP', 'IN_APP'],
   // El organizador tiene que actuar (confirmar y pagar) para no perder el
   // grupo — es transaccional/directo, no marketing, así que sí va por
   // WhatsApp (CLAUDE.md §4).
   'partido.completo': ['WHATSAPP', 'IN_APP'],
   'partido.confirmado': ['WHATSAPP', 'IN_APP'],
+  // Recordatorio único mientras el partido se queda en COMPLETO sin que el
+  // organizador confirme y pague — mismo criterio que partido.completo.
+  'partido.recordatorio_confirmar': ['WHATSAPP', 'IN_APP'],
   // Rutina, no urgente — solo in-app, no vale la pena un WhatsApp para "no
   // se completó a tiempo".
   'partido.expirado': ['IN_APP'],
@@ -139,4 +148,5 @@ export const QUEUES = {
   ALERTA_CRONOMETRO: 'alerta-cronometro',
   LIMPIEZA_TASA_CAMBIO: 'limpieza-tasa-cambio',
   EXPIRAR_PARTIDOS: 'expirar-partidos',
+  RECORDATORIO_CONFIRMAR_PARTIDO: 'recordatorio-confirmar-partido',
 } as const;

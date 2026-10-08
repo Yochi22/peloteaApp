@@ -245,6 +245,12 @@ model Usuario {
   nombre        String
   hashPassword  String? // null si es invitado o entra solo por OAuth / magic link
   rol           Rol     @default(JUGADOR)
+  // Solo aplica en la práctica a SEDE_STAFF/SEDE_ADMIN (ver
+  // /panel/equipo): un admin puede desactivar a alguien que ya no trabaja
+  // ahí sin borrar su historial (auditLogs, pagos aprobados, etc.) — corta
+  // el acceso de inmediato, incluso con una sesión ya abierta (ver
+  // `getSesion()`), no solo bloquea logins nuevos.
+  activa Boolean @default(true)
 
   // true = reservó como invitado, sin registrarse. No puede dividir pagos,
   // crear/unirse a partidos abiertos, ni recibir ofertas/descuentos — eso

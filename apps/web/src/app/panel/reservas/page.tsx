@@ -82,9 +82,18 @@ export default async function ReservasPanelPage({
           </p>
           <h1 style={{ fontSize: 26, marginTop: 4 }}>{total} en el rango</h1>
         </div>
-        <Link href="/panel/agenda" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
-          Ver agenda del día →
-        </Link>
+        <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
+          <a
+            href={`/api/admin/reservas/export?desde=${fmt(desde)}&hasta=${fmt(new Date(hasta.getTime() - 1))}${deporteFiltro ? `&deporte=${deporteFiltro}` : ''}`}
+            className="pl-btn pl-btn--ghost"
+            style={{ textDecoration: 'none' }}
+          >
+            Descargar CSV
+          </a>
+          <Link href="/panel/agenda" className="pl-btn pl-btn--ghost" style={{ textDecoration: 'none' }}>
+            Ver agenda del día →
+          </Link>
+        </div>
       </div>
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 13, marginTop: 6 }}>
         Incluye canceladas — si el cliente canceló, el abono no se devuelve y ese ingreso sigue contando; si canceló
