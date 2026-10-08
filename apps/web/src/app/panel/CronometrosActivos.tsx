@@ -13,9 +13,11 @@ export interface CronometroActivo {
 /**
  * Todos los cronómetros de hoy ya iniciados, en un solo lugar — antes había
  * que entrar reserva por reserva (o a la agenda) para ver cada cuenta
- * regresiva. La alerta de "se acabó" también llega por WhatsApp al staff
- * (ver jobs/alerta-cronometro.ts en el worker); esto es la vista rápida
- * para quien tiene el panel abierto.
+ * regresiva. El aviso de "se acabó" es puramente visual (cada
+ * `<Cronometro>` se pone en rojo solo, en vivo) — no hay ningún worker
+ * mandando una alerta aparte; si nadie tiene el panel abierto en ese
+ * momento, no hay forma de avisar (decisión explícita: no vale la pena un
+ * canal push solo para esto).
  */
 export function CronometrosActivos({ items }: { items: CronometroActivo[] }) {
   return (

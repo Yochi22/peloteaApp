@@ -19,7 +19,7 @@ monorepo pnpm + Turborepo. Self-hosted en 1 VPS con Dokploy/Coolify.
 
 ```
 apps/web       Next.js (App Router) — front + API
-apps/worker    BullMQ — timers, ofertas, notificaciones, WhatsApp (Baileys)
+apps/worker    BullMQ — timers, ofertas, notificaciones, limpiezas periódicas
 packages/db        Prisma schema + cliente + seed
 packages/shared    Zod, máquinas de estado, pricing, constantes
 packages/security  headers/CSP, rate-limit, idempotency, csrf, upload-guard

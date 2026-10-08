@@ -1,7 +1,8 @@
 # Blueprint de Render para una demo gratuita de Pelotea.
 #
-# Cubre: web (Next.js) + worker (WhatsApp/Baileys + BullMQ) + Postgres
-# administrado (free). El worker corre como `type: web` (no `type: worker`)
+# Cubre: web (Next.js) + worker (BullMQ: holds, ofertas, limpiezas) +
+# Postgres administrado (free). El worker corre como `type: web` (no
+# `type: worker`)
 # a propósito — Render solo da Background Workers en planes pagos, pero un
 # "Web Service" free SÍ alcanza si bindea un puerto (ver
 # `apps/worker/src/lib/server.ts`): se duerme tras ~15 min sin tráfico
@@ -89,20 +90,8 @@ services:
         value: 'true'
       - key: S3_PUBLIC_ORIGIN
         sync: false
-      # El QR/estado de WhatsApp se maneja en /panel/whatsapp — la web llama
-      # al worker server-to-server con este token (nunca lo ve el navegador
-      # del admin). `fromService` copia el mismo valor que Render generó
-      # para pelotea-worker, así no hay que pegarlo a mano dos veces.
-      - key: WHATSAPP_QR_TOKEN
-        fromService:
-          name: pelotea-worker
-          type: web
-          envVarKey: WHATSAPP_QR_TOKEN
-      # Ajustar si renombras el servicio del worker.
-      - key: WORKER_BASE_URL
-        value: https://pelotea-worker.onrender.com
 
-  # ── Worker: WhatsApp (Baileys) + BullMQ (hold-expiry, recordatorios, ofertas) ──
+  # ── Worker: BullMQ (hold-expiry, ofertas, limpiezas) ──────────────────────
   - type: web
     name: pelotea-worker
     runtime: node
@@ -115,8 +104,8 @@ services:
     startCommand: pnpm --filter @pelotea/worker start
     healthCheckPath: /health
     envVars:
-      # Mismo motivo que en pelotea-web: los jobs (hold-expiry, recordatorios)
-      # también hacen Date math local ingenuo asumiendo hora de Venezuela.
+      # Mismo motivo que en pelotea-web: los jobs (hold-expiry, ofertas) también
+      # hacen Date math local ingenuo asumiendo hora de Venezuela.
       - key: TZ
         value: America/Caracas
       - key: NODE_ENV
@@ -127,19 +116,6 @@ services:
           property: connectionString
       - key: REDIS_URL
         sync: false
-      # Sin disco persistente (pago) en el plan free: la sesión de WhatsApp
-      # puede perderse si Render reconstruye el contenedor al despertar de
-      # un sleep — en ese caso hay que volver a escanear el QR en /qr. Para
-      # una demo puntual es aceptable; para algo que quede corriendo días,
-      # conviene un disco persistente o subir a un plan pago.
-      - key: WHATSAPP_SESSION_DIR
-        value: /tmp/wa-session
-      - key: WHATSAPP_ADMIN_NUMBER
-        sync: false
-      # Token para /qr?token=... — sin esto el endpoint del QR queda
-      # deshabilitado (nunca expuesto sin protección, ver server.ts).
-      - key: WHATSAPP_QR_TOKEN
-        generateValue: true
       # Mismo bucket que pelotea-web — el worker solo BORRA comprobantes
       # viejos (ver jobs/limpieza-comprobantes.ts), nunca sube ni lee.
       - key: S3_ENDPOINT

@@ -126,7 +126,6 @@ enum CanalNotificacion {
   WEB_PUSH
   EMAIL
   IN_APP
-  WHATSAPP // SOLO transaccional
 }
 
 enum EstadoNotificacion {
@@ -312,7 +311,7 @@ model PerfilJugador {
   reputacion  Int     @default(100) // baja con no-shows
   noShowCount Int     @default(0)
 
-  // Preferencias de notificación (ofertas/descuentos NUNCA por WhatsApp)
+  // Preferencias de notificación
   recibeOfertasPush  Boolean @default(true)
   recibeOfertasEmail Boolean @default(true)
 
@@ -488,11 +487,10 @@ model Reserva {
   // Cronómetro de cancha: el staff lo arranca cuando el cliente retira la
   // pelota (no cuando "debería" haber empezado el turno — a veces llega
   // tarde) y cuenta regresivo `duracionMin` minutos desde ese instante
-  // exacto, no desde `inicio`. `tiempoAlertaEnviada` evita mandar la alerta
-  // de "se acabó" más de una vez cuando el barrido del worker corre de
-  // nuevo.
-  tiempoIniciadoEn    DateTime?
-  tiempoAlertaEnviada Boolean   @default(false)
+  // exacto, no desde `inicio`. El "se acabó" es puramente visual en
+  // `<Cronometro>` — no hay ningún worker mandando una alerta aparte, así
+  // que no hace falta ninguna bandera de "ya se avisó".
+  tiempoIniciadoEn DateTime?
 
   ofertaId         String?
   oferta           Oferta?         @relation(fields: [ofertaId], references: [id])

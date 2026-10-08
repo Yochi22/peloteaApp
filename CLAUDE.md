@@ -74,7 +74,7 @@ borrador
   → pendiente_pago        (slot en HOLD; TTL ~15 min para enviar comprobante)
   → comprobante_enviado   (usuario subió/mandó comprobante)
   → en_revision           (admin/staff la tiene en cola; TTL ~2 h para decidir)
-  → confirmada            (pago aprobado; WhatsApp de confirmación)
+  → confirmada            (pago aprobado; aviso in-app de confirmación)
   → completada            (partido jugado)
   ↘ no_show               (confirmada pero nadie asistió → afecta reputación)
   ↘ cancelada             (por usuario o admin; si estaba confirmada y entra en
@@ -135,13 +135,13 @@ split, el organizador ya cubre el 100% entre las cuotas antes de confirmar.
 
 1. **Reserva + pago móvil manual**: reservar (con o sin cuenta) → HOLD → pagar
    por fuera → enviar comprobante → cola de revisión → **un humano del club
-   aprueba o rechaza** → confirmación por WhatsApp. Si expira, el slot se
+   aprueba o rechaza** → confirmación in-app. Si expira, el slot se
    libera. **Subir el comprobante nunca aprueba nada por sí solo** — pago
    móvil no está automatizado; siempre lo revisa una persona
    (`SEDE_STAFF`/`SEDE_ADMIN`) antes de que la reserva pase a `CONFIRMADA`.
 2. **Cancelación → last-minute**: reserva confirmada se cancela en ventana
    crítica → slot a "ofertas de última hora" con descuento → **web push +
-   in-app + email** a jugadores opt-in que hacen match. **WhatsApp NO.**
+   in-app + email** a jugadores opt-in que hacen match.
 3. **Split con amigos**: organizador (con cuenta) arma reserva, invita por link,
    cada quien paga su parte, barra "3/4 pagado", TTL para completar antes de
    perder el slot. **Los invitados NO necesitan cuenta**: cada Cuota (salvo la
@@ -174,7 +174,7 @@ confirmar · posible seña para jugadores nuevos · lista de bloqueo por sede.
 ```
 apps/
   web/        Next.js 15 (App Router, TS). SSR catálogo público + API/server actions transaccional.
-  worker/     Node. Baileys (WhatsApp), BullMQ jobs, timers (expiración de holds, disparo de ofertas, recordatorios).
+  worker/     Node. BullMQ jobs: expiración de holds, disparo de ofertas, limpiezas periódicas.
 packages/
   db/         Prisma schema + cliente + migraciones + seed.
   shared/     Tipos, esquemas Zod, máquinas de estado, constantes de dominio.
@@ -182,8 +182,9 @@ packages/
 infra/        docker-compose, config Dokploy/Coolify, scripts de backup.
 ```
 
-El **worker es un servicio aparte** a propósito: si WhatsApp se cae o nos
-banean, la web sigue funcionando. Comunicación web ↔ worker vía colas Redis.
+El **worker es un servicio aparte** a propósito: si se cae, la web sigue
+funcionando igual (reservar, pagar, aprobar). Comunicación web ↔ worker vía
+colas Redis.
 
 ### Servicios (Docker)
 
@@ -193,7 +194,7 @@ banean, la web sigue funcionando. Comunicación web ↔ worker vía colas Redis.
 | **Redis** | Locks de slot, colas BullMQ, pub/sub realtime, rate limiting. |
 | **MinIO** | S3 self-hosted para comprobantes de pago. Cifrado en reposo. |
 | **web** | Next.js. |
-| **worker** | Jobs + WhatsApp. |
+| **worker** | Jobs (holds, ofertas, limpiezas). |
 | **Traefik/Caddy** | Reverse proxy + HTTPS automático. |
 
 ### Hosting
@@ -206,19 +207,34 @@ tipo Supabase.
 vender, hay un camino alterno gratis en **[`RENDER.md`](./RENDER.md)** +
 [`render.yaml`](./render.yaml) — Render (web + Postgres free) + Upstash
 (Redis free) + Cloudflare R2 (S3 free) porque Render ya no tiene Redis
-gratis. El worker (WhatsApp/BullMQ) no corre en el plan free — la demo
-cubre todo el camino feliz de reservar/pagar/aprobar/cancelar/split/
-partidos, pero sin recordatorios ni WhatsApp real. Esto es solo para demos
-puntuales, no reemplaza la arquitectura de producción de arriba.
+gratis. El worker no corre siempre en el plan free (se duerme tras
+inactividad) — la demo cubre todo el camino feliz de reservar/pagar/
+aprobar/cancelar/split/partidos igual, porque esas notificaciones son
+IN_APP (no dependen de que el worker esté despierto en el instante exacto).
+Esto es solo para demos puntuales, no reemplaza la arquitectura de
+producción de arriba.
 
-### Realtime y notificaciones
+### Notificaciones
+
+Todo pasa por **IN_APP** (`/notificaciones`, badge de no leídas) — nunca
+hubo WhatsApp automático: se construyó con Baileys (WhatsApp no oficial) y
+se eliminó por completo (2026-10-08, ver changelog) por el riesgo real de
+que Meta banee el número, la fragilidad de la sesión (se desloguea sola,
+exige re-escanear un QR) y el costo de mantener un worker conectado 24/7
+solo para esto.
 
 | Canal | Uso | Notas |
 |---|---|---|
-| **SSE + Redis pub/sub** | Tablero en vivo del admin (nueva reserva, comprobante entrante, slot liberado) | |
+| **IN_APP** | Todo — confirmaciones, rechazos, cancelaciones, partidos, etc. | Siempre disponible, sin dependencias externas. |
 | **Web Push (VAPID)** | Ofertas exprés y last-minute, descuentos | Gratis, sin riesgo de baneo. Service worker + opt-in. |
-| **Email** (Resend free / SMTP propio) | Respaldo de ofertas + recibos | |
-| **WhatsApp (Baileys)** | **Solo transaccional y bajo volumen**: confirmación de reserva, recepción de comprobante, recordatorio, resultado de aprobación | Nunca marketing/ofertas → riesgo de ban. |
+| **Email** (Resend free / SMTP propio) | Respaldo de ofertas + recibos | Pausado — falta conectar el proveedor real. |
+
+**"Enviar por WhatsApp" manual**: donde tiene sentido que un humano reenvíe
+un aviso por su cuenta (ej. el organizador de un partido le cuenta al grupo
+que ya se llenó el cupo), la UI ofrece un link `https://wa.me/...?text=...`
+con el mensaje ya armado — abre WhatsApp Web/la app con el texto listo para
+que la persona lo mande ella misma. Esto es un botón, nunca un envío
+automático — no se guarda como `Notificacion` ni pasa por ningún worker.
 
 ---
 
@@ -354,9 +370,9 @@ en la raíz del repo.
 La lista canónica y comentada está en **[`.env.example`](./.env.example)** en la
 raíz — mantenerla sincronizada. Grupos: base de datos, Redis, S3/MinIO
 (`S3_ENDPOINT`, `S3_ACCESS_KEY`, …, `S3_PUBLIC_ORIGIN` para la CSP), auth
-(`AUTH_SECRET`, `AUTH_URL`), Web Push (`WEB_PUSH_VAPID_*`), WhatsApp
-(`WHATSAPP_SESSION_DIR`, `WHATSAPP_ADMIN_NUMBER`), email, backups B2, `SENTRY_DSN`,
-`APP_BASE_URL`, y `DEFAULT_SEDE_SLUG` (sede activa del MVP single-tenant).
+(`AUTH_SECRET`, `AUTH_URL`), Web Push (`WEB_PUSH_VAPID_*`), email, backups B2,
+`SENTRY_DSN`, `APP_BASE_URL`, y `DEFAULT_SEDE_SLUG` (sede activa del MVP
+single-tenant).
 
 ---
 
@@ -398,8 +414,7 @@ apps/
            Auth propia (sesión por token opaco) — Better Auth queda como
            opción de migración futura, no bloqueante.
   worker/  BullMQ: hold-expiry, revision-expiry, oferta-dispatch (fan-out de
-           ofertas a jugadores opt-in por Web Push/email — nunca WhatsApp) +
-           barridos. Falta: whatsapp-out (Baileys) y recordatorios.
+           ofertas a jugadores opt-in por Web Push/email) + barridos.
 packages/
   db/        Prisma schema COMPLETO (dominio §3) + seed + prismaParaSede().
              Usuario con lockout de login (loginIntentosFallidos/loginBloqueadoHasta).
@@ -421,8 +436,7 @@ cuando `splitCompleto()`).
 carrera). **Panel del dueño**: `/api/admin/metricas` (ingresos, ocupación,
 no-shows, heatmap día×hora vía `$queryRaw` parametrizado). **Web Push real**:
 `/api/push/suscribir` + worker con `web-push` (borra suscripciones muertas en
-404/410). **WhatsApp real**: `apps/worker/src/lib/whatsapp.ts` (Baileys,
-transaccional, reconexión automática).
+404/410).
 
 **Split sin cuenta**: `/api/reservas` ahora calcula el precio real (plantilla +
 reglas, ya no un stub en 0) y, si `dividir` viene seteado, crea las `Cuota`
@@ -1020,14 +1034,48 @@ levantar `pnpm infra:up` + `pnpm dev`. Antes de confiar en ellas de verdad:
 @pelotea/web dev` en una terminal, `pnpm --filter @pelotea/web test:e2e` en
 otra.
 
+### WhatsApp (Baileys) eliminado por completo + limpieza de BD (2026-10-08)
+
+El usuario decidió sacar WhatsApp automático del todo: riesgo real de ban
+de Meta, sesión de Baileys frágil (se desloguea sola, exige re-escanear un
+QR), y un worker que tenía que quedarse conectado 24/7 solo para esto.
+Borrado: `apps/worker/src/lib/whatsapp.ts`, `jobs/alerta-cronometro.ts`,
+`jobs/recordatorios.ts` (recordatorio 2-4h antes del turno — pedido
+explícito de no tenerlo más), `/panel/whatsapp` + `ReiniciarWhatsapp.tsx` +
+`/api/admin/whatsapp/reiniciar` + `apps/web/src/lib/worker.ts`, los
+endpoints `/whatsapp/*` del servidor HTTP del worker (`lib/server.ts` queda
+solo con `/health`), el paso de onboarding "vincula tu WhatsApp", y las
+dependencias `@whiskeysockets/baileys`/`@hapi/boom`/`pino`/`qrcode` de
+`apps/worker`. `CanalNotificacion` perdió el valor `WHATSAPP` del enum —
+toda notificación es ahora `IN_APP`.
+
+Dos casos puntuales que antes dependían de WhatsApp, resueltos distinto
+cada uno (pedido explícito del usuario):
+- **Cronómetro de cancha**: ya no manda ninguna alerta aparte al staff —
+  `<Cronometro>`/`<CronometrosActivos>` en `/panel` YA se ponen en rojo
+  solos en vivo cuando se acaba el tiempo; eso basta como aviso mientras
+  alguien tenga el panel abierto, sin necesidad de un canal push. Se borró
+  `Reserva.tiempoAlertaEnviada` (campo que solo servía para ese job).
+- **Se llenó el cupo de un partido** (`partido.completo`): sigue avisando
+  in-app al organizador, y además `/cuenta` ahora muestra un link
+  `wa.me/?text=...` ("Avisarle al grupo por WhatsApp →") con el mensaje ya
+  armado, para que el organizador le cuente a su grupo externo si quiere —
+  un botón manual, no un envío automático.
+
+**Limpieza de base de datos** (pedido explícito: "optimicemos muchísimo la
+base de datos"): dos barridos nuevos, ambos diarios —
+`jobs/limpieza-notificaciones.ts` borra `Notificacion` de más de 30 días
+(leídas o no: son avisos de un momento puntual, no vale la pena guardarlas
+para siempre) y `jobs/limpieza-sesiones.ts` borra `Sesion` ya vencidas
+(antes solo se borraban a mano en logout o al desactivar una cuenta —
+crecían para siempre sin ningún barrido).
+
 Pendiente inmediato: primera migración contra una Postgres real — ya no
-bloqueada (Render la corre sola al arrancar, ver arriba); una pantalla para
-editar `ReglaPrecio` (recargos peak/off-peak) desde el
-panel — hoy solo se carga por seed/DB directo; **login con Google/Gmail**
-pedido por el usuario como mejora cercana — necesita que el usuario cree
-un proyecto en Google Cloud Console y dé Client ID/Secret (no se puede
-generar solo); cuando se haga, evaluar Auth.js/next-auth en vez de rodar
-OAuth a mano, ya que la sesión propia actual seguiría sirviendo para
+bloqueada (Render la corre sola al arrancar, ver arriba); **login con
+Google/Gmail** pedido por el usuario como mejora cercana — necesita que el
+usuario cree un proyecto en Google Cloud Console y dé Client ID/Secret (no
+se puede generar solo); cuando se haga, evaluar Auth.js/next-auth en vez de
+rodar OAuth a mano, ya que la sesión propia actual seguiría sirviendo para
 email/password en paralelo.
 
 ---

@@ -1,5 +1,4 @@
 import { prisma } from '@pelotea/db';
-import { obtenerEstadoWhatsapp } from './worker';
 import { obtenerTasaVigente } from './tasa-cambio';
 
 export interface PasoOnboarding {
@@ -25,14 +24,13 @@ export interface SedeParaOnboarding {
  * de "descartar" — no hace falta, desaparece solo).
  */
 export async function calcularChecklistOnboarding(sede: SedeParaOnboarding): Promise<PasoOnboarding[]> {
-  const [canchasActivas, canchaSinHorario, tasa, estadoWhatsapp] = await Promise.all([
+  const [canchasActivas, canchaSinHorario, tasa] = await Promise.all([
     prisma.cancha.count({ where: { sedeId: sede.id, activa: true } }),
     prisma.cancha.findFirst({
       where: { sedeId: sede.id, activa: true, plantillas: { none: {} } },
       select: { id: true },
     }),
     sede.precioMoneda !== 'VES' ? obtenerTasaVigente(sede.precioMoneda) : Promise.resolve(null),
-    obtenerEstadoWhatsapp(),
   ]);
 
   const pagoMovilOk = !!(sede.pagoMovilBanco && sede.pagoMovilCedulaRif && sede.pagoMovilTelefono);
@@ -56,12 +54,6 @@ export async function calcularChecklistOnboarding(sede: SedeParaOnboarding): Pro
       hecho: sede.precioMoneda === 'VES' || !!tasa,
       href: '/panel/tasa-cambio',
       accion: 'Cargar tasa',
-    },
-    {
-      label: 'Vincula el WhatsApp del club',
-      hecho: !!estadoWhatsapp?.conectado,
-      href: '/panel/whatsapp',
-      accion: 'Vincular',
     },
   ];
 }

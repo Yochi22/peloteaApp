@@ -61,7 +61,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
         await tx.notificacion.create({
           data: {
             usuarioId: reserva.organizadorId,
-            canal: 'WHATSAPP',
+            canal: 'IN_APP',
             plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CONFIRMADA,
             payload: { reservaId: reserva.id },
           },
@@ -82,7 +82,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
             await tx.notificacion.createMany({
               data: participantes.map((p) => ({
                 usuarioId: p.usuarioId,
-                canal: 'WHATSAPP' as const,
+                canal: 'IN_APP' as const,
                 plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_CONFIRMADO,
                 payload: { partidoId: reserva.partidoAbiertoId, reservaId: reserva.id },
               })),
@@ -118,7 +118,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       await tx.notificacion.create({
         data: {
           usuarioId: reserva.organizadorId,
-          canal: 'WHATSAPP',
+          canal: 'IN_APP',
           plantilla: PLANTILLAS_NOTIFICACION.RESERVA_RECHAZADA,
           payload: { reservaId: reserva.id, motivo: motivoRechazo },
         },

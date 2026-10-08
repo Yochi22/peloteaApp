@@ -239,9 +239,10 @@ pagos, uploads, o endpoints públicos. Correr `/security-review` antes de mergea
   que haya quedado asociado, para que no aparezca en la cola de aprobación
   de una reserva que ya no existe.
 
-### 2.10 Notificaciones / abuso de WhatsApp
-- **Control:** ofertas y descuentos **nunca** por WhatsApp (Web Push / email /
-  in-app). WhatsApp solo transaccional y de bajo volumen, con rate-limit propio.
+### 2.10 Notificaciones / abuso
+- **Control:** no hay WhatsApp automático (se eliminó por completo, ver
+  CLAUDE.md) — todo pasa por IN_APP, Web Push o email. Ofertas y descuentos
+  **nunca** por ningún canal que interrumpa fuera de la app sin opt-in.
 - **Control:** opt-in explícito para push; endpoints de suscripción con
   rate-limit `notify`.
 

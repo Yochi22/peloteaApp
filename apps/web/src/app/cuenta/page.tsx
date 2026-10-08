@@ -168,10 +168,22 @@ export default async function CuentaPage() {
                     </p>
                     <p style={{ fontSize: 12, fontWeight: 700, color: info.tono, marginTop: 2 }}>{info.texto}</p>
                     {puedeConfirmar ? (
-                      <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: 2, maxWidth: 320 }}>
-                        Confirma cuanto antes: mientras más esperes, más riesgo de que ya no quede cancha libre a
-                        esa hora.
-                      </p>
+                      <>
+                        <p style={{ fontSize: 11, color: 'var(--pl-ink-soft)', marginTop: 2, maxWidth: 320 }}>
+                          Confirma cuanto antes: mientras más esperes, más riesgo de que ya no quede cancha libre a
+                          esa hora.
+                        </p>
+                        <a
+                          href={`https://wa.me/?text=${encodeURIComponent(
+                            `¡Ya se completó nuestro partido de ${DEPORTE_LABEL[p.deporte as Deporte]} el ${p.inicio.toLocaleString('es-VE', { dateStyle: 'short', timeStyle: 'short' })}! Voy a confirmar y pagar la cancha.`,
+                          )}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          style={{ fontSize: 11, display: 'inline-block', marginTop: 4 }}
+                        >
+                          Avisarle al grupo por WhatsApp →
+                        </a>
+                      </>
                     ) : null}
                     {p.reserva && !['CANCELADA', 'EXPIRADA'].includes(p.reserva.estado) ? (
                       <Link href={`/reservas/${p.reserva.id}/comprobante`} style={{ fontSize: 12 }}>

@@ -111,16 +111,6 @@ const ITEMS: ItemNav[] = [
     ),
   },
   {
-    href: '/panel/whatsapp',
-    label: 'WhatsApp',
-    icon: (
-      <Icon>
-        <path d="M12 3a9 9 0 0 0-7.6 13.8L3 21l4.4-1.4A9 9 0 1 0 12 3Z" />
-        <path d="M8.5 8.7c0 4 3 6.8 6.8 6.8.6 0 .9-.6.6-1.1l-1-1.7c-.2-.4-.7-.5-1.1-.3l-.8.4a5 5 0 0 1-2.8-2.8l.4-.8c.2-.4.1-.9-.3-1.1l-1.7-1c-.5-.3-1.1 0-1.1.6Z" />
-      </Icon>
-    ),
-  },
-  {
     href: '/panel/equipo',
     label: 'Equipo',
     icon: (

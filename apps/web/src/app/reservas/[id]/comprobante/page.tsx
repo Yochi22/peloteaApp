@@ -133,7 +133,7 @@ export default async function ComprobantePage({
 
       <p style={{ color: 'var(--pl-ink-soft)', fontSize: 12, marginTop: 22 }}>
         Un humano del club revisa cada comprobante antes de confirmar — subirlo no aprueba el pago
-        automáticamente. Te avisamos por WhatsApp en cuanto lo revisen.
+        automáticamente. Te avisamos dentro de la app en cuanto lo revisen.
       </p>
 
       {esInvitadoSinCuenta && token ? (

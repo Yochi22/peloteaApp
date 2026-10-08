@@ -75,14 +75,20 @@ export const MAX_NO_SHOWS_INVITADO = 2;
 
 export const MONEDA_DEFAULT = 'VES';
 
-/** Plantillas de notificación. Ofertas/descuentos: nunca WHATSAPP. */
+/**
+ * Plantillas de notificación. Ya no existe WhatsApp automático (Baileys se
+ * eliminó por completo: riesgo real de ban de Meta, sesión frágil que se
+ * desloguea sola, y un worker que tenía que quedarse conectado 24/7 solo
+ * para esto). Todo pasa por IN_APP — para avisos donde además tiene sentido
+ * que un humano reenvíe el mensaje por su cuenta, la UI ofrece un botón que
+ * abre WhatsApp Web con el texto ya armado (`wa.me/...?text=...`), pero eso
+ * es un link, no un envío automático: nunca se guarda como `Notificacion`.
+ */
 export const PLANTILLAS_NOTIFICACION = {
   RESERVA_CONFIRMADA: 'reserva.confirmada',
   RESERVA_RECHAZADA: 'reserva.rechazada',
   RESERVA_CANCELADA: 'reserva.cancelada',
   COMPROBANTE_RECIBIDO: 'reserva.comprobante_recibido',
-  RESERVA_POR_EXPIRAR: 'reserva.por_expirar',
-  RECORDATORIO: 'reserva.recordatorio',
   OFERTA_LAST_MINUTE: 'oferta.last_minute',
   OFERTA_EXPRES: 'oferta.expres',
   SPLIT_INVITACION: 'split.invitacion',
@@ -94,46 +100,25 @@ export const PLANTILLAS_NOTIFICACION = {
   PARTIDO_CANCELADO: 'partido.cancelado',
   PARTIDO_SIN_DISPONIBILIDAD: 'partido.sin_disponibilidad',
   PARTIDO_RECORDATORIO_CONFIRMAR: 'partido.recordatorio_confirmar',
-  CRONOMETRO_TERMINADO: 'reserva.cronometro_terminado',
 } as const;
 
-export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMAIL' | 'IN_APP' | 'WHATSAPP'>> = {
-  'reserva.confirmada': ['WHATSAPP', 'IN_APP'],
-  'reserva.rechazada': ['WHATSAPP', 'IN_APP'],
-  'reserva.cancelada': ['WHATSAPP', 'IN_APP'],
+export const CANAL_POR_PLANTILLA: Record<string, ReadonlyArray<'WEB_PUSH' | 'EMAIL' | 'IN_APP'>> = {
+  'reserva.confirmada': ['IN_APP'],
+  'reserva.rechazada': ['IN_APP'],
+  'reserva.cancelada': ['IN_APP'],
   'reserva.comprobante_recibido': ['IN_APP'],
-  'reserva.por_expirar': ['WHATSAPP', 'IN_APP'],
-  'reserva.recordatorio': ['WHATSAPP', 'IN_APP'],
-  // marketing → sin WhatsApp
+  // marketing → nunca WhatsApp aunque existiera
   'oferta.last_minute': ['WEB_PUSH', 'EMAIL', 'IN_APP'],
   'oferta.expres': ['WEB_PUSH', 'EMAIL', 'IN_APP'],
   'split.invitacion': ['EMAIL', 'IN_APP'],
   'split.completo': ['WEB_PUSH', 'IN_APP'],
-  // Le rechazaron el comprobante de su parte — tiene que volver a subir uno.
-  // Mismo criterio que reserva.rechazada: transaccional, con acción
-  // pendiente, sí va por WhatsApp.
-  'cuota.rechazada': ['WHATSAPP', 'IN_APP'],
-  // El organizador tiene que actuar (confirmar y pagar) para no perder el
-  // grupo — es transaccional/directo, no marketing, así que sí va por
-  // WhatsApp (CLAUDE.md §4).
-  'partido.completo': ['WHATSAPP', 'IN_APP'],
-  'partido.confirmado': ['WHATSAPP', 'IN_APP'],
-  // Recordatorio único mientras el partido se queda en COMPLETO sin que el
-  // organizador confirme y pague — mismo criterio que partido.completo.
-  'partido.recordatorio_confirmar': ['WHATSAPP', 'IN_APP'],
-  // Rutina, no urgente — solo in-app, no vale la pena un WhatsApp para "no
-  // se completó a tiempo".
+  'cuota.rechazada': ['IN_APP'],
+  'partido.completo': ['IN_APP'],
+  'partido.confirmado': ['IN_APP'],
+  'partido.recordatorio_confirmar': ['IN_APP'],
   'partido.expirado': ['IN_APP'],
-  // El organizador lo canceló a propósito — avisar a los demás para que no
-  // se queden esperando algo que ya no va a pasar.
   'partido.cancelado': ['IN_APP'],
-  // El organizador intentó confirmar y pagar pero ya no había cancha libre
-  // a esa hora — antes esto solo lo veía el organizador (y solo si estaba
-  // mirando la pantalla en ese momento); ahora se avisa a todo el grupo.
   'partido.sin_disponibilidad': ['IN_APP'],
-  // Va al staff/admin del club, no al cliente — transaccional y con
-  // urgencia real (hay que ir a recoger la pelota).
-  'reserva.cronometro_terminado': ['WHATSAPP', 'IN_APP'],
 };
 
 /** Nombres de colas BullMQ. */
@@ -142,11 +127,11 @@ export const QUEUES = {
   REVISION_EXPIRY: 'revision-expiry',
   OFERTA_DISPATCH: 'oferta-dispatch',
   NOTIFICACIONES: 'notificaciones',
-  RECORDATORIOS: 'recordatorios',
   LIMPIEZA_COMPROBANTES: 'limpieza-comprobantes',
   MATERIALIZAR_DESCUENTOS: 'materializar-descuentos',
-  ALERTA_CRONOMETRO: 'alerta-cronometro',
   LIMPIEZA_TASA_CAMBIO: 'limpieza-tasa-cambio',
   EXPIRAR_PARTIDOS: 'expirar-partidos',
   RECORDATORIO_CONFIRMAR_PARTIDO: 'recordatorio-confirmar-partido',
+  LIMPIEZA_NOTIFICACIONES: 'limpieza-notificaciones',
+  LIMPIEZA_SESIONES: 'limpieza-sesiones',
 } as const;

@@ -1,6 +1,6 @@
 /**
  * Texto de cada plantilla de notificación — compartido entre el worker (que
- * la manda por WhatsApp/push/email) y la web (que muestra las IN_APP en
+ * la manda por push/email) y la web (que muestra las IN_APP en
  * `/notificaciones`), para no mantener el mismo switch en dos lugares.
  */
 export function renderTextoNotificacion(
@@ -24,12 +24,6 @@ export function renderTextoNotificacion(
       return { titulo: 'Split completo — reserva confirmada', cuerpo: 'Todos pagaron su parte. ¡A jugar!' };
     case 'cuota.rechazada':
       return { titulo: 'Tu comprobante fue rechazado', cuerpo: `El club no pudo validarlo. ${payload.motivo ?? ''}`.trim() };
-    case 'reserva.recordatorio': {
-      const hora = payload.inicio
-        ? new Date(String(payload.inicio)).toLocaleTimeString('es-VE', { hour: 'numeric', minute: '2-digit' })
-        : 'pronto';
-      return { titulo: 'Tu partido es en unas horas ⏰', cuerpo: `Empieza a las ${hora}. ¡Nos vemos en la cancha!` };
-    }
     case 'partido.completo':
       return {
         titulo: 'Tu partido se llenó — falta confirmar',
@@ -56,11 +50,6 @@ export function renderTextoNotificacion(
       return {
         titulo: 'No se pudo confirmar el partido',
         cuerpo: 'Se llenaron los cupos pero ya no había ninguna cancha libre a esa hora. El organizador puede reintentar más tarde o el partido se cae.',
-      };
-    case 'reserva.cronometro_terminado':
-      return {
-        titulo: '⏰ Se acabó el tiempo',
-        cuerpo: `${payload.cancha ?? 'La cancha'} — ${payload.persona ?? 'el cliente'} ya cumplió su hora. Hay que ir a recoger la pelota.`,
       };
     default:
       return { titulo: 'Pelotea', cuerpo: 'Tienes una novedad en tu cuenta.' };

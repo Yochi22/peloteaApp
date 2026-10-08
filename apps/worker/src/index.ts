@@ -5,33 +5,29 @@ import { procesarHoldExpirado } from './jobs/hold-expiry';
 import { procesarRevisionExpirada } from './jobs/revision-expiry';
 import { procesarOfertaDispatch } from './jobs/oferta-dispatch';
 import { procesarNotificaciones } from './jobs/notificaciones';
-import { procesarRecordatorios } from './jobs/recordatorios';
 import { procesarLimpiezaComprobantes } from './jobs/limpieza-comprobantes';
 import { procesarMaterializarDescuentos } from './jobs/materializar-descuentos';
-import { procesarAlertaCronometro } from './jobs/alerta-cronometro';
 import { procesarLimpiezaTasaCambio } from './jobs/limpieza-tasa-cambio';
 import { procesarExpirarPartidos } from './jobs/expirar-partidos';
 import { procesarRecordatorioConfirmarPartido } from './jobs/recordatorio-confirmar-partido';
-import { iniciarWhatsapp } from './lib/whatsapp';
+import { procesarLimpiezaNotificaciones } from './jobs/limpieza-notificaciones';
+import { procesarLimpiezaSesiones } from './jobs/limpieza-sesiones';
 import { iniciarServidorHttp } from './lib/server';
 
 /**
  * Servicio worker — aislado de la web a propósito. Corre:
  *  - timers de expiración de HOLD y de revisión
  *  - despacho de ofertas (exprés / last-minute) por Web Push + email
- *  - cola de salida de WhatsApp (Baileys) — SOLO transaccional
+ *  - barridos de limpieza (comprobantes, tasa de cambio, notificaciones, sesiones)
  *
- * Si WhatsApp se cae o nos banean, la web sigue funcionando.
+ * Ya no corre WhatsApp (Baileys se eliminó por completo): riesgo real de
+ * ban de Meta, sesión frágil que se desloguea sola y exige re-escanear un
+ * QR, y un worker que tenía que quedarse conectado 24/7 solo para esto. Las
+ * notificaciones de acción (reserva confirmada/rechazada/cancelada, etc.)
+ * ahora son siempre IN_APP; donde tiene sentido que alguien reenvíe el
+ * aviso por su cuenta, la UI ofrece un link `wa.me/...` con el texto ya
+ * armado, pero eso es un botón, no un envío automático.
  */
-
-// Red de seguridad final: Baileys (WhatsApp) reconecta agresivamente por
-// dentro y puede tirar un rechazo o una excepción que no pase por ninguno
-// de los `.catch`/`.on('error')` de este archivo. Sin esto, cualquiera de
-// esos casos mataba el proceso completo — exactamente el síntoma reportado
-// ("nunca aparece el QR", "reiniciar no encuentra el worker"): un
-// crash-loop constante nunca deja a Baileys terminar de conectar. Loguear
-// y seguir vivo es mejor que reiniciar todo por un error que ya se maneja
-// solo (reconexión) en otro lado.
 process.on('unhandledRejection', (err) => console.error('unhandledRejection (el proceso sigue vivo):', err));
 process.on('uncaughtException', (err) => console.error('uncaughtException (el proceso sigue vivo):', err));
 
@@ -42,11 +38,11 @@ const redisConexion = new IORedis(process.env.REDIS_URL ?? 'redis://localhost:63
 // tira una excepción no capturada y MATA el proceso entero — de fábrica,
 // `ioredis` no tiene ningún listener puesto. Blips de conexión normales en
 // Render+Upstash free tier (timeout, ECONNRESET, el primer round-trip al
-// despertar de un sleep) generan justo ese 'error', y sin este listener
-// cada uno de esos blips reiniciaba TODO el worker — WhatsApp incluido —
-// aunque `ioredis` ya iba a reconectar solo un instante después. Mismo
-// motivo por el que se quitó el `process.exit(1)` de `programarBarridos`
-// más abajo: nunca dejar que un hiccup de Redis tumbe el proceso.
+// despertar de un sleep) generan justo ese 'error' — sin este listener cada
+// uno de esos blips reiniciaba TODO el worker, aunque `ioredis` ya iba a
+// reconectar solo un instante después. Mismo motivo por el que se quitó el
+// `process.exit(1)` de `programarBarridos` más abajo: nunca dejar que un
+// hiccup de Redis tumbe el proceso.
 redisConexion.on('error', (err) => console.error('Redis (ioredis) error — reconectando solo:', err.message));
 const connection: ConnectionOptions = redisConexion;
 
@@ -58,23 +54,18 @@ const defaultJobOpts = {
 };
 
 // Colas (productores; los route handlers de la web también encolan acá).
-// `WHATSAPP_OUT` no está acá a propósito: el envío de WhatsApp se hace
-// directo desde `procesarNotificaciones` (canal WHATSAPP) contra
-// `lib/whatsapp.ts`, sin una cola intermedia — una cola declarada pero sin
-// ningún productor ni consumidor real es peor que no tenerla (parece
-// infraestructura viva y no lo es).
 export const queues = {
   holdExpiry: new Queue(QUEUES.HOLD_EXPIRY, { connection, defaultJobOptions: defaultJobOpts }),
   revisionExpiry: new Queue(QUEUES.REVISION_EXPIRY, { connection, defaultJobOptions: defaultJobOpts }),
   ofertaDispatch: new Queue(QUEUES.OFERTA_DISPATCH, { connection, defaultJobOptions: defaultJobOpts }),
   notificaciones: new Queue(QUEUES.NOTIFICACIONES, { connection, defaultJobOptions: defaultJobOpts }),
-  recordatorios: new Queue(QUEUES.RECORDATORIOS, { connection, defaultJobOptions: defaultJobOpts }),
   limpiezaComprobantes: new Queue(QUEUES.LIMPIEZA_COMPROBANTES, { connection, defaultJobOptions: defaultJobOpts }),
   materializarDescuentos: new Queue(QUEUES.MATERIALIZAR_DESCUENTOS, { connection, defaultJobOptions: defaultJobOpts }),
-  alertaCronometro: new Queue(QUEUES.ALERTA_CRONOMETRO, { connection, defaultJobOptions: defaultJobOpts }),
   limpiezaTasaCambio: new Queue(QUEUES.LIMPIEZA_TASA_CAMBIO, { connection, defaultJobOptions: defaultJobOpts }),
   expirarPartidos: new Queue(QUEUES.EXPIRAR_PARTIDOS, { connection, defaultJobOptions: defaultJobOpts }),
   recordatorioConfirmarPartido: new Queue(QUEUES.RECORDATORIO_CONFIRMAR_PARTIDO, { connection, defaultJobOptions: defaultJobOpts }),
+  limpiezaNotificaciones: new Queue(QUEUES.LIMPIEZA_NOTIFICACIONES, { connection, defaultJobOptions: defaultJobOpts }),
+  limpiezaSesiones: new Queue(QUEUES.LIMPIEZA_SESIONES, { connection, defaultJobOptions: defaultJobOpts }),
 };
 // BullMQ duplica la conexión de Redis por dentro de cada Queue/Worker (la
 // necesita para los comandos "blocking") — cada una de esas conexiones
@@ -89,13 +80,13 @@ const workers: Worker[] = [
   new Worker(QUEUES.REVISION_EXPIRY, procesarRevisionExpirada, { connection, concurrency: 5 }),
   new Worker(QUEUES.OFERTA_DISPATCH, procesarOfertaDispatch, { connection, concurrency: 2 }),
   new Worker(QUEUES.NOTIFICACIONES, procesarNotificaciones, { connection, concurrency: 3 }),
-  new Worker(QUEUES.RECORDATORIOS, procesarRecordatorios, { connection, concurrency: 2 }),
   new Worker(QUEUES.LIMPIEZA_COMPROBANTES, procesarLimpiezaComprobantes, { connection, concurrency: 1 }),
   new Worker(QUEUES.MATERIALIZAR_DESCUENTOS, procesarMaterializarDescuentos, { connection, concurrency: 1 }),
-  new Worker(QUEUES.ALERTA_CRONOMETRO, procesarAlertaCronometro, { connection, concurrency: 2 }),
   new Worker(QUEUES.LIMPIEZA_TASA_CAMBIO, procesarLimpiezaTasaCambio, { connection, concurrency: 1 }),
   new Worker(QUEUES.EXPIRAR_PARTIDOS, procesarExpirarPartidos, { connection, concurrency: 2 }),
   new Worker(QUEUES.RECORDATORIO_CONFIRMAR_PARTIDO, procesarRecordatorioConfirmarPartido, { connection, concurrency: 1 }),
+  new Worker(QUEUES.LIMPIEZA_NOTIFICACIONES, procesarLimpiezaNotificaciones, { connection, concurrency: 1 }),
+  new Worker(QUEUES.LIMPIEZA_SESIONES, procesarLimpiezaSesiones, { connection, concurrency: 1 }),
 ];
 
 // Barrido periódico: transiciona holds/revisiones vencidos y despacha ofertas
@@ -109,7 +100,6 @@ async function programarBarridos() {
   );
   await queues.ofertaDispatch.upsertJobScheduler('barrido-ofertas', { every: 30_000 }, { name: 'barrido' });
   await queues.notificaciones.upsertJobScheduler('barrido-notificaciones', { every: 15_000 }, { name: 'barrido' });
-  await queues.recordatorios.upsertJobScheduler('barrido-recordatorios', { every: 15 * 60_000 }, { name: 'barrido' });
   // Una vez al día alcanza de sobra — no es urgente, solo evita que el
   // bucket de comprobantes crezca para siempre.
   await queues.limpiezaComprobantes.upsertJobScheduler(
@@ -126,10 +116,6 @@ async function programarBarridos() {
     { every: 30 * 60_000 },
     { name: 'barrido' },
   );
-  // Cada minuto, no cada 15-30 como los otros: es una alerta en vivo ("ya
-  // se cumplió la hora, ve a recoger la pelota") — un retraso largo le
-  // quita el sentido.
-  await queues.alertaCronometro.upsertJobScheduler('barrido-alerta-cronometro', { every: 60_000 }, { name: 'barrido' });
   // Una vez al día alcanza — mismo criterio que la limpieza de comprobantes.
   await queues.limpiezaTasaCambio.upsertJobScheduler('barrido-limpieza-tasa-cambio', { every: 24 * 60 * 60_000 }, { name: 'barrido' });
   // Cada 5 min: un partido comunitario cuya hora ya pasó sin completarse
@@ -143,13 +129,15 @@ async function programarBarridos() {
     { every: 30 * 60_000 },
     { name: 'barrido' },
   );
+  // Una vez al día — mismo criterio que las otras limpiezas, nada de esto es urgente.
+  await queues.limpiezaNotificaciones.upsertJobScheduler('barrido-limpieza-notificaciones', { every: 24 * 60 * 60_000 }, { name: 'barrido' });
+  await queues.limpiezaSesiones.upsertJobScheduler('barrido-limpieza-sesiones', { every: 24 * 60 * 60_000 }, { name: 'barrido' });
 }
 
 // NUNCA `process.exit()` acá: un fallo transitorio de Redis al arrancar
 // (típico en Render+Upstash — el free tier duerme y el primer round-trip al
-// despertar puede tardar o fallar) mataba TODO el proceso, incluyendo el
-// servidor HTTP y Baileys, antes de que el QR llegara a generarse. `ioredis`
-// ya reintenta solo (retryStrategy por defecto) — deja que BullMQ reintente
+// despertar puede tardar o fallar) mataba TODO el proceso. `ioredis` ya
+// reintenta solo (retryStrategy por defecto) — deja que BullMQ reintente
 // también, el barrido se reprograma en el siguiente ciclo si hace falta.
 programarBarridos().catch((e) => {
   console.error('No se pudieron programar los barridos (se reintentará solo):', e);
@@ -162,15 +150,10 @@ for (const w of workers) {
   w.on('error', (err) => console.error(`[worker ${w.name}] error de conexión — reconectando solo:`, err.message));
 }
 
-// Se conecta al arrancar (no espera al primer mensaje) para que el QR de
-// emparejamiento esté disponible desde el principio — importante en un
-// hosting donde revisar el log a tiempo real es incómodo (ver `/qr` abajo).
-iniciarWhatsapp().catch((e) => console.error('No se pudo iniciar WhatsApp:', e));
-
 // Puerto HTTP: Render (free tier) solo permite Background Workers en planes
 // pagos, pero SÍ deja correr esto gratis como "Web Service" si bindea un
 // puerto — de ahí el servidor mínimo, no porque el worker necesite HTTP
-// para su trabajo real (BullMQ/Baileys van por Redis/websocket propios).
+// para su trabajo real (BullMQ va por Redis).
 iniciarServidorHttp(Number(process.env.PORT ?? 3001));
 
 console.log(`worker arriba — colas: ${Object.values(QUEUES).join(', ')}`);

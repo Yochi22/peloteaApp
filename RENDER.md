@@ -48,29 +48,13 @@ Render no tiene, en su plan free:
      público (si no, dejar vacío — los comprobantes solo se ven por URL
      firmada, ver
      SECURITY.md §2.8).
-   - En `pelotea-worker`: la misma `REDIS_URL` de Upstash, y
-     `WHATSAPP_ADMIN_NUMBER` (el número del club, formato venezolano). Las
-     variables S3_* también (el worker las usa para borrar comprobantes
-     viejos, ver más abajo). `WHATSAPP_QR_TOKEN` se genera solo
-     (`generateValue: true`) y `pelotea-web` lo copia automático vía
-     `fromService` — no hay que pegarlo a mano en ningún lado.
+   - En `pelotea-worker`: la misma `REDIS_URL` de Upstash, y las variables
+     S3_* también (el worker las usa para borrar comprobantes viejos, ver
+     más abajo).
 5. Deploy. Render corre `pnpm install` → `pnpm db:generate` → build de cada
    servicio; `pelotea-web` además aplica `prisma migrate deploy` antes de
    arrancar (aplica el schema a la Postgres nueva).
-6. **Vincular WhatsApp**: entra a `/panel/whatsapp` (con tu cuenta de
-   `SEDE_ADMIN`, 2FA activo) — ahí se ve el QR como imagen, protegido por tu
-   sesión de admin (nunca una URL pública con un token, como antes). Se
-   actualiza solo cada 5 segundos mientras no esté vinculado. Escanéalo
-   desde el WhatsApp del club (Dispositivos vinculados → Vincular un
-   dispositivo). Si necesitas cambiar de número o la sesión quedó rota, el
-   mismo panel tiene un botón para desvincular y generar un QR nuevo.
-   - **Ojo con el sleep**: si el servicio se durmió y Render reconstruye el
-     contenedor al despertar, la sesión guardada en disco (`/tmp` — no hay
-     disco persistente en el free) se pierde y hay que volver a escanear.
-     Para una demo puntual no es grave; si molesta, conviene un disco
-     persistente (plan pago) o simplemente aceptar re-vincular de vez en
-     cuando.
-7. **Crear tu club de verdad, sin seed**: abre `https://pelotea-web.onrender.com/configurar`
+6. **Crear tu club de verdad, sin seed**: abre `https://pelotea-web.onrender.com/configurar`
    — ahí creas el nombre del club, tus datos de pago móvil (opcional, se
    puede cargar después) y tu cuenta de administrador (nombre, email,
    contraseña). Esa pantalla **solo funciona la primera vez**: en cuanto
@@ -80,16 +64,16 @@ Render no tiene, en su plan free:
    (El seed genérico — `pnpm --filter @pelotea/db seed` desde la Shell de
    `pelotea-web` — sigue existiendo si algún día quieres datos de prueba
    rápidos, pero no hace falta para nada de esto.)
-8. **Activar 2FA**: apenas entres, `/panel` te va a mandar directo a
+7. **Activar 2FA**: apenas entres, `/panel` te va a mandar directo a
    `/cuenta/2fa` — es obligatorio para `SEDE_ADMIN`/`PLATAFORMA_ADMIN`, no
    hay forma de saltárselo.
-9. **Armar el inventario real** desde `/panel/canchas`: crear cada cancha
+8. **Armar el inventario real** desde `/panel/canchas`: crear cada cancha
    (deporte, superficie, capacidad, duración de turno) y configurarle el
    horario semanal con su tarifa — nace sin horario, así que no acepta
    reservas hasta que la configures.
-10. **Cargar la tasa de cambio** en `/panel/tasa-cambio` si vas a fijar
-    tarifas en USD/EUR (`Sede.precioMoneda`, elegible en
-    `/panel/configuracion`) — si no, nadie puede reservar.
+9. **Cargar la tasa de cambio** en `/panel/tasa-cambio` si vas a fijar
+   tarifas en USD/EUR (`Sede.precioMoneda`, elegible en
+   `/panel/configuracion`) — si no, nadie puede reservar.
 
 ## Limitaciones a tener presentes en la demo
 
@@ -98,15 +82,10 @@ Render no tiene, en su plan free:
   de eso tarda unos segundos en "despertar". Normal, no es un error.
 - La Postgres free de Render **expira a los 90 días** si no se pasa a un
   plan pago — bien para una demo puntual, no para dejarla corriendo meses.
-- Sin disco persistente, la sesión de WhatsApp puede pedir re-vincularse
-  después de un sleep largo (ver paso 6).
-- **El sleep de `pelotea-worker` afecta a TODO lo que corre ahí, no solo a
-  WhatsApp**: mientras está dormido, ningún barrido corre — ni la
-  expiración de HOLDs, ni los recordatorios, ni el despacho de ofertas, ni
-  la alerta del cronómetro de cancha ("se acabó el tiempo"). Todo se pone
-  al día recién cuando algo despierta al worker (una visita a
-  `/panel/whatsapp`, por ejemplo), así que una alerta puede llegar minutos
-  tarde si nadie usó el panel mientras tanto. Para una demo puntual es
+- **El sleep de `pelotea-worker` afecta a TODO lo que corre ahí**: mientras
+  está dormido, ningún barrido corre — ni la expiración de HOLDs, ni el
+  despacho de ofertas, ni las limpiezas periódicas. Todo se pone al día
+  recién cuando algo despierta al worker. Para una demo puntual es
   aceptable; si molesta, la solución gratis de siempre es un "pinger"
   externo (p.ej. [UptimeRobot](https://uptimerobot.com) o
   [cron-job.org](https://cron-job.org), ambos gratis) pegándole a

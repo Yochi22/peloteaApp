@@ -9,8 +9,8 @@ import { PLANTILLAS_NOTIFICACION } from '@pelotea/shared';
  * días después de llenarse el cupo, dejando al organizador sin ningún
  * empujón intermedio. Este barrido le recuerda UNA vez, entre 12 y 24 horas
  * antes del turno — ni tan pronto que parezca apuro, ni tan tarde que ya no
- * pueda reaccionar. Idempotente por payload, mismo criterio que
- * `jobs/recordatorios.ts`.
+ * pueda reaccionar. Idempotente por payload (no reenvía si ya existe una
+ * `Notificacion` de este tipo para ese partido).
  */
 export async function procesarRecordatorioConfirmarPartido(_job: Job): Promise<void> {
   const ahora = new Date();
@@ -37,11 +37,8 @@ export async function procesarRecordatorioConfirmarPartido(_job: Job): Promise<v
     });
     if (yaEnviado) continue;
 
-    await prisma.notificacion.createMany({
-      data: [
-        { usuarioId: p.organizadorId, canal: 'WHATSAPP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_RECORDATORIO_CONFIRMAR, payload: { partidoId: p.id } },
-        { usuarioId: p.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_RECORDATORIO_CONFIRMAR, payload: { partidoId: p.id } },
-      ],
+    await prisma.notificacion.create({
+      data: { usuarioId: p.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_RECORDATORIO_CONFIRMAR, payload: { partidoId: p.id } },
     });
   }
 }

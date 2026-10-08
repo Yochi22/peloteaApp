@@ -21,9 +21,8 @@ function fmtRestante(ms: number): string {
  * reserva (cuando el cliente retira la pelota) hasta que se cumple la
  * duración pagada. Pasado el cero sigue contando en rojo ("tiempo extra")
  * en vez de desaparecer — el staff necesita ver CUÁNTO se está pasando, no
- * solo que ya se acabó. La alerta por WhatsApp al staff la manda el worker
- * (`jobs/alerta-cronometro.ts`) — esto es solo la vista en vivo mientras
- * alguien tiene el panel abierto.
+ * solo que ya se acabó. No hay ninguna alerta aparte (push, WhatsApp, etc.)
+ * — esto ES el aviso, visible mientras alguien tenga el panel abierto.
  */
 export function Cronometro({
   reservaId,

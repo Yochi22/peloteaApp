@@ -47,7 +47,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
 
       const actualizada = await tx.reserva.update({
         where: { id: reservaId },
-        data: { tiempoIniciadoEn: new Date(), tiempoAlertaEnviada: false },
+        data: { tiempoIniciadoEn: new Date() },
       });
 
       await tx.auditLog.create({
@@ -93,6 +93,6 @@ export async function DELETE(req: NextRequest, { params }: { params: Promise<{ i
     return NextResponse.json({ error: 'sin_permiso' }, { status: 403 });
   }
 
-  await prisma.reserva.update({ where: { id: reservaId }, data: { tiempoIniciadoEn: null, tiempoAlertaEnviada: false } });
+  await prisma.reserva.update({ where: { id: reservaId }, data: { tiempoIniciadoEn: null } });
   return NextResponse.json({ ok: true }, { status: 200 });
 }

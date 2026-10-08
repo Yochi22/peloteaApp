@@ -113,11 +113,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       // siquiera cuando el club cancelaba la reserva de otra persona.
       const porElClub = esStaffDeLaSede || esPlataforma;
       const payloadNotificacion = { reservaId, motivo: motivo ?? null, porElClub };
-      await tx.notificacion.createMany({
-        data: [
-          { usuarioId: reserva.organizadorId, canal: 'WHATSAPP', plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CANCELADA, payload: payloadNotificacion },
-          { usuarioId: reserva.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CANCELADA, payload: payloadNotificacion },
-        ],
+      await tx.notificacion.create({
+        data: { usuarioId: reserva.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.RESERVA_CANCELADA, payload: payloadNotificacion },
       });
 
       // Partido comunitario: si su reserva se cancela (rechazo definitivo,

@@ -26,10 +26,6 @@ Thumbs.db
 *.log
 npm-debug.log*
 
-# baileys whatsapp session
-apps/worker/.wa-session/
-.wa-session/
-
 # misc
 coverage/
 .vercel

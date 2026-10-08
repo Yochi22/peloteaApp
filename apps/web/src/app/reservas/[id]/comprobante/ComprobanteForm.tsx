@@ -89,7 +89,7 @@ export function ComprobanteForm({
     return (
       <div style={{ marginTop: 20 }}>
         <Alert tone="ok" title="Comprobante enviado" live>
-          El club tiene hasta 2 horas para revisarlo. Te avisamos por WhatsApp cuando quede confirmada.
+          El club tiene hasta 2 horas para revisarlo. Te avisamos dentro de la app cuando quede confirmada.
         </Alert>
       </div>
     );

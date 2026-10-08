@@ -23,9 +23,9 @@ class HttpError extends Error {
  *
  * Cuando se llena, NO se reserva nada solo — el diseño de "partidos
  * comunitarios" pide que el slot no se bloquee mientras se arma el grupo
- * (ver CLAUDE.md). Solo se avisa al organizador (WhatsApp + in-app) para que
- * entre a confirmar y pagar (`POST /api/partidos/[id]/confirmar`), que ahí
- * sí revalida disponibilidad real en el pool de canchas antes de reservar.
+ * (ver CLAUDE.md). Solo se avisa al organizador (in-app) para que entre a
+ * confirmar y pagar (`POST /api/partidos/[id]/confirmar`), que ahí sí
+ * revalida disponibilidad real en el pool de canchas antes de reservar.
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id: partidoId } = await params;
@@ -66,11 +66,8 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
       const seCompleto = actualizado.cuposLlenos >= actualizado.cuposTotales;
       if (seCompleto) {
         await tx.partidoAbierto.update({ where: { id: partidoId }, data: { estado: 'COMPLETO' } });
-        await tx.notificacion.createMany({
-          data: [
-            { usuarioId: partido.organizadorId, canal: 'WHATSAPP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_COMPLETO, payload: { partidoId } },
-            { usuarioId: partido.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_COMPLETO, payload: { partidoId } },
-          ],
+        await tx.notificacion.create({
+          data: { usuarioId: partido.organizadorId, canal: 'IN_APP', plantilla: PLANTILLAS_NOTIFICACION.PARTIDO_COMPLETO, payload: { partidoId } },
         });
       }
 
