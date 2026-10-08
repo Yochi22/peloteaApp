@@ -83,6 +83,15 @@ const ITEMS: ItemNav[] = [
     ),
   },
   {
+    href: '/panel/tarifas',
+    label: 'Tarifas',
+    icon: (
+      <Icon>
+        <path d="M12 3v18M7 7.5c0-1.4 1.8-2.5 5-2.5s5 1.1 5 2.5c0 1.4-2 2-5 2.5s-5 1.1-5 2.5 2 2.5 5 2.5 5-1.1 5-2.5" />
+      </Icon>
+    ),
+  },
+  {
     href: '/panel/descuentos',
     label: 'Descuentos',
     icon: (

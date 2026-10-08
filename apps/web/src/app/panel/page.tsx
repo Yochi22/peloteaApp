@@ -167,6 +167,10 @@ export default async function PanelPage({ searchParams }: { searchParams: Promis
           subvalor={metricas.monedaRef !== 'VES' ? `≈ ${metricas.monedaRef} ${metricas.ticketPromedioRef.toLocaleString('es-VE')}` : undefined}
         />
         <Kpi etiqueta="Recuperado (ofertas)" valor={`Bs ${metricas.recuperadoOfertas.toLocaleString('es-VE')}`} tono="ok" />
+        <Kpi
+          etiqueta="Clientes nuevos / recurrentes"
+          valor={`${metricas.clientesNuevos} / ${metricas.clientesRecurrentes}`}
+        />
       </div>
       <p style={{ marginTop: 10 }}>
         <Link href="/panel/finanzas" style={{ fontSize: 13 }}>

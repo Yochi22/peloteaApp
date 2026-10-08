@@ -371,6 +371,46 @@ export const crearExcepcionSchema = z
   });
 export type CrearExcepcionInput = z.infer<typeof crearExcepcionSchema>;
 
+// ── Tarifas: recargos/descuentos por franja (peak/off-peak) ────────────────
+//    Ver ReglaPrecio en el schema de Prisma y packages/shared/domain/pricing.ts.
+//    Antes solo se cargaba por seed/DB directo — sin UI en el panel.
+
+export const crearReglaPrecioSchema = z
+  .object({
+    // null/undefined = aplica a TODAS las canchas de la sede.
+    canchaId: z.string().min(1).nullable().optional(),
+    nombre: z.string().trim().min(2).max(80),
+    // null/undefined = todos los días de la semana.
+    diaSemana: z.number().int().min(0).max(6).nullable().optional(),
+    // null/undefined en ambos = todo el día.
+    horaDesde: z.number().int().min(0).max(1439).nullable().optional(),
+    horaHasta: z.number().int().min(1).max(1440).nullable().optional(),
+    tipoModificador: z.enum(['PORCENTAJE', 'MONTO_FIJO']),
+    // Puede ser negativo (descuento, ej. -15% off-peak) o positivo (recargo, ej. +25% peak).
+    valor: z.number().min(-1_000_000).max(1_000_000),
+    // Si varias reglas aplican a la misma hora, se aplican TODAS, en orden
+    // de prioridad (mayor primero) — no es "la que gana", es acumulativo.
+    prioridad: z.number().int().min(0).max(100).default(0),
+  })
+  .refine((v) => (v.horaDesde == null) === (v.horaHasta == null), {
+    message: 'Da ambas horas o ninguna (todo el día).',
+    path: ['horaHasta'],
+  })
+  .refine((v) => v.horaDesde == null || v.horaHasta! > v.horaDesde, {
+    message: 'La hora de fin debe ser después de la de inicio.',
+    path: ['horaHasta'],
+  });
+export type CrearReglaPrecioInput = z.infer<typeof crearReglaPrecioSchema>;
+
+export const actualizarReglaPrecioSchema = z
+  .object({
+    activa: z.boolean().optional(),
+    valor: z.number().min(-1_000_000).max(1_000_000).optional(),
+    prioridad: z.number().int().min(0).max(100).optional(),
+  })
+  .refine((v) => Object.keys(v).length > 0, { message: 'Nada para actualizar.' });
+export type ActualizarReglaPrecioInput = z.infer<typeof actualizarReglaPrecioSchema>;
+
 // ── Descuentos programados (EXPRES) — el admin decide cancha/horario/día/%,
 //    nunca automático. Ver ReglaDescuento en el schema de Prisma. ─────────────
 

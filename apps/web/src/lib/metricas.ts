@@ -21,6 +21,8 @@ export interface Metricas {
   ticketPromedioRef: number;
   recuperadoOfertas: number;
   heatmap: Array<{ dia: number; hora: number; total: number }>;
+  clientesNuevos: number;
+  clientesRecurrentes: number;
 }
 
 /**
@@ -77,7 +79,7 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
   const sede = await prisma.sede.findUniqueOrThrow({ where: { id: sedeId }, select: { precioMoneda: true } });
   const confirmadas = await prisma.reserva.findMany({
     where: { sedeId, estado: { in: ['CONFIRMADA', 'COMPLETADA'] }, inicio: { gte: desde, lt: hasta } },
-    select: { precioTotal: true, precioTotalRef: true, inicio: true, fin: true, ofertaId: true },
+    select: { precioTotal: true, precioTotalRef: true, inicio: true, fin: true, ofertaId: true, organizadorId: true },
   });
   const noShows = await prisma.reserva.count({ where: { sedeId, estado: 'NO_SHOW', inicio: { gte: desde, lt: hasta } } });
   const canceladas = await prisma.reserva.count({ where: { sedeId, estado: 'CANCELADA', inicio: { gte: desde, lt: hasta } } });
@@ -142,6 +144,29 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
 
   const horasDisponibles = await calcularHorasDisponibles(sedeId, desde, hasta);
 
+  // "Cliente" = quien organizó al menos una reserva confirmada/jugada en el
+  // rango. "Recurrente" = ya tenía una CONFIRMADA/COMPLETADA de ANTES de
+  // `desde` (en cualquier momento, no solo en el rango) — "nuevo" = esta es
+  // la primera vez que se le ve. Aproximación conocida: un invitado sin
+  // cuenta crea un Usuario nuevo en CADA reserva (ver CLAUDE.md §3), así que
+  // alguien que reserva repetido siempre como invitado sale "nuevo" cada
+  // vez — solo las cuentas registradas distinguen de verdad "ya volvió".
+  const organizadoresEnRango = Array.from(new Set(confirmadas.map((r) => r.organizadorId)));
+  let clientesRecurrentes = 0;
+  if (organizadoresEnRango.length > 0) {
+    const yaTenianAntes = await prisma.reserva.groupBy({
+      by: ['organizadorId'],
+      where: {
+        sedeId,
+        estado: { in: ['CONFIRMADA', 'COMPLETADA'] },
+        organizadorId: { in: organizadoresEnRango },
+        inicio: { lt: desde },
+      },
+    });
+    clientesRecurrentes = yaTenianAntes.length;
+  }
+  const clientesNuevos = organizadoresEnRango.length - clientesRecurrentes;
+
   return {
     rango: { desde, hasta },
     ingresosConfirmados: round2(ingresosConfirmados),
@@ -156,6 +181,8 @@ export async function calcularMetricas(sedeId: string, desde: Date, hasta: Date)
     ticketPromedioRef: round2(ticketPromedioRef),
     recuperadoOfertas: round2(recuperadoOfertas),
     heatmap: heatmap.map((h) => ({ dia: h.dia, hora: h.hora, total: Number(h.total) })),
+    clientesNuevos,
+    clientesRecurrentes,
   };
 }
 
